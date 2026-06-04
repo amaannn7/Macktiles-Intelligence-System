@@ -1,0 +1,6 @@
+data/admin.json
+data/users.json
+data/user_*.json
+error_log
+.DS_Store
+.claude/
