@@ -2,4 +2,8 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/stagdctc/macktiles.levatahq.com/
-    - /bin/cp -R . $DEPLOYPATH
+    - /bin/cp index.html $DEPLOYPATH
+    - /bin/cp api.php $DEPLOYPATH
+    - /bin/cp logo.png $DEPLOYPATH
+    - /bin/cp logo-inverse.png $DEPLOYPATH
+    - /bin/cp -R data $DEPLOYPATH
