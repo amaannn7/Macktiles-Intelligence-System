@@ -43,5 +43,23 @@
         "token": "816a63fe037f505046ed83e84c4799e4475d4cd8e20d6a7adb5c6fa2151619ed",
         "created_at": "2026-06-08T17:19:44+00:00",
         "is_admin": false
+    },
+    {
+        "id": "user_0a03d3e44d33b121",
+        "name": "Danushka",
+        "email": "danushka@macksons.com",
+        "password": "$2y$12$N6iLwtZJYOT1G\/5fOLnXHeKS18xOG2I.K0XO4MLKde0fkzTmLVhre",
+        "token": "c1cda398ca90f03c97c9d74d08a5744c451ba1d22c70575fe87eda7bda5a0bb1",
+        "created_at": "2026-06-09T00:00:00+00:00",
+        "is_admin": true
+    },
+    {
+        "id": "user_c661eb56c62657a2",
+        "name": "Ash",
+        "email": "ash@tastebuds.com.au",
+        "password": "$2y$12$goQTUnvkicgnUdRsB.AIQOBbpR\/1nzUad4jf3PjjA0TEunpkRUBSe",
+        "token": "3d1100090cfee30315d444ba0b5f2b504c24e8deb3aa023fc9cc110557aac8e5",
+        "created_at": "2026-06-09T00:00:00+00:00",
+        "is_admin": true
     }
 ]
