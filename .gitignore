@@ -9,6 +9,7 @@ data/chat_last_read_*.json
 data/uploads/*
 !data/uploads/.gitkeep
 
-# Note: users.json, admin.json, user_*.json, channels.json, and
-# messages_*.json ARE committed so the live server starts with the
-# current accounts, leads, and chat. Repo is private.
+# Sensitive data — NEVER commit (contains API keys, passwords, lead data)
+data/admin.json
+data/users.json
+data/user_*.json
