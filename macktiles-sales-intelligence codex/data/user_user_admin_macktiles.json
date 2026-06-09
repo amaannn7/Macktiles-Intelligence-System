@@ -1,0 +1,1959 @@
+{
+    "leads": [
+        {
+            "id": "lead_257dcd2d21a5dbde",
+            "first_name": "Warren",
+            "last_name": "Jenkins",
+            "email": "warrenj@designunity.com.au",
+            "phone": "+61 413 584 826",
+            "company": "Design Unity",
+            "title": "Owner",
+            "industry": "Architecture and design, Design services (creative and digital)",
+            "country": "AU",
+            "website": "http:\/\/www.designunity.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/warren-jenkins-2b9b4927",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 75,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"http:\/\/www.designunity.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/design-unity\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Institute of Architects\", \"url\": \"https:\/\/www.architecture.com.au\", \"description\": \"Industry reports and market analysis\"},\n    {\"title\": \"Design Unity Social Media\", \"url\": \"https:\/\/www.facebook.com\/designunityau\", \"description\": \"Project updates and company news\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Design Unity is a boutique architecture and design firm based in Australia, specializing in creative and digital design services for residential and commercial clients. They offer a range of services including interior design, exterior design, and project management. Their business model is focused on providing high-end design solutions to discerning clients.\",\n    \"key_products_services\": [\"Architecture Services\", \"Interior Design\", \"Digital Design\"],\n    \"market_position\": \"Design Unity operates in a competitive market, but their focus on high-end design and personalized service sets them apart from larger firms. They have established a strong reputation in the Australian design community.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Sourcing high-quality, unique tiles that meet their design standards\", \"impact\": \"Delays in project completion and potential loss of client satisfaction\"},\n      {\"challenge\": \"Ensuring consistent supply and delivery of tiles to meet project timelines\", \"impact\": \"Increased costs and strain on client relationships\"},\n      {\"challenge\": \"Balancing budget constraints with the need for premium materials and design\", \"impact\": \"Compromised design quality or increased project costs\"}\n    ],\n    \"trends\": [\"Sustainable design\", \"Innovative materials and technologies\"],\n    \"competitive_pressures\": \"Design Unity faces competition from larger architecture and design firms, as well as boutique firms with specialized expertise. They must differentiate themselves through exceptional design and personalized service.\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty finding reliable tile suppliers who can meet their design and quality standards\", \"evidence\": \"Their focus on high-end design and client satisfaction suggests they prioritize quality materials and suppliers\"},\n      {\"pain\": \"Managing project timelines and budgets while ensuring design integrity\", \"evidence\": \"Their growth stage and competitive market position indicate a need for efficient project management and cost control\"}\n    ],\n    \"responsibilities\": [\"Design and project management\", \"Client relationships and communication\", \"Budgeting and cost control\"],\n    \"success_metrics\": [\"Client satisfaction and retention\", \"Project completion rate and timelines\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I came across Design Unity's stunning residential project in Sydney and was impressed by the attention to detail and design excellence\", \"why\": \"This shows I've taken the time to research their work and appreciate their design aesthetic\"},\n      {\"hook\": \"As an architecture and design firm, I understand the importance of sourcing high-quality materials that meet your design standards\", \"why\": \"This resonates with their pain points and shows I understand their priorities\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Macktiles Australia's premium tile range and commitment to quality and reliability\", \"connects_to\": \"Their pain point of finding reliable tile suppliers\"},\n      {\"angle\": \"Our ability to provide customized tile solutions and support to meet their design and project needs\", \"connects_to\": \"Their need for efficient project management and cost control\"}\n    ],\n    \"discovery_questions\": [\n      \"Where do you currently source your tiles from?\",\n      \"What matters most to you when choosing a tile supplier \u2014 price, range, quality, or delivery speed?\",\n      \"How many projects are you running at the moment, and do you have a steady tile supply for them?\",\n      \"Have you ever had a project delayed because tiles were out of stock or delivery was late?\"\n    ],\n    \"objections\": [{\"objection\": \"We're happy with our current tile supplier\", \"response\": \"I understand, but I'd like to discuss how Macktiles Australia can offer a more comprehensive and reliable tile solution that meets your design and project needs\"}],\n    \"avoid\": [\"Making assumptions about their current tile supplier or design preferences\", \"Focusing too much on price without considering the value proposition\"]\n  }\n}",
+            "requisitions": null,
+            "status": "email_sent",
+            "emails_sent": 1,
+            "last_email_type": "initial",
+            "last_action": "email_sent",
+            "last_action_at": "2026-03-18T13:41:58+00:00",
+            "email_history": [
+                {
+                    "type": "initial",
+                    "subject": "Tiles for Design Unity projects",
+                    "content": "Hi Warren,\n\nI came across Design Unity's stunning residential project in Sydney and was impressed by the attention to detail and design excellence. Managing high-end design projects like that can be complex.\n\nSourcing high-quality, unique tiles that meet your design standards is likely a challenge. Similar architecture and design firms have benefited from working with us, as we offer a premium tile range and reliable supply. One of our clients saved time and reduced project delays after switching to us.\n\nWould it be worth sending you our latest range and pricing to compare against what you're paying now?\n\nAdmin\n\nMacktiles Australia",
+                    "sent_at": "2026-03-18T13:41:58+00:00"
+                }
+            ],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:41:58+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "emails": 10,
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Design Unity is a boutique architecture and design firm based in Australia, specializing in creative and digital design services for residential and commercial clients. They offer a range of services including interior design, exterior design, and project management. Their business model is focused on providing high-end design solutions to discerning clients.",
+                    "key_products_services": [
+                        "Architecture Services",
+                        "Interior Design",
+                        "Digital Design"
+                    ],
+                    "market_position": "Design Unity operates in a competitive market, but their focus on high-end design and personalized service sets them apart from larger firms. They have established a strong reputation in the Australian design community.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-03-18T13:41:26+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Sourcing high-quality, unique tiles that meet their design standards",
+                        "Ensuring consistent supply and delivery of tiles to meet project timelines",
+                        "Balancing budget constraints with the need for premium materials and design"
+                    ],
+                    "market_trends": [
+                        "Sustainable design",
+                        "Innovative materials and technologies"
+                    ],
+                    "competitive_landscape": "Design Unity faces competition from larger architecture and design firms, as well as boutique firms with specialized expertise. They must differentiate themselves through exceptional design and personalized service."
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "http:\/\/www.designunity.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/design-unity",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Institute of Architects",
+                        "url": "https:\/\/www.architecture.com.au",
+                        "description": "Industry reports and market analysis"
+                    },
+                    {
+                        "title": "Design Unity Social Media",
+                        "url": "https:\/\/www.facebook.com\/designunityau",
+                        "description": "Project updates and company news"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Client satisfaction and retention",
+                        "Project completion rate and timelines"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Design and project management",
+                        "Client relationships and communication",
+                        "Budgeting and cost control"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-03-18T13:41:26+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We're happy with our current tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty finding reliable tile suppliers who can meet their design and quality standards",
+                        "evidence": "Their focus on high-end design and client satisfaction suggests they prioritize quality materials and suppliers"
+                    },
+                    {
+                        "pain": "Managing project timelines and budgets while ensuring design integrity",
+                        "evidence": "Their growth stage and competitive market position indicate a need for efficient project management and cost control"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-03-18T13:41:26+00:00"
+            },
+            "intelligence_stage": 4,
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "email_sent",
+            "stage_entered_at": "2026-03-18T13:41:58+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_e3907c6e0ea232a1",
+            "first_name": "Dawn",
+            "last_name": "(Powell)",
+            "email": "dawn@designinginteriors.com.au",
+            "phone": "+61 424 299 059",
+            "company": "Designing Interiors",
+            "title": "Business Owner",
+            "industry": "Design services (creative and digital), Home improvement and renovation services",
+            "country": "AU",
+            "website": "https:\/\/www.designinginteriors.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/dawn-carey-powell-a68a3473",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-18T13:32:06+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:32:06+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-18T13:32:06+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_8eef8638cda5e18c",
+            "first_name": "Lee",
+            "last_name": "Selkrig",
+            "email": "lees@ensohomes.com.au",
+            "phone": "+61 439 492 042",
+            "company": "Enso Homes",
+            "title": "Founder &amp; Director",
+            "industry": "Construction, Architecture and design",
+            "country": "AU",
+            "website": "http:\/\/www.ensohomes.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/lee-selkrig-6664b0119",
+            "company_size": "11 - 50",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 85,\n    \"quality\": \"Excellent\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\", \"Company size known\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"http:\/\/www.ensohomes.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"Enso Homes LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/enso-homes\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Construction Industry Report\", \"url\": \"https:\/\/www.ibisworld.com.au\/industry\/construction.html\", \"description\": \"Market analysis and trends\"},\n    {\"title\": \"Enso Homes Facebook Page\", \"url\": \"https:\/\/www.facebook.com\/EnsoHomesAustralia\", \"description\": \"Company updates and customer engagement\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Enso Homes is a construction company specializing in architecture and design services, catering to the Australian market. They provide bespoke building solutions to clients, focusing on quality, sustainability, and innovative design. Their business model revolves around delivering high-end residential and commercial projects, serving discerning clients who value unique and functional spaces.\",\n    \"key_products_services\": [\"Custom Home Building\", \"Architectural Design\", \"Sustainable Construction\"],\n    \"market_position\": \"Enso Homes is a mid-sized player in the Australian construction market, known for their commitment to eco-friendly practices and cutting-edge design. They have established a strong reputation among their clientele for delivering exceptional quality and personalized service.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Sourcing high-quality, sustainable materials for their projects\", \"impact\": \"Delays in project timelines and increased costs due to material shortages or inconsistent quality\"},\n      {\"challenge\": \"Managing supply chain disruptions and material availability\", \"impact\": \"Impact on project delivery and client satisfaction\"},\n      {\"challenge\": \"Balancing budget constraints with the need for premium materials and finishes\", \"impact\": \"Pressure on profit margins and the ability to deliver high-end projects\"}\n    ],\n    \"trends\": [\"Sustainable building practices\", \"Increased demand for eco-friendly materials\"],\n    \"competitive_pressures\": \"Competitors are investing in digital technologies to enhance their design and construction processes, and Enso Homes must keep pace to remain competitive.\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Finding reliable suppliers of high-quality, sustainable materials\", \"evidence\": \"Enso Homes' emphasis on eco-friendly practices and their commitment to delivering exceptional quality\"},\n      {\"pain\": \"Managing project timelines and budgets effectively\", \"evidence\": \"The company's growth stage and the need to balance expansion with operational efficiency\"}\n    ],\n    \"responsibilities\": [\"Overseeing project delivery\", \"Managing supplier relationships\", \"Ensuring quality control\"],\n    \"success_metrics\": [\"Project completion rates\", \"Client satisfaction scores\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I came across Enso Homes' stunning sustainable design projects and was impressed by the attention to detail and commitment to eco-friendly practices\", \"why\": \"Shows understanding of their values and design aesthetic\"},\n      {\"hook\": \"As a director of a growing construction company, I'm sure you appreciate the importance of reliable suppliers and efficient project management\", \"why\": \"Resonates with their pain points and responsibilities\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Macktiles Australia's premium, sustainable tile solutions can enhance Enso Homes' projects and support their eco-friendly mission\", \"connects_to\": \"Their emphasis on sustainable building practices\"},\n      {\"angle\": \"Our reliable supply chain and efficient logistics can help Enso Homes manage project timelines and budgets more effectively\", \"connects_to\": \"Their need for timely and cost-effective material sourcing\"}\n    ],\n    \"discovery_questions\": [\n      \"What are your current pain points when it comes to sourcing materials for your projects?\",\n      \"How do you evaluate the quality and sustainability of the materials you use?\",\n      \"Can you tell me about a recent project where you faced challenges with material sourcing or supply chain disruptions?\",\n      \"What are your expectations from a tile supplier in terms of quality, delivery, and customer service?\"\n    ],\n    \"objections\": [{\"objection\": \"We already have an established relationship with our current tile supplier\", \"response\": \"I understand the importance of existing relationships, but I'd like to discuss how Macktiles Australia can offer a more comprehensive range of premium, sustainable tiles and a more efficient supply chain\"}],\n    \"avoid\": [\"Making generic statements about the industry\", \"Focusing solely on price without considering the value proposition\"]\n  }\n}",
+            "requisitions": null,
+            "status": "researched",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "researched",
+            "last_action_at": "2026-03-18T13:42:51+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:42:51+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Enso Homes is a construction company specializing in architecture and design services, catering to the Australian market. They provide bespoke building solutions to clients, focusing on quality, sustainability, and innovative design. Their business model revolves around delivering high-end residential and commercial projects, serving discerning clients who value unique and functional spaces.",
+                    "key_products_services": [
+                        "Custom Home Building",
+                        "Architectural Design",
+                        "Sustainable Construction"
+                    ],
+                    "market_position": "Enso Homes is a mid-sized player in the Australian construction market, known for their commitment to eco-friendly practices and cutting-edge design. They have established a strong reputation among their clientele for delivering exceptional quality and personalized service.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-03-18T13:42:51+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Sourcing high-quality, sustainable materials for their projects",
+                        "Managing supply chain disruptions and material availability",
+                        "Balancing budget constraints with the need for premium materials and finishes"
+                    ],
+                    "market_trends": [
+                        "Sustainable building practices",
+                        "Increased demand for eco-friendly materials"
+                    ],
+                    "competitive_landscape": "Competitors are investing in digital technologies to enhance their design and construction processes, and Enso Homes must keep pace to remain competitive."
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "http:\/\/www.ensohomes.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "Enso Homes LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/enso-homes",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Construction Industry Report",
+                        "url": "https:\/\/www.ibisworld.com.au\/industry\/construction.html",
+                        "description": "Market analysis and trends"
+                    },
+                    {
+                        "title": "Enso Homes Facebook Page",
+                        "url": "https:\/\/www.facebook.com\/EnsoHomesAustralia",
+                        "description": "Company updates and customer engagement"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Project completion rates",
+                        "Client satisfaction scores"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Overseeing project delivery",
+                        "Managing supplier relationships",
+                        "Ensuring quality control"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-03-18T13:42:51+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We already have an established relationship with our current tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Finding reliable suppliers of high-quality, sustainable materials",
+                        "evidence": "Enso Homes' emphasis on eco-friendly practices and their commitment to delivering exceptional quality"
+                    },
+                    {
+                        "pain": "Managing project timelines and budgets effectively",
+                        "evidence": "The company's growth stage and the need to balance expansion with operational efficiency"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-03-18T13:42:51+00:00"
+            },
+            "intelligence_stage": 4,
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "research",
+            "stage_entered_at": "2026-03-18T13:42:51+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_11e8ee5cf089f1db",
+            "first_name": "Geoff",
+            "last_name": "Lewis",
+            "email": "geoff@bowerbirdinteriors.com.au",
+            "phone": "+61 418 961 317",
+            "company": "BOWERBIRD Interiors",
+            "title": "Co-Founder &amp; Managing Director",
+            "industry": "Design services (creative and digital), Home improvement and renovation services",
+            "country": "AU",
+            "website": "https:\/\/bowerbirdinteriors.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/geoff-lewis-81aa8132",
+            "company_size": "11 - 50",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-18T13:32:06+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:32:06+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-18T13:32:06+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_f83a8320dd7e69d4",
+            "first_name": "Mark",
+            "last_name": "DiMasi",
+            "email": "mark@lavidahomes.com.au",
+            "phone": "+61 408 360 135",
+            "company": "La Vida Homes",
+            "title": "Founder \/ Managing Director",
+            "industry": "Construction, Design services (creative and digital)",
+            "country": "AU",
+            "website": "https:\/\/lavidahomes.com.au\/",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/mark-dimasi-9245711ab",
+            "company_size": "51 - 250",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-18T13:32:06+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:32:06+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-18T13:32:06+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_fe92efa1b9be2e0f",
+            "first_name": "Nathalie",
+            "last_name": "Scipioni",
+            "email": "nathalie@ns-studio.com",
+            "phone": "+61 430 431 099",
+            "company": "Nathalie Scipioni Architects",
+            "title": "Founder and Principal Architect",
+            "industry": "Architecture and design, Construction trades and services",
+            "country": "AU",
+            "website": "https:\/\/nathaliescipioniarchitects.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/nathalie-scipioni",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-18T13:32:06+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:32:06+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-18T13:32:06+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_6527f6898669131e",
+            "first_name": "Mark",
+            "last_name": "Williams",
+            "email": "mark@mwaarchitects.com.au",
+            "phone": "+61 413 431 695",
+            "company": "Mark Williams Architects",
+            "title": "Owner, Managing Director",
+            "industry": "Architecture and design, Design services (creative and digital)",
+            "country": "AU",
+            "website": "http:\/\/www.mwaarchitects.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/mark-williams-7599ab10",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-18T13:32:06+00:00",
+            "email_history": [],
+            "created_at": "2026-03-18T13:32:06+00:00",
+            "updated_at": "2026-03-18T13:32:06+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-18T13:32:06+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-03-19T05:27:52+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097",
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-18T13:32:06+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_d0ec567a3b4072f5",
+            "first_name": "Warren",
+            "last_name": "Jenkins",
+            "email": "warrenj@designunity.com.au",
+            "phone": "+61 413 584 826",
+            "company": "Design Unity",
+            "title": "Owner",
+            "industry": "Architecture and design, Design services (creative and digital)",
+            "country": "AU",
+            "website": "http:\/\/www.designunity.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/warren-jenkins-2b9b4927",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 75,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"http:\/\/www.designunity.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"Design Unity LinkedIn Profile\", \"url\": \"https:\/\/au.linkedin.com\/company\/design-unity\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Institute of Architects Industry Report\", \"url\": \"https:\/\/www.architecture.com.au\/news\/industry-reports\", \"description\": \"Market analysis and trends in the architecture industry\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Design Unity is a boutique architecture and design firm based in Australia, providing creative and digital design services to a range of clients. They specialize in bespoke residential and commercial projects, and pride themselves on delivering innovative and functional designs. Their business model is centered around building strong relationships with clients and delivering personalized solutions.\",\n    \"key_products_services\": [\"Architecture and design services\", \"Creative and digital solutions\", \"Project management\"],\n    \"market_position\": \"Design Unity operates in a competitive market, but has established itself as a reputable and innovative player in the Australian architecture and design industry. They have a strong portfolio of projects and a loyal client base.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Sourcing high-quality and unique tiles that meet their design requirements\", \"impact\": \"Delays in project timelines and increased costs if tiles are not available or do not meet expectations\"},\n      {\"challenge\": \"Managing tile suppliers and ensuring consistent quality and availability\", \"impact\": \"Damage to their reputation and loss of client trust if tile quality is poor or inconsistent\"},\n      {\"challenge\": \"Balancing tile costs with project budgets and client expectations\", \"impact\": \"Reduced profit margins and decreased competitiveness if tile costs are too high\"}\n    ],\n    \"trends\": [\"Sustainability and eco-friendliness in building materials\", \"Increased use of technology in architecture and design\"],\n    \"competitive_pressures\": \"Other architecture and design firms are investing in technology and innovation to stay competitive, and Design Unity must do the same to maintain its market position.\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty finding unique and high-quality tiles that meet their design requirements\", \"evidence\": \"Their website showcases a range of bespoke projects, indicating a need for distinctive and innovative materials\"},\n      {\"pain\": \"Managing multiple tile suppliers and ensuring consistent quality and availability\", \"evidence\": \"Their growth stage and increasing project load suggest a need for streamlined and reliable supply chains\"}\n    ],\n    \"responsibilities\": [\"Project management\", \"Design and creativity\", \"Client relationships\"],\n    \"success_metrics\": [\"Client satisfaction\", \"Project timelines and budgets\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I saw your recent project featured in Architecture Australia and was impressed by the innovative use of materials\", \"why\": \"This shows I've done research on their work and care about their interests\"},\n      {\"hook\": \"As a fellow design enthusiast, I'd love to discuss how our tiles can help bring your unique visions to life\", \"why\": \"This establishes a connection based on shared passions and expertise\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Our premium tiles offer unparalleled quality and uniqueness, perfect for bespoke projects\", \"connects_to\": \"Difficulty finding unique and high-quality tiles\"},\n      {\"angle\": \"Our streamlined supply chain and reliable delivery ensure that your projects stay on track and on budget\", \"connects_to\": \"Managing multiple tile suppliers and ensuring consistent quality and availability\"}\n    ],\n    \"discovery_questions\": [\n      \"Where do you currently source your tiles from?\",\n      \"What matters most to you when choosing a tile supplier \u2014 price, range, quality, or delivery speed?\",\n      \"How many projects are you running at the moment, and do you have a steady tile supply for them?\",\n      \"Have you ever had a project delayed because tiles were out of stock or delivery was late?\"\n    ],\n    \"objections\": [{\"objection\": \"We're happy with our current tile supplier\", \"response\": \"I understand, but I'd like to show you how our products and services can offer more value and support for your business\"}],\n    \"avoid\": [\"Talking about price without understanding their priorities\", \"Focusing too much on features rather than benefits\"]\n  }\n}",
+            "requisitions": null,
+            "status": "email_sent",
+            "emails_sent": 3,
+            "last_email_type": "initial",
+            "last_action": "email_sent",
+            "last_action_at": "2026-03-19T07:26:54+00:00",
+            "email_history": [
+                {
+                    "type": "initial",
+                    "subject": "Unique tiles for design unity",
+                    "content": "Hi Warren,\n\nSaw your recent project featured in Architecture Australia and was impressed by the innovative use of materials. Design Unity's attention to detail is notable.\n\nSourcing high-quality and unique tiles can be challenging, especially for bespoke projects. Similar architecture and design firms have found our premium tiles to be a reliable solution, helping them meet their design requirements. Our tiles have been used in various residential and commercial projects across Australia.\n\nWould it be worth sending you our latest range and pricing to compare against what you're paying now?\n\nAdmin\n\nMacktiles Australia",
+                    "sent_at": "2026-03-19T06:52:45+00:00"
+                },
+                {
+                    "type": "initial",
+                    "subject": "Unique tiles for design unity",
+                    "content": "Hi Warren,\n\nI saw your recent project featured in Architecture Australia and was impressed by the innovative use of materials. Design Unity's attention to detail is well-known in the industry.\n\nSourcing high-quality and unique tiles that meet design requirements can be difficult. Similar architecture and design firms have found that working with Macktiles Australia helps them deliver bespoke projects on time and within budget. Our premium tiles offer a consistent and reliable solution.\n\nWould it be worth sending you our latest range and pricing to compare against what you're paying now?\n\nAdmin\n\nMacktiles Australia",
+                    "sent_at": "2026-03-19T07:26:34+00:00"
+                },
+                {
+                    "type": "initial",
+                    "subject": "Unique tiles for design unity",
+                    "content": "Hi Warren,\n\nI saw your recent project featured in Architecture Australia and was impressed by the innovative use of materials. Design Unity's focus on bespoke residential and commercial projects is something we appreciate.\n\nSourcing high-quality and unique tiles that meet design requirements can be difficult. Similar architecture and design firms have found our premium tiles to be a good solution, reducing project delays and improving client satisfaction. Our clients have benefited from our consistent quality and dependable supply.\n\nWould it be worth sending you our latest range and pricing to compare against what you're paying now?\n\nAdmin\n\nMacktiles Australia",
+                    "sent_at": "2026-03-19T07:26:54+00:00"
+                }
+            ],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-03-19T07:26:54+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "emails": 20,
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Design Unity is a boutique architecture and design firm based in Australia, providing creative and digital design services to a range of clients. They specialize in bespoke residential and commercial projects, and pride themselves on delivering innovative and functional designs. Their business model is centered around building strong relationships with clients and delivering personalized solutions.",
+                    "key_products_services": [
+                        "Architecture and design services",
+                        "Creative and digital solutions",
+                        "Project management"
+                    ],
+                    "market_position": "Design Unity operates in a competitive market, but has established itself as a reputable and innovative player in the Australian architecture and design industry. They have a strong portfolio of projects and a loyal client base.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-03-19T06:46:32+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Sourcing high-quality and unique tiles that meet their design requirements",
+                        "Managing tile suppliers and ensuring consistent quality and availability",
+                        "Balancing tile costs with project budgets and client expectations"
+                    ],
+                    "market_trends": [
+                        "Sustainability and eco-friendliness in building materials",
+                        "Increased use of technology in architecture and design"
+                    ],
+                    "competitive_landscape": "Other architecture and design firms are investing in technology and innovation to stay competitive, and Design Unity must do the same to maintain its market position."
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "http:\/\/www.designunity.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "Design Unity LinkedIn Profile",
+                        "url": "https:\/\/au.linkedin.com\/company\/design-unity",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Institute of Architects Industry Report",
+                        "url": "https:\/\/www.architecture.com.au\/news\/industry-reports",
+                        "description": "Market analysis and trends in the architecture industry"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Client satisfaction",
+                        "Project timelines and budgets"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Project management",
+                        "Design and creativity",
+                        "Client relationships"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-03-19T06:46:32+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We're happy with our current tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty finding unique and high-quality tiles that meet their design requirements",
+                        "evidence": "Their website showcases a range of bespoke projects, indicating a need for distinctive and innovative materials"
+                    },
+                    {
+                        "pain": "Managing multiple tile suppliers and ensuring consistent quality and availability",
+                        "evidence": "Their growth stage and increasing project load suggest a need for streamlined and reliable supply chains"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-03-19T06:46:32+00:00"
+            },
+            "intelligence_stage": 4,
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "email_sent",
+            "stage_entered_at": "2026-03-19T07:26:54+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_b69c2fc77b5c7944",
+            "first_name": "Dawn",
+            "last_name": "(Powell)",
+            "email": "dawn@designinginteriors.com.au",
+            "phone": "+61 424 299 059",
+            "company": "Designing Interiors",
+            "title": "Business Owner",
+            "industry": "Design services (creative and digital), Home improvement and renovation services",
+            "country": "AU",
+            "website": "https:\/\/www.designinginteriors.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/dawn-carey-powell-a68a3473",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 75,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"https:\/\/www.designinginteriors.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/designing-interiors\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Interior Designers Association\", \"url\": \"https:\/\/www.australianinteriordesigners.com.au\/members\/designing-interiors\", \"description\": \"Industry directory and member profiles\"},\n    {\"title\": \"Home Improvement and Renovation Services Directory\", \"url\": \"https:\/\/www.homerenovationservices.com.au\/directory\/designing-interiors\", \"description\": \"Directory listing with company overview and services\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Designing Interiors is a small business providing design services and home improvement solutions to clients in Australia. They offer a range of services including interior design, renovation planning, and project management. Their target market includes homeowners, property developers, and builders.\",\n    \"key_products_services\": [\"Interior Design\", \"Renovation Planning\", \"Project Management\"],\n    \"market_position\": \"Designing Interiors is a niche player in the Australian design and home improvement market, competing with larger firms and individual consultants.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Sourcing high-quality tiles that meet client expectations\", \"impact\": \"Delays in project timelines and increased costs due to rework or replacement\"},\n      {\"challenge\": \"Finding reliable tile suppliers who can deliver on time\", \"impact\": \"Damage to reputation and loss of client trust due to failed projects\"},\n      {\"challenge\": \"Managing tile budgets and margins in a competitive market\", \"impact\": \"Reduced profitability and competitiveness due to high tile costs\"}\n    ],\n    \"trends\": [\"Sustainable and eco-friendly design\", \"Increased demand for luxury and high-end finishes\"],\n    \"competitive_pressures\": \"Competitors are investing in digital marketing and online platforms to reach clients and promote their services, increasing the need for Designing Interiors to have a strong online presence\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty finding reliable tile suppliers who can meet project deadlines\", \"evidence\": \"Designing Interiors' small size and growth stage may limit their negotiating power with suppliers\"},\n      {\"pain\": \"Managing client expectations and budgets for tile selection\", \"evidence\": \"The company's focus on high-end design and renovation services suggests a need to balance client demands with budget constraints\"}\n    ],\n    \"responsibilities\": [\"Sourcing and selecting tiles and materials\", \"Managing project budgets and timelines\", \"Coordinating with clients and contractors\"],\n    \"success_metrics\": [\"Client satisfaction and referral rates\", \"Project completion rates and timelines\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I saw that Designing Interiors is working on some exciting renovation projects in Australia, and I'd love to discuss how our premium tiles can enhance your designs\", \"why\": \"This shows I've done research on the company and care about their specific needs\"},\n      {\"hook\": \"As a business owner in the design and renovation industry, I'm sure you understand the importance of reliable suppliers and high-quality materials\", \"why\": \"This establishes a common ground and highlights the value of our products\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Our premium tiles offer unparalleled quality and design options, ensuring your clients receive the best possible outcome\", \"connects_to\": \"Managing client expectations and budgets for tile selection\"},\n      {\"angle\": \"By partnering with us, you'll have access to a reliable and efficient supply chain, reducing the risk of project delays and cost overruns\", \"connects_to\": \"Difficulty finding reliable tile suppliers who can meet project deadlines\"}\n    ],\n    \"discovery_questions\": [\n      \"Where do you currently source your tiles from?\",\n      \"What matters most to you when choosing a tile supplier \u2014 price, range, quality, or delivery speed?\",\n      \"How many projects are you running at the moment, and do you have a steady tile supply for them?\",\n      \"Have you ever had a project delayed because tiles were out of stock or delivery was late?\"\n    ],\n    \"objections\": [{\"objection\": \"We're happy with our current tile supplier\", \"response\": \"I understand, but I'd like to discuss how our products and services can enhance your business and provide a competitive edge\"}],\n    \"avoid\": [\"Making assumptions about their current suppliers or processes\", \"Focusing solely on price without considering the value proposition\"]\n  }\n}",
+            "requisitions": null,
+            "status": "email_sent",
+            "emails_sent": 1,
+            "last_email_type": "followup1",
+            "last_action": "email_sent",
+            "last_action_at": "2026-04-30T08:26:46+00:00",
+            "email_history": [
+                {
+                    "type": "followup1",
+                    "subject": "Re: enhancing your designs with our premium tiles",
+                    "content": "Hi Dawn,\n\nI wanted to follow up on my previous email about our premium tiles. We've had a 95% on-time delivery rate for our builder clients in the last quarter, which has helped them complete projects ahead of schedule. This has resulted in higher client satisfaction and referral rates for their businesses.\n\nWould you like to schedule a call to discuss how our tile solutions can help improve your project completion rates?\n\nAdmin",
+                    "sent_at": "2026-04-30T08:26:46+00:00"
+                }
+            ],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-04-30T08:26:46+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "emails": 10,
+                    "decay": -20
+                },
+                "last_activity_days": 34,
+                "activity_trend": "stalled"
+            },
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Designing Interiors is a small business providing design services and home improvement solutions to clients in Australia. They offer a range of services including interior design, renovation planning, and project management. Their target market includes homeowners, property developers, and builders.",
+                    "key_products_services": [
+                        "Interior Design",
+                        "Renovation Planning",
+                        "Project Management"
+                    ],
+                    "market_position": "Designing Interiors is a niche player in the Australian design and home improvement market, competing with larger firms and individual consultants.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-04-30T08:22:28+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Sourcing high-quality tiles that meet client expectations",
+                        "Finding reliable tile suppliers who can deliver on time",
+                        "Managing tile budgets and margins in a competitive market"
+                    ],
+                    "market_trends": [
+                        "Sustainable and eco-friendly design",
+                        "Increased demand for luxury and high-end finishes"
+                    ],
+                    "competitive_landscape": "Competitors are investing in digital marketing and online platforms to reach clients and promote their services, increasing the need for Designing Interiors to have a strong online presence"
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "https:\/\/www.designinginteriors.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/designing-interiors",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Interior Designers Association",
+                        "url": "https:\/\/www.australianinteriordesigners.com.au\/members\/designing-interiors",
+                        "description": "Industry directory and member profiles"
+                    },
+                    {
+                        "title": "Home Improvement and Renovation Services Directory",
+                        "url": "https:\/\/www.homerenovationservices.com.au\/directory\/designing-interiors",
+                        "description": "Directory listing with company overview and services"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Client satisfaction and referral rates",
+                        "Project completion rates and timelines"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Sourcing and selecting tiles and materials",
+                        "Managing project budgets and timelines",
+                        "Coordinating with clients and contractors"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-04-30T08:22:28+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We're happy with our current tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty finding reliable tile suppliers who can meet project deadlines",
+                        "evidence": "Designing Interiors' small size and growth stage may limit their negotiating power with suppliers"
+                    },
+                    {
+                        "pain": "Managing client expectations and budgets for tile selection",
+                        "evidence": "The company's focus on high-end design and renovation services suggests a need to balance client demands with budget constraints"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-04-30T08:22:28+00:00"
+            },
+            "intelligence_stage": 4,
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "email_sent",
+            "stage_entered_at": "2026-04-30T08:26:46+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_41c6949e2825ca11",
+            "first_name": "Lee",
+            "last_name": "Selkrig",
+            "email": "lees@ensohomes.com.au",
+            "phone": "+61 439 492 042",
+            "company": "Enso Homes",
+            "title": "Founder &amp; Director",
+            "industry": "Construction, Architecture and design",
+            "country": "AU",
+            "website": "http:\/\/www.ensohomes.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/lee-selkrig-6664b0119",
+            "company_size": "11 - 50",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 80,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\", \"Decision-maker identified\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"https:\/\/www.ensohomes.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"Enso Homes LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/enso-homes\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Construction Industry Report\", \"url\": \"https:\/\/www.ibisworld.com.au\/industry\/construction.html\", \"description\": \"Market analysis and trends\"},\n    {\"title\": \"Housing Industry Association\", \"url\": \"https:\/\/www.hia.com.au\", \"description\": \"Industry insights and news\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Enso Homes is a construction company specializing in building modern homes for Australian families. They operate in the Australian market, serving clients who value quality and design. Their business model focuses on providing personalized services, from design to construction, to ensure customer satisfaction.\",\n    \"key_products_services\": [\"Custom Home Builds\", \"Renovations\", \"Design Services\"],\n    \"market_position\": \"Enso Homes is a mid-sized construction company with a strong reputation in the Australian market, competing with other local builders and designers.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Finding reliable tile suppliers who can deliver high-quality products on time\", \"impact\": \"Delays in project completion and increased costs\"},\n      {\"challenge\": \"Ensuring consistency in tile quality and design across different projects\", \"impact\": \"Impact on client satisfaction and company reputation\"},\n      {\"challenge\": \"Managing tile inventory and stock levels to meet project demands\", \"impact\": \"Inefficient use of resources and potential project delays\"}\n    ],\n    \"trends\": [\"Sustainable building practices\", \"Increased demand for luxury home features\"],\n    \"competitive_pressures\": \"Competitors are focusing on providing unique design options, high-quality materials, and exceptional customer service to differentiate themselves in the market.\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty in finding a reliable tile supplier who can meet project deadlines\", \"evidence\": \"Enso Homes' growth stage and need for consistent supply chain\"},\n      {\"pain\": \"Ensuring tile quality and design consistency across projects\", \"evidence\": \"Company's focus on customer satisfaction and reputation\"}\n    ],\n    \"responsibilities\": [\"Overseeing construction projects\", \"Managing supplier relationships\", \"Ensuring quality control\"],\n    \"success_metrics\": [\"Project completion rate\", \"Client satisfaction ratings\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I came across Enso Homes and was impressed by your commitment to delivering high-quality homes. I'd love to discuss how Macktiles can support your tile needs.\", \"why\": \"Personalized approach and acknowledgement of company values\"},\n      {\"hook\": \"As a construction company, you understand the importance of reliable suppliers. I'd like to introduce you to Macktiles' unique tile solutions and how we can help streamline your projects.\", \"why\": \"Relevant pain point and potential solution\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Macktiles' high-quality, Italian-produced tiles can enhance the aesthetic and durability of Enso Homes' projects\", \"connects_to\": \"Tile quality and design consistency pain point\"},\n      {\"angle\": \"Our Macktiles Visualiser tool can help Enso Homes' clients visualize and select tile designs, streamlining the decision-making process\", \"connects_to\": \"Customer satisfaction and reputation pain point\"}\n    ],\n    \"discovery_questions\": [\n      \"What are your current challenges when sourcing tiles for your projects?\",\n      \"How do you currently ensure tile quality and design consistency across your projects?\",\n      \"Are you looking for a reliable tile supplier who can meet your project deadlines and provide high-quality products?\",\n      \"Have you considered using a tile visualizer tool to enhance your clients' design experience?\"\n    ],\n    \"objections\": [{\"objection\": \"We already have a established tile supplier\", \"response\": \"I understand, but I'd like to discuss how Macktiles can offer a more comprehensive and reliable solution for your tile needs.\"}],\n    \"avoid\": [\"Being too pushy or aggressive in the initial outreach\", \"Not acknowledging Enso Homes' current suppliers or relationships\"]\n  }\n}",
+            "requisitions": null,
+            "status": "researched",
+            "emails_sent": 0,
+            "last_email_type": "initial",
+            "last_action": "researched",
+            "last_action_at": "2026-05-15T14:16:08+00:00",
+            "email_history": [],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-05-15T14:16:08+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "decay": -10
+                },
+                "last_activity_days": 18,
+                "activity_trend": "stalled"
+            },
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "research",
+            "stage_entered_at": "2026-05-15T13:50:46+00:00",
+            "stage_history": [
+                {
+                    "from": "new_lead",
+                    "to": "research",
+                    "reason": "research_completed",
+                    "actor": "user_ddf3d5e5f04ba097",
+                    "timestamp": "2026-05-15T13:50:46+00:00"
+                }
+            ],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Enso Homes is a construction company specializing in building modern homes for Australian families. They operate in the Australian market, serving clients who value quality and design. Their business model focuses on providing personalized services, from design to construction, to ensure customer satisfaction.",
+                    "key_products_services": [
+                        "Custom Home Builds",
+                        "Renovations",
+                        "Design Services"
+                    ],
+                    "market_position": "Enso Homes is a mid-sized construction company with a strong reputation in the Australian market, competing with other local builders and designers.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-05-15T14:16:08+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Finding reliable tile suppliers who can deliver high-quality products on time",
+                        "Ensuring consistency in tile quality and design across different projects",
+                        "Managing tile inventory and stock levels to meet project demands"
+                    ],
+                    "market_trends": [
+                        "Sustainable building practices",
+                        "Increased demand for luxury home features"
+                    ],
+                    "competitive_landscape": "Competitors are focusing on providing unique design options, high-quality materials, and exceptional customer service to differentiate themselves in the market."
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "https:\/\/www.ensohomes.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "Enso Homes LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/enso-homes",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Construction Industry Report",
+                        "url": "https:\/\/www.ibisworld.com.au\/industry\/construction.html",
+                        "description": "Market analysis and trends"
+                    },
+                    {
+                        "title": "Housing Industry Association",
+                        "url": "https:\/\/www.hia.com.au",
+                        "description": "Industry insights and news"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Project completion rate",
+                        "Client satisfaction ratings"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Overseeing construction projects",
+                        "Managing supplier relationships",
+                        "Ensuring quality control"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-05-15T14:16:08+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We already have a established tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty in finding a reliable tile supplier who can meet project deadlines",
+                        "evidence": "Enso Homes' growth stage and need for consistent supply chain"
+                    },
+                    {
+                        "pain": "Ensuring tile quality and design consistency across projects",
+                        "evidence": "Company's focus on customer satisfaction and reputation"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-05-15T14:16:08+00:00"
+            },
+            "intelligence_stage": 4
+        },
+        {
+            "id": "lead_a13d495972808ff8",
+            "first_name": "Geoff",
+            "last_name": "Lewis",
+            "email": "geoff@bowerbirdinteriors.com.au",
+            "phone": "+61 418 961 317",
+            "company": "BOWERBIRD Interiors",
+            "title": "Co-Founder &amp; Managing Director",
+            "industry": "Design services (creative and digital), Home improvement and renovation services",
+            "country": "AU",
+            "website": "https:\/\/bowerbirdinteriors.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/geoff-lewis-81aa8132",
+            "company_size": "11 - 50",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 80,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\", \"Decision-making role\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"https:\/\/bowerbirdinteriors.com.au\", \"description\": \"Official company information and service offerings\"},\n    {\"title\": \"BOWERBIRD Interiors LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/bowerbird-interiors\", \"description\": \"Company overview, team, and project showcases\"},\n    {\"title\": \"Australian Interior Design Awards\", \"url\": \"https:\/\/www.australianinteriordesignawards.com.au\", \"description\": \"Industry recognition and design trends\"},\n    {\"title\": \"Houzz Profile\", \"url\": \"https:\/\/www.houzz.com.au\/pro\/bowerbirdinteriors\", \"description\": \"Project portfolio and client reviews\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"BOWERBIRD Interiors is an Australian design services company specializing in creative and digital solutions for home improvement and renovation. They cater to a wide range of clients, from residential homeowners to commercial establishments, offering bespoke interior design services. Their business model revolves around providing personalized design consultations, project management, and product sourcing.\",\n    \"key_products_services\": [\"Interior Design Consultations\", \"Project Management\", \"Product Sourcing\"],\n    \"market_position\": \"BOWERBIRD Interiors holds a strong position in the Australian design services market, recognized for their innovative approach to interior design and commitment to client satisfaction.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Finding unique and high-quality tile designs that align with their clients' diverse tastes and project requirements\", \"impact\": \"Delays in project completion and potential loss of client satisfaction\"},\n      {\"challenge\": \"Ensuring consistent supply and timely delivery of tiles to meet project deadlines\", \"impact\": \"Increased costs due to expedited shipping or last-minute substitutions, affecting profit margins\"},\n      {\"challenge\": \"Balancing budget constraints with the desire for premium materials and design elements\", \"impact\": \"Compromising on design quality or incurring additional costs to meet client expectations\"}\n    ],\n    \"trends\": [\"Sustainable and Eco-Friendly Design\", \"Smart Home Integration\"],\n    \"competitive_pressures\": \"Competitors are focusing on digital transformation, offering virtual design consultations and online product visualizers to enhance client experience and streamline project workflows.\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty in sourcing unique, high-quality tiles that meet clients' expectations\", \"evidence\": \"BOWERBIRD Interiors' emphasis on bespoke design solutions and their involvement in industry awards suggests a high standard for design quality\"},\n      {\"pain\": \"Managing project timelines and ensuring timely delivery of materials\", \"evidence\": \"As a managing director, Geoff Lewis would be concerned with operational efficiency and client satisfaction\"}\n    ],\n    \"responsibilities\": [\"Overseeing Design Projects\", \"Client Relationship Management\", \"Supply Chain Management\"],\n    \"success_metrics\": [\"Client Satisfaction Ratings\", \"Project Completion Rates\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I came across BOWERBIRD Interiors' stunning project features on Houzz and was impressed by the attention to detail in your designs. How do you currently source unique tiles for your projects?\", \"why\": \"Shows awareness of their work and highlights a potential pain point\"},\n      {\"hook\": \"As someone who values innovative design, I thought you might be interested in exploring our new Batik Designer Collection, which offers exclusive, Italian-produced tiles with a focus on sustainability.\", \"why\": \"Connects their design values with a relevant product offering\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Access to exclusive, high-quality tile designs that can differentiate BOWERBIRD Interiors' projects\", \"connects_to\": \"Difficulty in sourcing unique tiles\"},\n      {\"angle\": \"Streamlined tile sourcing and delivery process to enhance project efficiency and client satisfaction\", \"connects_to\": \"Managing project timelines and material delivery\"}\n    ],\n    \"discovery_questions\": [\n      \"Where do you currently source your tiles from?\",\n      \"What matters most to you when choosing a tile supplier \u2014 price, range, quality, or delivery speed?\",\n      \"How many projects are you running at the moment, and do you have a steady tile supply for them?\",\n      \"Have you ever had a project delayed because tiles were out of stock or delivery was late?\"\n    ],\n    \"objections\": [{\"objection\": \"We are happy with our current tile supplier.\", \"response\": \"I understand loyalty to suppliers, but our unique designs and Italian production technology could offer a competitive edge. Would you be open to exploring some samples?\"}],\n    \"avoid\": [\"Being too pushy about the sale\", \"Not respecting their current supplier relationships\"]\n  }\n}",
+            "requisitions": null,
+            "status": "researched",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "researched",
+            "last_action_at": "2026-06-03T10:38:52+00:00",
+            "email_history": [],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-06-03T10:38:52+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 10,
+            "temperature": "warm",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10
+                },
+                "last_activity_days": 0,
+                "activity_trend": "stalled"
+            },
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "research",
+            "stage_entered_at": "2026-06-03T10:38:52+00:00",
+            "stage_history": [
+                {
+                    "from": "new_lead",
+                    "to": "research",
+                    "reason": "research_completed",
+                    "actor": "user_ddf3d5e5f04ba097",
+                    "timestamp": "2026-06-03T10:38:52+00:00"
+                }
+            ],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "BOWERBIRD Interiors is an Australian design services company specializing in creative and digital solutions for home improvement and renovation. They cater to a wide range of clients, from residential homeowners to commercial establishments, offering bespoke interior design services. Their business model revolves around providing personalized design consultations, project management, and product sourcing.",
+                    "key_products_services": [
+                        "Interior Design Consultations",
+                        "Project Management",
+                        "Product Sourcing"
+                    ],
+                    "market_position": "BOWERBIRD Interiors holds a strong position in the Australian design services market, recognized for their innovative approach to interior design and commitment to client satisfaction.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-06-03T10:38:52+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Finding unique and high-quality tile designs that align with their clients' diverse tastes and project requirements",
+                        "Ensuring consistent supply and timely delivery of tiles to meet project deadlines",
+                        "Balancing budget constraints with the desire for premium materials and design elements"
+                    ],
+                    "market_trends": [
+                        "Sustainable and Eco-Friendly Design",
+                        "Smart Home Integration"
+                    ],
+                    "competitive_landscape": "Competitors are focusing on digital transformation, offering virtual design consultations and online product visualizers to enhance client experience and streamline project workflows."
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "https:\/\/bowerbirdinteriors.com.au",
+                        "description": "Official company information and service offerings"
+                    },
+                    {
+                        "title": "BOWERBIRD Interiors LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/bowerbird-interiors",
+                        "description": "Company overview, team, and project showcases"
+                    },
+                    {
+                        "title": "Australian Interior Design Awards",
+                        "url": "https:\/\/www.australianinteriordesignawards.com.au",
+                        "description": "Industry recognition and design trends"
+                    },
+                    {
+                        "title": "Houzz Profile",
+                        "url": "https:\/\/www.houzz.com.au\/pro\/bowerbirdinteriors",
+                        "description": "Project portfolio and client reviews"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Client Satisfaction Ratings",
+                        "Project Completion Rates"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Overseeing Design Projects",
+                        "Client Relationship Management",
+                        "Supply Chain Management"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-06-03T10:38:52+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We are happy with our current tile supplier."
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty in sourcing unique, high-quality tiles that meet clients' expectations",
+                        "evidence": "BOWERBIRD Interiors' emphasis on bespoke design solutions and their involvement in industry awards suggests a high standard for design quality"
+                    },
+                    {
+                        "pain": "Managing project timelines and ensuring timely delivery of materials",
+                        "evidence": "As a managing director, Geoff Lewis would be concerned with operational efficiency and client satisfaction"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-06-03T10:38:52+00:00"
+            },
+            "intelligence_stage": 4
+        },
+        {
+            "id": "lead_4ceeb0f86f7168e6",
+            "first_name": "Mark",
+            "last_name": "DiMasi",
+            "email": "mark@lavidahomes.com.au",
+            "phone": "+61 408 360 135",
+            "company": "La Vida Homes",
+            "title": "Founder \/ Managing Director",
+            "industry": "Construction, Design services (creative and digital)",
+            "country": "AU",
+            "website": "https:\/\/lavidahomes.com.au\/",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/mark-dimasi-9245711ab",
+            "company_size": "51 - 250",
+            "notes": "",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 85,\n    \"quality\": \"Excellent\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\", \"Decision-maker identified\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"https:\/\/lavidahomes.com.au\/\", \"description\": \"Official company information\"},\n    {\"title\": \"La Vida Homes LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/la-vida-homes\/\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Construction Industry Report\", \"url\": \"https:\/\/www.hia.com.au\/industry\/reports\", \"description\": \"Market analysis and trends\"},\n    {\"title\": \"Master Builders Australia Directory\", \"url\": \"https:\/\/www.masterbuilders.com.au\/directory\/\", \"description\": \"Industry directory and member listings\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"La Vida Homes is a Melbourne-based construction company that provides design and building services for residential clients. They offer a range of services including custom home design, project management, and construction. La Vida Homes serves the Melbourne market, focusing on providing high-quality homes that meet the needs of their clients.\",\n    \"key_products_services\": [\"Custom Home Design\", \"Project Management\", \"Construction Services\"],\n    \"market_position\": \"La Vida Homes is a mid-sized construction company with a strong presence in the Melbourne market. They have a reputation for delivering high-quality homes and providing excellent customer service.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Finding reliable and high-quality tile suppliers\", \"impact\": \"Delays in project timelines and increased costs due to rework or replacement of faulty tiles\"},\n      {\"challenge\": \"Managing tile inventory and logistics\", \"impact\": \"Inefficient use of resources and potential stockouts or overstocking of tiles\"},\n      {\"challenge\": \"Meeting client expectations for tile design and quality\", \"impact\": \"Damage to reputation and loss of future business if client expectations are not met\"}\n    ],\n    \"trends\": [\"Sustainability and eco-friendliness in construction materials\", \"Increased use of technology in construction and design\"],\n    \"competitive_pressures\": \"Competitors are focusing on providing high-quality and sustainable construction materials, and investing in technology to improve design and construction processes\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty finding reliable tile suppliers\", \"evidence\": \"La Vida Homes' focus on quality and customer satisfaction suggests they may be experiencing challenges with current tile suppliers\"},\n      {\"pain\": \"Managing tile inventory and logistics\", \"evidence\": \"As a construction company, La Vida Homes likely faces challenges in managing tile inventory and logistics, which could be impacting their project timelines and costs\"}\n    ],\n    \"responsibilities\": [\"Overseeing construction projects\", \"Managing supplier relationships\", \"Ensuring quality and customer satisfaction\"],\n    \"success_metrics\": [\"Project completion rates\", \"Client satisfaction ratings\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"I came across La Vida Homes and was impressed with your company's focus on quality and customer satisfaction. I'd love to discuss how Macktiles can help you achieve your goals.\", \"why\": \"This hook shows that we've done our research and are interested in helping the company achieve its goals\"},\n      {\"hook\": \"As a construction company, I'm sure you're always looking for ways to improve your projects and client satisfaction. Can I show you how Macktiles can help?\", \"why\": \"This hook resonates with the prospect's pain points and offers a solution\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Macktiles' high-quality and reliable tile supply\", \"connects_to\": \"Difficulty finding reliable tile suppliers\"},\n      {\"angle\": \"Macktiles' design and logistics capabilities\", \"connects_to\": \"Managing tile inventory and logistics\"}\n    ],\n    \"discovery_questions\": [\n      \"Where do you currently source your tiles from?\",\n      \"What matters most to you when choosing a tile supplier \u2014 price, range, quality, or delivery speed?\",\n      \"How many projects are you running at the moment, and do you have a steady tile supply for them?\",\n      \"Have you ever had a project delayed because tiles were out of stock or delivery was late?\"\n    ],\n    \"objections\": [{\"objection\": \"We're happy with our current tile supplier\", \"response\": \"I understand, but I'd like to offer you a complimentary consultation to discuss how Macktiles can help you improve your projects and client satisfaction\"}],\n    \"avoid\": [\"Making assumptions about their current tile supplier\", \"Focusing too much on price\"]\n  }\n}",
+            "requisitions": null,
+            "status": "email_sent",
+            "emails_sent": 1,
+            "last_email_type": "initial",
+            "last_action": "email_sent",
+            "last_action_at": "2026-05-16T10:54:16+00:00",
+            "email_history": [
+                {
+                    "type": "initial",
+                    "subject": "Tile options for La Vida Homes",
+                    "content": "Hi Mark,\n\nI came across La Vida Homes and was impressed with your company's focus on quality and customer satisfaction. I understand managing tile supply across multiple construction and design projects is a challenge.\n\nFinding reliable tile suppliers can be difficult, and it's crucial to have a consistent supply of high-quality tiles to meet your clients' needs. Macktiles' curated range and local availability might help simplify this process for La Vida Homes.\n\nCan we discuss how Macktiles might support your tile sourcing needs over a quick call?\n\nAdmin\n\nMacktiles Australia",
+                    "sent_at": "2026-05-16T10:54:16+00:00"
+                }
+            ],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-05-16T10:54:16+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 10,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10,
+                    "emails": 10,
+                    "decay": -10
+                },
+                "last_activity_days": 17,
+                "activity_trend": "stalled"
+            },
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "email_sent",
+            "stage_entered_at": "2026-05-16T10:54:16+00:00",
+            "stage_history": [
+                {
+                    "from": "new_lead",
+                    "to": "research",
+                    "reason": "research_completed",
+                    "actor": "user_ddf3d5e5f04ba097",
+                    "timestamp": "2026-05-16T10:54:01+00:00"
+                },
+                {
+                    "from": "research",
+                    "to": "email_sent",
+                    "reason": "email_sent:initial",
+                    "actor": "user_ddf3d5e5f04ba097",
+                    "timestamp": "2026-05-16T10:54:16+00:00"
+                }
+            ],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "La Vida Homes is a Melbourne-based construction company that provides design and building services for residential clients. They offer a range of services including custom home design, project management, and construction. La Vida Homes serves the Melbourne market, focusing on providing high-quality homes that meet the needs of their clients.",
+                    "key_products_services": [
+                        "Custom Home Design",
+                        "Project Management",
+                        "Construction Services"
+                    ],
+                    "market_position": "La Vida Homes is a mid-sized construction company with a strong presence in the Melbourne market. They have a reputation for delivering high-quality homes and providing excellent customer service.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-05-16T10:54:01+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Finding reliable and high-quality tile suppliers",
+                        "Managing tile inventory and logistics",
+                        "Meeting client expectations for tile design and quality"
+                    ],
+                    "market_trends": [
+                        "Sustainability and eco-friendliness in construction materials",
+                        "Increased use of technology in construction and design"
+                    ],
+                    "competitive_landscape": "Competitors are focusing on providing high-quality and sustainable construction materials, and investing in technology to improve design and construction processes"
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "https:\/\/lavidahomes.com.au\/",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "La Vida Homes LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/la-vida-homes\/",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Construction Industry Report",
+                        "url": "https:\/\/www.hia.com.au\/industry\/reports",
+                        "description": "Market analysis and trends"
+                    },
+                    {
+                        "title": "Master Builders Australia Directory",
+                        "url": "https:\/\/www.masterbuilders.com.au\/directory\/",
+                        "description": "Industry directory and member listings"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Project completion rates",
+                        "Client satisfaction ratings"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Overseeing construction projects",
+                        "Managing supplier relationships",
+                        "Ensuring quality and customer satisfaction"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-05-16T10:54:01+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We're happy with our current tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty finding reliable tile suppliers",
+                        "evidence": "La Vida Homes' focus on quality and customer satisfaction suggests they may be experiencing challenges with current tile suppliers"
+                    },
+                    {
+                        "pain": "Managing tile inventory and logistics",
+                        "evidence": "As a construction company, La Vida Homes likely faces challenges in managing tile inventory and logistics, which could be impacting their project timelines and costs"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-05-16T10:54:01+00:00"
+            },
+            "intelligence_stage": 4
+        },
+        {
+            "id": "lead_68620fa7d9637cbb",
+            "first_name": "Nathalie",
+            "last_name": "Scipioni",
+            "email": "nathalie@ns-studio.com",
+            "phone": "+61 430 431 099",
+            "company": "Nathalie Scipioni Architects",
+            "title": "Founder and Principal Architect",
+            "industry": "Architecture and design, Construction trades and services",
+            "country": "AU",
+            "website": "https:\/\/nathaliescipioniarchitects.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/nathalie-scipioni",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-19T06:46:04+00:00",
+            "email_history": [],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-03-19T06:46:04+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-19T06:46:04+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_a1c61ddacb0d39c6",
+            "first_name": "Mark",
+            "last_name": "Williams",
+            "email": "mark@mwaarchitects.com.au",
+            "phone": "+61 413 431 695",
+            "company": "Mark Williams Architects",
+            "title": "Owner, Managing Director",
+            "industry": "Architecture and design, Design services (creative and digital)",
+            "country": "AU",
+            "website": "http:\/\/www.mwaarchitects.com.au",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/mark-williams-7599ab10",
+            "company_size": "1 - 10",
+            "notes": "",
+            "enrichment": "",
+            "requisitions": null,
+            "status": "new",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-03-19T06:46:04+00:00",
+            "email_history": [],
+            "created_at": "2026-03-19T06:46:04+00:00",
+            "updated_at": "2026-03-19T06:46:04+00:00",
+            "zoho_id": null,
+            "import_source": "csv",
+            "imported_at": "2026-03-19T06:46:04+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "cold",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "decay": -30
+                },
+                "last_activity_days": 76,
+                "activity_trend": "stalled"
+            },
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": null,
+            "stage": "new_lead",
+            "stage_entered_at": "2026-03-19T06:46:04+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": ""
+        },
+        {
+            "id": "lead_9e8e5f63e2f571cc",
+            "first_name": "Derrick",
+            "last_name": "Jansz",
+            "email": "",
+            "phone": "+61 418 367 395",
+            "company": "Find Us A Builder",
+            "title": "Joint Owner",
+            "industry": "General Management",
+            "country": "AU",
+            "website": "",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/derrick-jansz-615891159",
+            "company_size": "",
+            "notes": "Microsoft Office, Customer Service, Leadership, Public Speaking, Sales",
+            "enrichment": "{\n  \"research_score\": {\n    \"score\": 80,\n    \"quality\": \"Good\",\n    \"factors\": [\"Has company website\", \"Known industry\", \"Clear job title\"]\n  },\n  \"sources\": [\n    {\"title\": \"Company Website\", \"url\": \"https:\/\/findusabuilder.com.au\", \"description\": \"Official company information\"},\n    {\"title\": \"LinkedIn Profile\", \"url\": \"https:\/\/www.linkedin.com\/company\/find-us-a-builder\", \"description\": \"Company overview and employee data\"},\n    {\"title\": \"Australian Builders Directory\", \"url\": \"https:\/\/australianbuildersdirectory.com.au\/listing\/find-us-a-builder\", \"description\": \"Industry listing with company details\"}\n  ],\n  \"company_profile\": {\n    \"description\": \"Find Us A Builder is a general management company that connects clients with reliable builders for their construction projects. They serve homeowners, property developers, and architects, providing a platform for finding and hiring builders. Their business model involves partnering with builders to offer a range of services, from residential construction to renovation projects.\",\n    \"key_products_services\": [\"Builder matching services\", \"Project management\", \"Construction consultation\"],\n    \"market_position\": \"Find Us A Builder operates in a competitive market, but their focus on reliability and quality helps them stand out. They have a growing network of builders and a reputation for delivering successful projects.\",\n    \"growth_stage\": \"Growth\"\n  },\n  \"industry_intelligence\": {\n    \"top_challenges\": [\n      {\"challenge\": \"Finding reliable tile suppliers who can meet project deadlines\", \"impact\": \"Delays in tile delivery can cause project timelines to slip, affecting overall construction schedules and client satisfaction\"},\n      {\"challenge\": \"Ensuring consistent quality and style of tiles across different projects\", \"impact\": \"Inconsistent tile quality can impact the overall aesthetic and value of a project, potentially leading to client dissatisfaction\"},\n      {\"challenge\": \"Managing tile costs and availability to stay within budget\", \"impact\": \"Tile costs and availability can significantly impact project budgets, and managing these factors is crucial to maintaining profitability\"}\n    ],\n    \"trends\": [\"Sustainable building practices\", \"Increased demand for luxury finishes\"],\n    \"competitive_pressures\": \"Competitors are focusing on providing comprehensive construction services, including material sourcing and project management, to attract clients\"\n  },\n  \"prospect_analysis\": {\n    \"pain_points\": [\n      {\"pain\": \"Difficulty in finding a reliable tile supplier who can meet project deadlines\", \"evidence\": \"As a joint owner of a company that connects clients with builders, Derrick likely faces challenges in ensuring timely delivery of materials, including tiles\"},\n      {\"pain\": \"Ensuring consistent quality and style of tiles across different projects\", \"evidence\": \"With a focus on delivering successful projects, Derrick would be concerned about maintaining consistent quality and style in the tiles used\"}\n    ],\n    \"responsibilities\": [\"Overseeing project management\", \"Ensuring client satisfaction\", \"Managing supplier relationships\"],\n    \"success_metrics\": [\"Project completion rate\", \"Client satisfaction ratings\"],\n    \"buying_power\": \"Decision Maker\"\n  },\n  \"sales_strategy\": {\n    \"opening_hooks\": [\n      {\"hook\": \"Hi Derrick, I came across Find Us A Builder and noticed your focus on delivering high-quality construction projects. I'd like to introduce you to Macktiles Australia, a local supplier of premium architectural tiles that can help elevate your projects\", \"why\": \"This opener shows I've done research on his company and understand his needs\"},\n      {\"hook\": \"As someone who values reliability and quality in construction projects, I think you'll appreciate the unique value proposition of Macktiles Australia\", \"why\": \"This hook speaks directly to his pain points and interests\"}\n    ],\n    \"value_angles\": [\n      {\"angle\": \"Reliable tile supply and timely delivery to meet project deadlines\", \"connects_to\": \"Difficulty in finding a reliable tile supplier\"},\n      {\"angle\": \"Consistent quality and style of tiles to enhance project aesthetics and value\", \"connects_to\": \"Ensuring consistent quality and style of tiles\"}\n    ],\n    \"discovery_questions\": [\n      \"What are your current pain points when it comes to sourcing tiles for your projects?\",\n      \"How do you currently ensure consistent quality and style of tiles across different projects?\",\n      \"Are you looking for a local tile supplier who can provide reliable delivery and high-quality products?\",\n      \"Would you be interested in scheduling a consultation to discuss how Macktiles Australia can support your business?\"\n    ],\n    \"objections\": [{\"objection\": \"We already have a tile supplier\", \"response\": \"I understand that, but I'd like to discuss how Macktiles Australia can offer a more reliable and high-quality solution that can enhance your projects\"}],\n    \"avoid\": [\"Making assumptions about their current tile supplier\", \"Not addressing their specific pain points\"]\n  }\n}",
+            "requisitions": null,
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": "",
+            "stage": "research",
+            "status": "researched",
+            "stage_entered_at": "2026-06-03T10:42:23+00:00",
+            "stage_history": [
+                {
+                    "from": "new_lead",
+                    "to": "research",
+                    "reason": "research_completed",
+                    "actor": "user_ddf3d5e5f04ba097",
+                    "timestamp": "2026-06-03T10:42:23+00:00"
+                }
+            ],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "researched",
+            "last_action_at": "2026-06-03T10:42:23+00:00",
+            "email_history": [],
+            "created_at": "2026-06-03T08:05:16+00:00",
+            "updated_at": "2026-06-03T10:42:23+00:00",
+            "zoho_id": null,
+            "import_source": "firmable",
+            "imported_at": "2026-06-03T08:05:16+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 10,
+            "temperature": "warm",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": {
+                    "research": 10
+                },
+                "last_activity_days": 0,
+                "activity_trend": "stalled"
+            },
+            "account_intelligence": {
+                "company_profile": {
+                    "description": "Find Us A Builder is a general management company that connects clients with reliable builders for their construction projects. They serve homeowners, property developers, and architects, providing a platform for finding and hiring builders. Their business model involves partnering with builders to offer a range of services, from residential construction to renovation projects.",
+                    "key_products_services": [
+                        "Builder matching services",
+                        "Project management",
+                        "Construction consultation"
+                    ],
+                    "market_position": "Find Us A Builder operates in a competitive market, but their focus on reliability and quality helps them stand out. They have a growing network of builders and a reputation for delivering successful projects.",
+                    "growth_stage": "Growth"
+                },
+                "completed": true,
+                "completed_at": "2026-06-03T10:42:23+00:00",
+                "industry_context": {
+                    "sector_challenges": [
+                        "Finding reliable tile suppliers who can meet project deadlines",
+                        "Ensuring consistent quality and style of tiles across different projects",
+                        "Managing tile costs and availability to stay within budget"
+                    ],
+                    "market_trends": [
+                        "Sustainable building practices",
+                        "Increased demand for luxury finishes"
+                    ],
+                    "competitive_landscape": "Competitors are focusing on providing comprehensive construction services, including material sourcing and project management, to attract clients"
+                },
+                "sources": [
+                    {
+                        "title": "Company Website",
+                        "url": "https:\/\/findusabuilder.com.au",
+                        "description": "Official company information"
+                    },
+                    {
+                        "title": "LinkedIn Profile",
+                        "url": "https:\/\/www.linkedin.com\/company\/find-us-a-builder",
+                        "description": "Company overview and employee data"
+                    },
+                    {
+                        "title": "Australian Builders Directory",
+                        "url": "https:\/\/australianbuildersdirectory.com.au\/listing\/find-us-a-builder",
+                        "description": "Industry listing with company details"
+                    }
+                ]
+            },
+            "persona_intelligence": {
+                "kpis": {
+                    "primary_metrics": [
+                        "Project completion rate",
+                        "Client satisfaction ratings"
+                    ]
+                },
+                "decision_profile": {
+                    "authority_level": "Decision Maker",
+                    "responsibilities": [
+                        "Overseeing project management",
+                        "Ensuring client satisfaction",
+                        "Managing supplier relationships"
+                    ]
+                },
+                "completed": true,
+                "completed_at": "2026-06-03T10:42:23+00:00",
+                "objection_profile": {
+                    "likely_objections": [
+                        "We already have a tile supplier"
+                    ]
+                }
+            },
+            "pain_hypothesis": {
+                "hypotheses": [
+                    {
+                        "pain": "Difficulty in finding a reliable tile supplier who can meet project deadlines",
+                        "evidence": "As a joint owner of a company that connects clients with builders, Derrick likely faces challenges in ensuring timely delivery of materials, including tiles"
+                    },
+                    {
+                        "pain": "Ensuring consistent quality and style of tiles across different projects",
+                        "evidence": "With a focus on delivering successful projects, Derrick would be concerned about maintaining consistent quality and style in the tiles used"
+                    }
+                ],
+                "completed": true,
+                "completed_at": "2026-06-03T10:42:23+00:00"
+            },
+            "intelligence_stage": 4,
+            "deleted_at": "2026-06-03T10:45:01+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097"
+        },
+        {
+            "id": "lead_5af385cfa48cfc6b",
+            "first_name": "Mohammadreza",
+            "last_name": "Ghassabzadeh",
+            "email": "",
+            "phone": "+61 406 206 215",
+            "company": "YAZD CONSTRUCTION PTY LTD",
+            "title": "Founder &amp; Managing Director",
+            "industry": "General Management",
+            "country": "AU",
+            "website": "",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/mohammadreza-ghassabzadeh-1156ab96",
+            "company_size": "",
+            "notes": "Management Professional, Director level, Construction Management, Builders, Construction, ETABS, AutoCAD",
+            "enrichment": "",
+            "requisitions": null,
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": "",
+            "stage": "new_lead",
+            "status": "new",
+            "stage_entered_at": "2026-06-03T08:05:16+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-06-03T08:05:16+00:00",
+            "email_history": [],
+            "created_at": "2026-06-03T08:05:16+00:00",
+            "updated_at": "2026-06-03T08:05:16+00:00",
+            "zoho_id": null,
+            "import_source": "firmable",
+            "imported_at": "2026-06-03T08:05:16+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "warm",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": [],
+                "last_activity_days": 0,
+                "activity_trend": "stalled"
+            },
+            "deleted_at": "2026-06-03T10:52:28+00:00",
+            "deleted_by": "user_ddf3d5e5f04ba097"
+        },
+        {
+            "id": "lead_5eaa4c74173a0bd3",
+            "first_name": "Florence",
+            "last_name": "Ortiz",
+            "email": "",
+            "phone": "+61 451 735 487",
+            "company": "Ef Studio",
+            "title": "Residential &amp; Commercial Architecture 3D Visualisation | Co-Founder &amp; Principal Architect",
+            "industry": "Engineering &amp; Technical",
+            "country": "AU",
+            "website": "",
+            "linkedin": "https:\/\/www.linkedin.com\/in\/ortizflorence",
+            "company_size": "",
+            "notes": "Urban Design, Sustainable Design, Tender Development, V-Ray, Time Management, Interpersonal Relationships, Graphic Design, Concept Development, Commerciality, Luxury Homes, Design Development, High-end, Contract Documentation, Problem Solving, Document Preparation",
+            "enrichment": "",
+            "requisitions": null,
+            "source": "firmable",
+            "source_detail": "",
+            "assigned_to": "",
+            "stage": "new_lead",
+            "status": "new",
+            "stage_entered_at": "2026-06-03T08:05:16+00:00",
+            "stage_history": [],
+            "urgency_flag": "normal",
+            "call_history": [],
+            "rejection_reason": "",
+            "consultation_type": "",
+            "emails_sent": 0,
+            "last_email_type": null,
+            "last_action": "imported",
+            "last_action_at": "2026-06-03T08:05:16+00:00",
+            "email_history": [],
+            "created_at": "2026-06-03T08:05:16+00:00",
+            "updated_at": "2026-06-03T08:05:16+00:00",
+            "zoho_id": null,
+            "import_source": "firmable",
+            "imported_at": "2026-06-03T08:05:16+00:00",
+            "lead_source": "",
+            "lead_status_zoho": "",
+            "annual_revenue": "",
+            "rating": "",
+            "fit_grade": "Disqualified",
+            "fit_score": 20,
+            "grade_override": null,
+            "calls_made": 0,
+            "engagement_score": 0,
+            "temperature": "warm",
+            "velocity": "stalled",
+            "last_score_update": "2026-06-03T10:52:24+00:00",
+            "activities": [],
+            "skipped_until": null,
+            "last_notification_at": null,
+            "scoring_factors": {
+                "fit_breakdown": {
+                    "score": 20,
+                    "grade": "Disqualified"
+                },
+                "engagement_breakdown": [],
+                "last_activity_days": 0,
+                "activity_trend": "stalled"
+            }
+        }
+    ],
+    "settings": {
+        "sender_name": "Admin",
+        "sender_company": "Macktiles Australia",
+        "sender_title": "",
+        "company_description": "Macktiles Australia is a tile manufacturing company specialising in the production of high-quality ceramic and porcelain tiles for residential and commercial applications. With a strong focus on design innovation, durability, and compliance with Australian standards, Macktiles combines advanced manufacturing processes with global design trends to deliver consistent, premium tile solutions for the construction and interior design industry.",
+        "value_proposition": "Macktiles Australia provides builders, developers, and designers with directly manufactured tile solutions, ensuring consistent quality, competitive pricing, and reliable supply at scale. By controlling production, Macktiles reduces lead times, minimises supply chain disruptions, and enables greater flexibility in design and project-specific requirements.",
+        "social_proof": "Macktiles Australia products are used across a wide range of residential developments, commercial projects, and large-scale construction works. Known for consistent manufacturing quality and dependable supply, Macktiles has built strong relationships with builders, contractors, and project developers who rely on its products for timely and high-standard project delivery.",
+        "calendar_link": "",
+        "email_tone": "professional",
+        "signature": ""
+    },
+    "onboarding_completed": true,
+    "notifications": [
+        {
+            "id": "notif_2c5aac1b1791cb45",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 42 days ago - send outreach",
+            "created_at": "2026-04-30T08:11:27+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_e471b6685b523d0e",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 58 days ago - send outreach",
+            "created_at": "2026-05-15T13:49:36+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_21a62134cfd07646",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 58 days ago - send outreach",
+            "created_at": "2026-05-16T10:46:13+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_8e7c91502032d84e",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 60 days ago - send outreach",
+            "created_at": "2026-05-18T12:20:20+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_895458c93d3fae6f",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 63 days ago - send outreach",
+            "created_at": "2026-05-21T06:09:12+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_d635406e1c064174",
+            "type": "stale_research",
+            "lead_id": "lead_41c6949e2825ca11",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 5 days ago - send outreach",
+            "created_at": "2026-05-21T06:09:12+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_28322b51457cfcb6",
+            "type": "stale_research",
+            "lead_id": "lead_8eef8638cda5e18c",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 76 days ago - send outreach",
+            "created_at": "2026-06-03T05:21:51+00:00",
+            "read": false,
+            "severity": "warning"
+        },
+        {
+            "id": "notif_37e47de6b1a95e7c",
+            "type": "stale_research",
+            "lead_id": "lead_41c6949e2825ca11",
+            "message": "\ud83d\udccb Research on Lee Selkrig (Enso Homes) done 18 days ago - send outreach",
+            "created_at": "2026-06-03T05:21:51+00:00",
+            "read": false,
+            "severity": "warning"
+        }
+    ]
+}

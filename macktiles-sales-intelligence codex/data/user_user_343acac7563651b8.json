@@ -1,0 +1,15 @@
+{
+    "leads": [],
+    "settings": {
+        "sender_name": "Pasan",
+        "sender_company": "Macktiles Australia",
+        "sender_title": "",
+        "company_description": "",
+        "value_proposition": "",
+        "social_proof": "",
+        "calendar_link": "",
+        "email_tone": "professional",
+        "signature": ""
+    },
+    "onboarding_completed": false
+}

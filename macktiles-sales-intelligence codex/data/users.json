@@ -1,0 +1,47 @@
+[
+    {
+        "id": "user_ddf3d5e5f04ba097",
+        "name": "Macktiles Admin",
+        "email": "admin@macktiles.com.au",
+        "password": "$2y$12$ZhLS5Pn\/FFIv6YkCmV52AuDE0wjLs0MKdhg4K\/ubD.6FSUALLBG9i",
+        "token": "2ce71f7cb93a730b27ea86e238943652528147837cbd17270e30e1d2a00b21fd",
+        "created_at": "2026-05-21T00:00:00+00:00",
+        "is_admin": true
+    },
+    {
+        "id": "user_rep_macktiles",
+        "name": "Macktiles Sales Rep",
+        "email": "rep@macktiles.com.au",
+        "password": "$2y$12$MBYoQmkVOdASafNeHK5S9.rFhKCGVQ7mIl8hT1pNZRiVRpJLl87RS",
+        "token": "abac6641752f18b3441a395443ace8bcda56c7ddd2aaf8ebadffc6ff656a13af",
+        "created_at": "2026-05-21T00:00:00+00:00",
+        "is_admin": false
+    },
+    {
+        "id": "user_343acac7563651b8",
+        "name": "Pasan",
+        "email": "pasan@macktiles.com.au",
+        "password": "$2y$10$vunZQkANgvIZcgPAP3W83OX8UUNDX7M4GE.jzQWr6XQT5jkDNzC16",
+        "token": "8c95e679d7a727766efcdc00b3de1820b5e611a1a17c8f7c9a0fcef7836095fc",
+        "created_at": "2026-06-08T17:19:44+00:00",
+        "is_admin": false
+    },
+    {
+        "id": "user_b7473600af07c890",
+        "name": "Senara",
+        "email": "senara@macktiles.com.au",
+        "password": "$2y$10$cXlID8yf9XGKS2pJA1gycecSbw\/IBEdbZErwN5dVRxazyp7ILXJdW",
+        "token": "3bb612ac47894810d4a769f70f032dace1fc030c4efbe736569a53cfd59c437a",
+        "created_at": "2026-06-08T17:19:44+00:00",
+        "is_admin": false
+    },
+    {
+        "id": "user_42f81219b683dd63",
+        "name": "Aida",
+        "email": "aida@macktiles.com.au",
+        "password": "$2y$10$yLEwfqA0Cuebrt4s9SKUJO9XXuWpg7S7\/nLyrHuf68k2PFoM2KlE6",
+        "token": "816a63fe037f505046ed83e84c4799e4475d4cd8e20d6a7adb5c6fa2151619ed",
+        "created_at": "2026-06-08T17:19:44+00:00",
+        "is_admin": false
+    }
+]
