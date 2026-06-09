@@ -1,0 +1,23 @@
+[
+    {
+        "id": "channel_general",
+        "name": "general",
+        "description": "Company-wide announcements and general chat",
+        "created_by": "system",
+        "created_at": "2026-06-06T00:00:00+00:00"
+    },
+    {
+        "id": "channel_deals",
+        "name": "deals",
+        "description": "Deal updates and pipeline discussions",
+        "created_by": "system",
+        "created_at": "2026-06-06T00:00:00+00:00"
+    },
+    {
+        "id": "channel_wins",
+        "name": "wins",
+        "description": "Celebrate closed deals and consultations booked",
+        "created_by": "system",
+        "created_at": "2026-06-06T00:00:00+00:00"
+    }
+]
