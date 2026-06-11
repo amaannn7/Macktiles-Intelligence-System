@@ -981,6 +981,13 @@
                             <div id="cc-parked-reasons"></div>
                         </div>
                     </div>
+
+                    <div class="cc-progress-row">
+                        <div class="cc-progress-card" style="flex:1;">
+                            <div class="cc-progress-title">User Sessions</div>
+                            <div id="cc-user-sessions"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -1539,7 +1546,7 @@ Phone: +1 234 567 890"></textarea></div>
             <section class="page-section" id="page-users">
                 <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Users</h1><p>Manage accounts</p></div><button class="btn btn-primary btn-sm" onclick="openModal('create-user-modal')">+ User</button></div></div>
                 <div class="page-content">
-                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
+                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last Login</th><th>Session Duration</th><th>Last Active</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
                 </div>
             </section>
         </main>
@@ -2309,6 +2316,23 @@ async function loadCommandCenter() {
         renderConversionFunnel(r.funnel || []);
         renderManagementMetrics(r.management || {});
 
+        // User sessions
+        const sessionsEl = document.getElementById('cc-user-sessions');
+        if(sessionsEl){
+            const ur = await api('users');
+            if(ur.success && ur.users.length){
+                sessionsEl.innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Last Login</th><th>Session Duration</th><th>Last Active</th></tr></thead><tbody>${ur.users.map(u=>{
+                    const loginAgo = u.last_login_at ? fmtAgo(u.last_login_at) : '<span style="color:var(--text-muted)">Never</span>';
+                    const lastActiveAgo = u.last_active_at ? fmtAgo(u.last_active_at) : '<span style="color:var(--text-muted)">—</span>';
+                    const duration = fmtDuration(u.session_start, u.last_active_at);
+                    const isOnline = u.last_active_at && (Date.now()-new Date(u.last_active_at))<5*60*1000;
+                    return `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isOnline?'var(--success)':'var(--border)'};margin-right:6px;"></span>${u.name}</td><td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':'User'}</td><td>${loginAgo}</td><td>${duration}</td><td>${lastActiveAgo}</td></tr>`;
+                }).join('')}</tbody></table></div>`;
+            } else {
+                sessionsEl.innerHTML = emptyState('No session data', 'Sessions appear after users log in.');
+            }
+        }
+
         // Streak
         if (r.streak > 0) {
             document.getElementById('cc-streak').style.display = 'flex';
@@ -2408,6 +2432,7 @@ function renderManagementMetrics(m) {
     if(reasonsEl) reasonsEl.innerHTML = reasons.length ? reasons.map(([reason,count])=>`
         <div class="activity-item" style="cursor:default;"><span class="activity-icon">${count}</span><div><div style="font-size:13px;font-weight:600;">${reason}</div><div style="font-size:12px;color:var(--text-muted);">Parked or lost leads</div></div></div>
     `).join('') : emptyState('No parked or lost reasons', 'Reasons appear after outcomes are logged.');
+
 }
 
 // Filter by grade
@@ -4296,7 +4321,9 @@ async function toggleReq(i){reqConfig[i].enabled=!reqConfig[i].enabled;await api
 function openAddReqModal(){document.getElementById('add-req-title').textContent='Add Question';document.getElementById('edit-req-id').value='';document.getElementById('req-title-input').value='';document.getElementById('req-subtitle-input').value='';document.getElementById('req-type-input').value='single';document.getElementById('req-options-input').value='';openModal('add-req-modal')}
 function editReq(i){const r=reqConfig[i];document.getElementById('add-req-title').textContent='Edit Question';document.getElementById('edit-req-id').value=i;document.getElementById('req-title-input').value=r.title;document.getElementById('req-subtitle-input').value=r.subtitle||'';document.getElementById('req-type-input').value=r.type;document.getElementById('req-options-input').value=(r.options||[]).join('\n');openModal('add-req-modal')}
 async function deleteReq(i){const ok=await customConfirm('Delete this qualification question?','Delete Question',{danger:true,confirmText:'Delete'});if(!ok)return;reqConfig.splice(i,1);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();toast('Deleted','success')}
-async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':'User'}</td><td><button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')}
+function fmtAgo(iso){if(!iso)return'<span style="color:var(--text-muted)">Never</span>';const s=Math.floor((Date.now()-new Date(iso))/1000);if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m ago';return Math.floor(s/86400)+'d ago';}
+function fmtDuration(startIso,lastActiveIso){if(!startIso||!lastActiveIso)return'<span style="color:var(--text-muted)">—</span>';const s=Math.floor((new Date(lastActiveIso)-new Date(startIso))/1000);if(s<60)return'<1m';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
+async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':'User'}</td><td>${fmtAgo(u.last_login_at)}</td><td>${fmtDuration(u.session_start,u.last_active_at)}</td><td>${fmtAgo(u.last_active_at)}</td><td><button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('');}
 async function deleteUser(id){const ok=await customConfirm('Delete this user? This cannot be undone.','Delete User',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-user','POST',{id});loadUsers();toast('Deleted','success')}
 async function testAPI(){const p=document.getElementById('admin-provider').value;const r=await api('test-api','POST',{provider:p});toast(r.success?'Connected!':r.error||'Failed',r.success?'success':'error')}
 

@@ -1477,6 +1477,9 @@ case 'login':
         if ($user['email'] === $email && password_verify($password, $user['password'])) {
             $token = generateToken();
             $user['token'] = $token;
+            $user['last_login_at'] = date('c');
+            $user['session_start'] = date('c');
+            $user['last_active_at'] = date('c');
             saveUsers($users);
             respond(['success' => true, 'user' => ['id' => $user['id'], 'name' => $user['name'], 'email' => $user['email'], 'is_admin' => $user['is_admin'] ?? false], 'token' => $token]);
         }
@@ -1488,6 +1491,14 @@ case 'me':
     if ($method !== 'GET') break;
     $user = getCurrentUser();
     if ($user) {
+        $users = getUsers();
+        foreach ($users as &$u) {
+            if ($u['id'] === $user['id']) {
+                $u['last_active_at'] = date('c');
+                break;
+            }
+        }
+        saveUsers($users);
         $userData = getUserData($user['id']);
         respond(['success' => true, 'user' => [
             'id' => $user['id'],
@@ -1577,7 +1588,7 @@ case 'test-api':
 case 'users':
     if ($method !== 'GET') break;
     requireAdmin();
-    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'created_at' => $u['created_at'] ?? '']; }, getUsers());
+    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'created_at' => $u['created_at'] ?? '', 'last_login_at' => $u['last_login_at'] ?? null, 'session_start' => $u['session_start'] ?? null, 'last_active_at' => $u['last_active_at'] ?? null]; }, getUsers());
     respond(['success' => true, 'users' => $users]);
     break;
 

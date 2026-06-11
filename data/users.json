@@ -4,7 +4,7 @@
         "name": "Pasan",
         "email": "pasan@macktiles.com.au",
         "password": "$2y$12$O2fUZS9tDQEufUQXG.Sm\/Ofict4ketzu6gA0yVMuTnFIvhsxMMccK",
-        "token": "8c95e679d7a727766efcdc00b3de1820b5e611a1a17c8f7c9a0fcef7836095fc",
+        "token": "",
         "created_at": "2026-06-08T17:19:44+00:00",
         "is_admin": false
     },
@@ -13,7 +13,7 @@
         "name": "Senara",
         "email": "senara@macktiles.com.au",
         "password": "$2y$12$x6.wCqf.xs41mi8pcAz0EekETe6CRdd6.VjsUeC4a448Z7pYVwbRW",
-        "token": "3bb612ac47894810d4a769f70f032dace1fc030c4efbe736569a53cfd59c437a",
+        "token": "",
         "created_at": "2026-06-08T17:19:44+00:00",
         "is_admin": false
     },
@@ -22,7 +22,7 @@
         "name": "Aida",
         "email": "aida@macktiles.com.au",
         "password": "$2y$12$95iFVqXu\/otratW\/fA7YpOUZCb2DkGWMZ0pKemUqgsjbpjxAkEM\/y",
-        "token": "816a63fe037f505046ed83e84c4799e4475d4cd8e20d6a7adb5c6fa2151619ed",
+        "token": "",
         "created_at": "2026-06-08T17:19:44+00:00",
         "is_admin": false
     },
@@ -31,7 +31,7 @@
         "name": "Danushka",
         "email": "danushka@macksons.com",
         "password": "$2y$12$N6iLwtZJYOT1G\/5fOLnXHeKS18xOG2I.K0XO4MLKde0fkzTmLVhre",
-        "token": "c1cda398ca90f03c97c9d74d08a5744c451ba1d22c70575fe87eda7bda5a0bb1",
+        "token": "",
         "created_at": "2026-06-09T00:00:00+00:00",
         "is_admin": true
     },
@@ -40,7 +40,7 @@
         "name": "Ash",
         "email": "ash@tastebuds.com.au",
         "password": "$2y$12$goQTUnvkicgnUdRsB.AIQOBbpR\/1nzUad4jf3PjjA0TEunpkRUBSe",
-        "token": "3d1100090cfee30315d444ba0b5f2b504c24e8deb3aa023fc9cc110557aac8e5",
+        "token": "",
         "created_at": "2026-06-09T00:00:00+00:00",
         "is_admin": true
     }
