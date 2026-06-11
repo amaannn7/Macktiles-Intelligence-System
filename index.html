@@ -702,6 +702,7 @@
             .table { min-width: 500px; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="auth-screen" id="auth-screen">
@@ -742,7 +743,7 @@
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar" id="user-avatar">U</div>
-                    <div class="user-details"><div class="user-name" id="user-name">User</div><div class="user-email" id="user-email">user@example.com</div></div>
+                    <div class="user-details"><div class="user-name" id="user-name">User</div><div class="user-email" id="user-email">user@example.com</div><div id="super-admin-badge" style="display:none;font-size:9px;font-weight:700;text-transform:uppercase;color:#a78bfa;letter-spacing:0.5px;margin-top:2px;">Super Admin</div></div>
                     <button class="logout-btn" onclick="logout()" title="Sign Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
                 </div>
             </div>
@@ -1268,10 +1269,10 @@
             </section>
 
             <section class="page-section" id="page-import">
-                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Import Leads</h1><p>Upload CSV file</p></div></div></div>
+                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Import Leads</h1><p>Upload CSV or Excel file</p></div></div></div>
                 <div class="page-content">
                     <div class="card"><div class="card-body">
-                        <div class="upload-zone" id="upload-zone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><h4>Drop CSV file here</h4><p>or tap to browse</p><input type="file" id="file-input" accept=".csv" style="display:none;"></div>
+                        <div class="upload-zone" id="upload-zone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><h4>Drop file here</h4><p>CSV, Excel (.xlsx, .xls) — or tap to browse</p><input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none;"></div>
                         <div style="margin-top:16px;padding:12px;background:var(--bg-main);border-radius:var(--radius-md);">
 <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"><strong>Standard Columns:</strong> first_name, last_name, email, phone, company, title, industry, country</p>
 </div>
@@ -1714,7 +1715,7 @@ async function requestPasswordReset(){
 }
 function logout(){localStorage.removeItem('token');user=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex'}
 async function checkAuth(){if(!localStorage.token)return;const r=await api('me');if(r.success){user=r.user;showApp()}}
-function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.body.classList.toggle('is-admin', !!user.is_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
+function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
     setInterval(pollNotifications, 8000);
     // Check onboarding
     if(user.onboarding_completed===false) showOnboarding();
@@ -4323,8 +4324,10 @@ function editReq(i){const r=reqConfig[i];document.getElementById('add-req-title'
 async function deleteReq(i){const ok=await customConfirm('Delete this qualification question?','Delete Question',{danger:true,confirmText:'Delete'});if(!ok)return;reqConfig.splice(i,1);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();toast('Deleted','success')}
 function fmtAgo(iso){if(!iso)return'<span style="color:var(--text-muted)">Never</span>';const s=Math.floor((Date.now()-new Date(iso))/1000);if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m ago';return Math.floor(s/86400)+'d ago';}
 function fmtDuration(startIso,lastActiveIso){if(!startIso||!lastActiveIso)return'<span style="color:var(--text-muted)">—</span>';const s=Math.floor((new Date(lastActiveIso)-new Date(startIso))/1000);if(s<60)return'<1m';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
-async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':'User'}</td><td>${fmtAgo(u.last_login_at)}</td><td>${fmtDuration(u.session_start,u.last_active_at)}</td><td>${fmtAgo(u.last_active_at)}</td><td><button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('');}
+async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td><td>${fmtAgo(u.last_login_at)}</td><td>${fmtDuration(u.session_start,u.last_active_at)}</td><td>${fmtAgo(u.last_active_at)}</td><td style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`}).join('');}
 async function deleteUser(id){const ok=await customConfirm('Delete this user? This cannot be undone.','Delete User',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-user','POST',{id});loadUsers();toast('Deleted','success')}
+async function impersonateUser(id,name){const ok=await customConfirm(`Log in as ${name}? Your current session will be replaced.`,'Impersonate User',{confirmText:'Impersonate'});if(!ok)return;const r=await api('impersonate','POST',{user_id:id});if(!r.success)return toast(r.error||'Failed','error');const prevToken=localStorage.token;localStorage.setItem('impersonate_return_token',prevToken);localStorage.token=r.token;user=r.user;showApp();toast(`Now viewing as ${name} — refresh to return to your account`,'success')}
+async function resetUserData(id,name){const ok=await customConfirm(`Delete ALL leads for ${name}? This cannot be undone.`,'Reset User Data',{danger:true,confirmText:'Reset'});if(!ok)return;const r=await api('reset-user-data','POST',{user_id:id});if(r.success)toast(`${name}'s data reset`,'success');else toast(r.error||'Failed','error')}
 async function testAPI(){const p=document.getElementById('admin-provider').value;const r=await api('test-api','POST',{provider:p});toast(r.success?'Connected!':r.error||'Failed',r.success?'success':'error')}
 
 // Email Creator functions
@@ -4522,23 +4525,35 @@ function parseFullCSV(text) {
 }
 
 function handleFile(f) {
-    if (!f || !f.name.toLowerCase().endsWith('.csv')) return toast('Upload CSV', 'error');
+    if (!f) return;
+    const name = f.name.toLowerCase();
+    const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+    const isCsv = name.endsWith('.csv');
+    if (!isExcel && !isCsv) return toast('Please upload a CSV or Excel file (.csv, .xlsx, .xls)', 'error');
+
     const r = new FileReader();
     r.onload = e => {
-        const all = parseFullCSV(e.target.result);
-        if (all.length < 2) return toast('Empty CSV', 'error');
-        const headers = all[0].map(x => x.trim());
+        let headers, rows2d;
+        if (isExcel) {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            rows2d = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        } else {
+            rows2d = parseFullCSV(e.target.result);
+        }
+        if (!rows2d || rows2d.length < 2) return toast('File appears empty', 'error');
+        headers = rows2d[0].map(x => String(x).trim());
         rawCsvRows = [];
-        for (let i = 1; i < all.length; i++) {
-            const v = all[i];
+        for (let i = 1; i < rows2d.length; i++) {
+            const v = rows2d[i];
             const row = {};
-            headers.forEach((k, j) => row[k] = (v[j] || '').trim());
+            headers.forEach((k, j) => row[k] = String(v[j] ?? '').trim());
             if (headers.some(h => (row[h] || '').trim().length > 1)) rawCsvRows.push(row);
         }
-        if (!rawCsvRows.length) return toast('No data', 'error');
+        if (!rawCsvRows.length) return toast('No data rows found', 'error');
         showMappingStep(headers);
     };
-    r.readAsText(f);
+    isExcel ? r.readAsArrayBuffer(f) : r.readAsText(f);
 }
 
 function showMappingStep(headers) {

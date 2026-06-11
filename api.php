@@ -1421,7 +1421,8 @@ function getCurrentUser() {
 }
 
 function requireAuth() { $user = getCurrentUser(); if (!$user) respond(['success' => false, 'error' => 'Authentication required'], 401); return $user; }
-function requireAdmin() { $user = requireAuth(); if (!($user['is_admin'] ?? false)) respond(['success' => false, 'error' => 'Admin access required'], 403); return $user; }
+function requireAdmin() { $user = requireAuth(); if (!($user['is_admin'] ?? false) && !($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Admin access required'], 403); return $user; }
+function requireSuperAdmin() { $user = requireAuth(); if (!($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Super admin access required'], 403); return $user; }
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_GET['action'] ?? '';
@@ -1481,7 +1482,7 @@ case 'login':
             $user['session_start'] = date('c');
             $user['last_active_at'] = date('c');
             saveUsers($users);
-            respond(['success' => true, 'user' => ['id' => $user['id'], 'name' => $user['name'], 'email' => $user['email'], 'is_admin' => $user['is_admin'] ?? false], 'token' => $token]);
+            respond(['success' => true, 'user' => ['id' => $user['id'], 'name' => $user['name'], 'email' => $user['email'], 'is_admin' => ($user['is_admin'] ?? false) || ($user['is_super_admin'] ?? false), 'is_super_admin' => $user['is_super_admin'] ?? false], 'token' => $token]);
         }
     }
     respond(['success' => false, 'error' => 'Invalid email or password'], 401);
@@ -1504,7 +1505,8 @@ case 'me':
             'id' => $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'is_admin' => $user['is_admin'] ?? false,
+            'is_admin' => ($user['is_admin'] ?? false) || ($user['is_super_admin'] ?? false),
+            'is_super_admin' => $user['is_super_admin'] ?? false,
             'onboarding_completed' => $userData['onboarding_completed'] ?? true
         ]]);
     }
@@ -1588,7 +1590,13 @@ case 'test-api':
 case 'users':
     if ($method !== 'GET') break;
     requireAdmin();
-    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'created_at' => $u['created_at'] ?? '', 'last_login_at' => $u['last_login_at'] ?? null, 'session_start' => $u['session_start'] ?? null, 'last_active_at' => $u['last_active_at'] ?? null]; }, getUsers());
+    $requestingUser = requireAdmin();
+    $isSuperAdmin = $requestingUser['is_super_admin'] ?? false;
+    $allUsers = getUsers();
+    if (!$isSuperAdmin) {
+        $allUsers = array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
+    }
+    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'is_super_admin' => $u['is_super_admin'] ?? false, 'created_at' => $u['created_at'] ?? '', 'last_login_at' => $u['last_login_at'] ?? null, 'session_start' => $u['session_start'] ?? null, 'last_active_at' => $u['last_active_at'] ?? null]; }, $allUsers);
     respond(['success' => true, 'users' => $users]);
     break;
 
@@ -1598,28 +1606,32 @@ case 'create-user':
     $name = trim($input['name'] ?? '');
     $email = trim(strtolower($input['email'] ?? ''));
     $isAdmin = (bool)($input['is_admin'] ?? false);
+    $isSuperAdmin = (bool)($input['is_super_admin'] ?? false);
+    if ($isSuperAdmin) requireSuperAdmin();
     if (!$name || !$email) respond(['success' => false, 'error' => 'Name and email required'], 400);
     $users = getUsers();
     foreach ($users as $u) { if ($u['email'] === $email) respond(['success' => false, 'error' => 'Email exists'], 400); }
     $password = generatePassword();
     $userId = generateId('user_');
-    $users[] = ['id' => $userId, 'name' => $name, 'email' => $email, 'password' => password_hash($password, PASSWORD_DEFAULT), 'token' => '', 'created_at' => date('c'), 'is_admin' => $isAdmin];
+    $users[] = ['id' => $userId, 'name' => $name, 'email' => $email, 'password' => password_hash($password, PASSWORD_DEFAULT), 'token' => '', 'created_at' => date('c'), 'is_admin' => $isAdmin, 'is_super_admin' => $isSuperAdmin];
     saveUsers($users);
     saveUserData($userId, ['leads' => [], 'settings' => ['sender_name' => $name, 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => ''], 'onboarding_completed' => false]);
-    respond(['success' => true, 'user' => ['id' => $userId, 'name' => $name, 'email' => $email, 'is_admin' => $isAdmin], 'password' => $password]);
+    respond(['success' => true, 'user' => ['id' => $userId, 'name' => $name, 'email' => $email, 'is_admin' => $isAdmin, 'is_super_admin' => $isSuperAdmin], 'password' => $password]);
     break;
 
 case 'update-user':
     if ($method !== 'POST') break;
-    requireAdmin();
+    $admin = requireAdmin();
     $userId = $input['id'] ?? '';
     $users = getUsers();
     $newPass = null;
     foreach ($users as &$u) {
         if ($u['id'] === $userId) {
+            if (!empty($u['is_super_admin']) && empty($admin['is_super_admin'])) respond(['success' => false, 'error' => 'Cannot edit a super admin'], 403);
             if (!empty($input['name'])) $u['name'] = trim($input['name']);
             if (!empty($input['email'])) $u['email'] = trim(strtolower($input['email']));
             if (isset($input['is_admin'])) $u['is_admin'] = (bool)$input['is_admin'];
+            if (isset($input['is_super_admin'])) { requireSuperAdmin(); $u['is_super_admin'] = (bool)$input['is_super_admin']; }
             if (!empty($input['reset_password'])) { $newPass = generatePassword(); $u['password'] = password_hash($newPass, PASSWORD_DEFAULT); }
             saveUsers($users);
             $res = ['success' => true];
@@ -1635,8 +1647,47 @@ case 'delete-user':
     $admin = requireAdmin();
     $userId = $input['id'] ?? '';
     if ($userId === $admin['id']) respond(['success' => false, 'error' => 'Cannot delete yourself'], 400);
+    $target = null;
+    foreach (getUsers() as $u) { if ($u['id'] === $userId) { $target = $u; break; } }
+    if ($target && !empty($target['is_super_admin']) && empty($admin['is_super_admin'])) respond(['success' => false, 'error' => 'Cannot delete a super admin'], 403);
     $users = array_values(array_filter(getUsers(), function($u) use ($userId) { return $u['id'] !== $userId; }));
     saveUsers($users);
+    respond(['success' => true]);
+    break;
+
+case 'impersonate':
+    if ($method !== 'POST') break;
+    requireSuperAdmin();
+    $targetId = $input['user_id'] ?? '';
+    $users = getUsers();
+    foreach ($users as &$u) {
+        if ($u['id'] === $targetId) {
+            $token = bin2hex(random_bytes(32));
+            $u['token'] = $token;
+            saveUsers($users);
+            respond(['success' => true, 'token' => $token, 'user' => ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'is_super_admin' => $u['is_super_admin'] ?? false]]);
+        }
+    }
+    respond(['success' => false, 'error' => 'User not found'], 404);
+    break;
+
+case 'user-leads':
+    if ($method !== 'GET') break;
+    requireSuperAdmin();
+    $targetId = $_GET['user_id'] ?? '';
+    if (!$targetId) respond(['success' => false, 'error' => 'user_id required'], 400);
+    $targetData = getUserData($targetId);
+    respond(['success' => true, 'leads' => $targetData['leads'] ?? []]);
+    break;
+
+case 'reset-user-data':
+    if ($method !== 'POST') break;
+    requireSuperAdmin();
+    $targetId = $input['user_id'] ?? '';
+    if (!$targetId) respond(['success' => false, 'error' => 'user_id required'], 400);
+    $existing = getUserData($targetId);
+    $existing['leads'] = [];
+    saveUserData($targetId, $existing);
     respond(['success' => true]);
     break;
 
@@ -3106,8 +3157,13 @@ case 'activity-feed':
         'researched'   => '🔍',
     ];
 
-    // Admin sees all users' activity; rep sees only their own
-    $allUsers = ($user['is_admin'] ?? false) ? getUsers() : [$user];
+    // Admin sees all users' activity; rep sees only their own; super admins see everyone
+    $isSuperAdmin = $user['is_super_admin'] ?? false;
+    if ($user['is_admin'] ?? false) {
+        $allUsers = $isSuperAdmin ? getUsers() : array_values(array_filter(getUsers(), fn($u) => empty($u['is_super_admin'])));
+    } else {
+        $allUsers = [$user];
+    }
     $userMap = [];
     foreach ($allUsers as $u) $userMap[$u['id']] = $u['name'] ?? $u['email'];
 
@@ -3213,7 +3269,9 @@ case 'stats':
 case 'command-center':
     if ($method !== 'GET') break;
     $user = requireAuth();
-    $users = getUsers();
+    $allUsers = getUsers();
+    $isSuperAdmin = $user['is_super_admin'] ?? false;
+    $users = $isSuperAdmin ? $allUsers : array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
     $teamActivity = [];
     $leads = [];
     $settings = [];
