@@ -11,5 +11,5 @@ data/uploads/*
 
 # Sensitive data — NEVER commit (contains API keys, passwords, lead data)
 data/admin.json
-# data/users.json
+data/users.json
 data/user_*.json
