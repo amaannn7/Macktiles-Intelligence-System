@@ -36,6 +36,24 @@ php -S localhost:8000
 chmod 755 data/
 ```
 
+## Deployment Rules — IMPORTANT
+
+The repo is **public on GitHub**. Follow these rules every time:
+
+### Code changes (features, bug fixes, UI updates)
+→ `git add` the changed files → `git commit` → `git push` → cPanel: Update from Remote + Deploy HEAD Commit
+
+### User changes (add user, reset password, change role)
+→ Edit `data/users.json` locally → Upload via **cPanel File Manager** to `/home/stagdctc/macktiles.levatahq.com/data/users.json` → DO NOT git push users.json
+
+### Data that NEVER goes through git (stays on server only)
+- `data/users.json` — user accounts & passwords
+- `data/admin.json` — API keys (Groq, Gemini, Anthropic, etc.)
+- `data/user_*.json` — per-user lead data
+
+### Why
+The repo is public — pushing sensitive files exposes user emails, password hashes, API keys, and auth tokens to anyone on the internet.
+
 ## Architecture Patterns
 
 ### Backend (api.php)
