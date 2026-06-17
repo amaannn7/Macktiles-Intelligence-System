@@ -3359,11 +3359,16 @@ case 'command-center':
         if (isset($statuses[$stage])) {
             $statuses[$stage]++;
         }
+        // Won leads have necessarily passed through consultation_booked, so count them there too
+        // (forward progress should not empty the earlier funnel step).
+        if ($stage === 'won') {
+            $statuses['consultation_booked']++;
+        }
     }
 
     // Calculate conversion funnel rates
     $funnel = [];
-    $stageOrder = ['new_lead', 'research', 'email_sent', 'call_attempted', 'engaged', 'consultation_booked', 'nurture_parked'];
+    $stageOrder = ['new_lead', 'research', 'email_sent', 'call_attempted', 'engaged', 'consultation_booked', 'won'];
     $cumulative = 0;
     foreach ($stageOrder as $i => $stage) {
         $count = $statuses[$stage];
@@ -3388,53 +3393,41 @@ case 'command-center':
     $todaysResearch = 0;
     $todaysOutcomes = 0;
 
+    // Count today's activity from the authoritative per-lead sources the app actually writes to:
+    //   calls/outcomes/conversions -> call_history[]   emails -> email_history[]   research -> activity_log[]
     foreach ($leads as $l) {
         $ownerId = $l['_owner_id'] ?? $user['id'];
-        // Count today's emails
-        $emailHistory = $l['email_history'] ?? [];
-        foreach ($emailHistory as $email) {
+
+        // Calls + outcomes from call_history (every started call counts; outcome only when logged)
+        foreach (($l['call_history'] ?? []) as $call) {
+            $when = $call['completed_at'] ?? $call['started_at'] ?? '';
+            if (substr($when, 0, 10) !== $today) continue;
+            $todaysCalls++;
+            if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['calls']++;
+            if (($call['status'] ?? '') === 'completed') {
+                $todaysOutcomes++;
+                if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['outcomes']++;
+            }
+        }
+
+        // Emails from email_history
+        foreach (($l['email_history'] ?? []) as $email) {
             if (isset($email['sent_at']) && substr($email['sent_at'], 0, 10) === $today) {
                 $todaysEmails++;
                 if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['emails']++;
             }
         }
 
-        // Count today's activities (calls, research)
-        $activities = $l['activities'] ?? [];
-        foreach ($activities as $act) {
-            if (isset($act['timestamp']) && substr($act['timestamp'], 0, 10) === $today) {
-                if (isset($act['type'])) {
-                    if ($act['type'] === 'call' || $act['type'] === 'call_started') {
-                        $todaysCalls++;
-                        if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['calls']++;
-                    } elseif ($act['type'] === 'research' || $act['type'] === 'enriched') {
-                        $todaysResearch++;
-                        if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['research']++;
-                    } elseif (strpos($act['type'], 'outcome') !== false) {
-                        $todaysOutcomes++;
-                        if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['outcomes']++;
-                    }
-                }
+        // Research from activity_log
+        foreach (($l['activity_log'] ?? []) as $act) {
+            if (($act['type'] ?? '') === 'researched' && substr($act['timestamp'] ?? '', 0, 10) === $today) {
+                $todaysResearch++;
+                if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['research']++;
             }
         }
 
-        // Also check last_action for today
-        if (!empty($l['last_action_at']) && substr($l['last_action_at'], 0, 10) === $today) {
-            if (!empty($l['last_action'])) {
-                if (strpos($l['last_action'], 'call') !== false) {
-                    $todaysCalls++;
-                    if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['calls']++;
-                } elseif (strpos($l['last_action'], 'research') !== false || strpos($l['last_action'], 'enrich') !== false) {
-                    $todaysResearch++;
-                    if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['research']++;
-                }
-                if (strpos($l['last_action'], 'outcome') !== false || strpos($l['last_action'], 'call_outcome') !== false) {
-                    $todaysOutcomes++;
-                    if (isset($teamActivity[$ownerId])) $teamActivity[$ownerId]['outcomes']++;
-                }
-            }
-        }
-        if (getLeadStage($l) === 'consultation_booked' && isset($teamActivity[$ownerId])) {
+        // Consultations: leads currently booked or won (won has passed through booked)
+        if (in_array(getLeadStage($l), ['consultation_booked', 'won']) && isset($teamActivity[$ownerId])) {
             $teamActivity[$ownerId]['consultations']++;
         }
     }
@@ -3544,9 +3537,10 @@ case 'command-center':
         'totals' => [
             'all' => $total,
             'grades' => $grades,
-            'qualified' => $statuses['consultation_booked'] + $statuses['won'],
+            'qualified' => $statuses['consultation_booked'],
             'disqualified' => $statuses['nurture_parked'] + $statuses['lost'],
             'consultation_booked' => $statuses['consultation_booked'],
+            'won' => $statuses['won'],
             'nurture_parked' => $statuses['nurture_parked'],
             'overdue' => $overdueCount,
             'stale' => $staleCount
@@ -3570,6 +3564,152 @@ case 'command-center':
         ],
         'streak' => $streak,
         'date' => $today
+    ]);
+    break;
+
+case 'activity-report':
+    if ($method !== 'GET') break;
+    $user = requireSuperAdmin();
+    $allUsers = getUsers();
+    // Super admin only — sees everyone
+    $reportUsers = $allUsers;
+
+    // Resolve date range. Accepts ?range=today|week|month or explicit ?from=YYYY-MM-DD&to=YYYY-MM-DD
+    $range = $_GET['range'] ?? '';
+    $fromDate = $_GET['from'] ?? '';
+    $toDate = $_GET['to'] ?? '';
+    if ($range === 'today') {
+        $fromDate = date('Y-m-d');
+        $toDate = date('Y-m-d');
+    } elseif ($range === 'week') {
+        $fromDate = date('Y-m-d', strtotime('monday this week'));
+        $toDate = date('Y-m-d');
+    } elseif ($range === 'month') {
+        $fromDate = date('Y-m-01');
+        $toDate = date('Y-m-d');
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) $fromDate = date('Y-m-d', strtotime('monday this week'));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) $toDate = date('Y-m-d');
+    // Inclusive bounds as timestamps
+    $fromTs = strtotime($fromDate . ' 00:00:00');
+    $toTs = strtotime($toDate . ' 23:59:59');
+    $inRange = function($iso) use ($fromTs, $toTs) {
+        if (empty($iso)) return false;
+        $t = strtotime($iso);
+        return $t !== false && $t >= $fromTs && $t <= $toTs;
+    };
+
+    $repStats = [];
+    $feed = [];
+    foreach ($reportUsers as $rep) {
+        $repId = $rep['id'];
+        $repStats[$repId] = [
+            'user_id' => $repId,
+            'name' => $rep['name'] ?? $rep['email'] ?? 'User',
+            'is_admin' => $rep['is_admin'] ?? false,
+            'calls' => 0,
+            'emails' => 0,
+            'research' => 0,
+            'outcomes' => 0,
+            'conversions' => 0,
+            'leads_created' => 0,
+            'active_days' => 0,
+            'conversion_rate' => 0,
+            'avg_calls_per_day' => 0
+        ];
+        $activeDays = [];
+        $repData = getUserData($repId);
+        foreach (($repData['leads'] ?? []) as $lead) {
+            $leadName = trim(($lead['first_name'] ?? '') . ' ' . ($lead['last_name'] ?? ''));
+            if ($leadName === '') $leadName = $lead['company'] ?? 'Unknown lead';
+
+            // Calls + outcomes + conversions from call_history (authoritative, timestamped, rep-attributed)
+            // Count every call attempt (started or completed); outcomes/conversions only when logged.
+            foreach (($lead['call_history'] ?? []) as $call) {
+                $isCompleted = ($call['status'] ?? '') === 'completed';
+                $when = $call['completed_at'] ?? $call['started_at'] ?? '';
+                if (!$inRange($when)) continue;
+                $repStats[$repId]['calls']++;
+                $activeDays[substr($when, 0, 10)] = true;
+                $outcome = $call['outcome'] ?? '';
+                if ($isCompleted) {
+                    $repStats[$repId]['outcomes']++;
+                    if ($outcome === 'consultation_booked') $repStats[$repId]['conversions']++;
+                }
+                $feed[] = [
+                    'user_id' => $repId,
+                    'rep_name' => $repStats[$repId]['name'],
+                    'type' => 'call',
+                    'detail' => $isCompleted ? ('Call: ' . ($call['outcome_label'] ?? $outcome)) : 'Call started (no outcome logged)',
+                    'lead' => $leadName,
+                    'timestamp' => $when
+                ];
+            }
+
+            // Emails from email_history
+            foreach (($lead['email_history'] ?? []) as $email) {
+                $when = $email['sent_at'] ?? '';
+                if (!$inRange($when)) continue;
+                $repStats[$repId]['emails']++;
+                $activeDays[substr($when, 0, 10)] = true;
+                $feed[] = [
+                    'user_id' => $repId,
+                    'rep_name' => $repStats[$repId]['name'],
+                    'type' => 'email',
+                    'detail' => 'Email sent' . (!empty($email['type']) ? ' (' . str_replace('_', ' ', $email['type']) . ')' : ''),
+                    'lead' => $leadName,
+                    'timestamp' => $when
+                ];
+            }
+
+            // Research / created from activity_log
+            foreach (($lead['activity_log'] ?? []) as $act) {
+                $when = $act['timestamp'] ?? '';
+                if (!$inRange($when)) continue;
+                $type = $act['type'] ?? '';
+                if ($type === 'researched') {
+                    $repStats[$repId]['research']++;
+                } elseif ($type === 'created') {
+                    $repStats[$repId]['leads_created']++;
+                } else {
+                    continue; // calls/emails already counted from their own sources
+                }
+                $activeDays[substr($when, 0, 10)] = true;
+                $feed[] = [
+                    'user_id' => $repId,
+                    'rep_name' => $repStats[$repId]['name'],
+                    'type' => $type,
+                    'detail' => $act['detail'] ?? $type,
+                    'lead' => $leadName,
+                    'timestamp' => $when
+                ];
+            }
+        }
+        $repStats[$repId]['active_days'] = count($activeDays);
+        $repStats[$repId]['conversion_rate'] = $repStats[$repId]['calls'] > 0
+            ? round(($repStats[$repId]['conversions'] / $repStats[$repId]['calls']) * 100, 1) : 0;
+        $repStats[$repId]['avg_calls_per_day'] = $repStats[$repId]['active_days'] > 0
+            ? round($repStats[$repId]['calls'] / $repStats[$repId]['active_days'], 1) : 0;
+    }
+
+    // Team totals
+    $totals = ['calls' => 0, 'emails' => 0, 'research' => 0, 'outcomes' => 0, 'conversions' => 0, 'leads_created' => 0];
+    foreach ($repStats as $s) {
+        foreach ($totals as $k => $v) $totals[$k] += $s[$k];
+    }
+    $totals['conversion_rate'] = $totals['calls'] > 0 ? round(($totals['conversions'] / $totals['calls']) * 100, 1) : 0;
+
+    // Sort feed newest first, cap to a reasonable size for the view
+    usort($feed, fn($a, $b) => strtotime($b['timestamp']) <=> strtotime($a['timestamp']));
+    $feed = array_slice($feed, 0, 500);
+
+    respond([
+        'success' => true,
+        'from' => $fromDate,
+        'to' => $toDate,
+        'reps' => array_values($repStats),
+        'totals' => $totals,
+        'feed' => $feed
     ]);
     break;
 
@@ -3865,19 +4005,17 @@ case 'daily-progress':
     $todaysResearch = 0;
 
     foreach ($leads as $l) {
-        // Count emails sent today
-        foreach (($l['email_history'] ?? []) as $email) {
-            if (isset($email['sent_at']) && substr($email['sent_at'], 0, 10) === $today) {
-                $todaysEmails++;
-            }
+        // Calls from call_history
+        foreach (($l['call_history'] ?? []) as $call) {
+            if (substr($call['completed_at'] ?? $call['started_at'] ?? '', 0, 10) === $today) $todaysCalls++;
         }
-        // Count activities today
-        foreach (($l['activities'] ?? []) as $act) {
-            if (isset($act['timestamp']) && substr($act['timestamp'], 0, 10) === $today) {
-                $type = $act['type'] ?? '';
-                if (in_array($type, ['call', 'call_started', 'call_made'])) $todaysCalls++;
-                if (in_array($type, ['research', 'enriched', 'research_completed'])) $todaysResearch++;
-            }
+        // Emails from email_history
+        foreach (($l['email_history'] ?? []) as $email) {
+            if (isset($email['sent_at']) && substr($email['sent_at'], 0, 10) === $today) $todaysEmails++;
+        }
+        // Research from activity_log
+        foreach (($l['activity_log'] ?? []) as $act) {
+            if (($act['type'] ?? '') === 'researched' && substr($act['timestamp'] ?? '', 0, 10) === $today) $todaysResearch++;
         }
     }
 
@@ -3964,17 +4102,11 @@ case 'save-daily-performance':
     $todaysEmails = 0;
 
     foreach ($leads as $l) {
-        foreach (($l['email_history'] ?? []) as $email) {
-            if (isset($email['sent_at']) && substr($email['sent_at'], 0, 10) === $today) {
-                $todaysEmails++;
-            }
+        foreach (($l['call_history'] ?? []) as $call) {
+            if (substr($call['completed_at'] ?? $call['started_at'] ?? '', 0, 10) === $today) $todaysCalls++;
         }
-        foreach (($l['activities'] ?? []) as $act) {
-            if (isset($act['timestamp']) && substr($act['timestamp'], 0, 10) === $today) {
-                if (in_array($act['type'] ?? '', ['call', 'call_started', 'call_made'])) {
-                    $todaysCalls++;
-                }
-            }
+        foreach (($l['email_history'] ?? []) as $email) {
+            if (isset($email['sent_at']) && substr($email['sent_at'], 0, 10) === $today) $todaysEmails++;
         }
     }
 
@@ -4390,110 +4522,6 @@ case 'zoho-sync-lead':
     }
 
     respond($result);
-    break;
-
-case 'lead-comment':
-    $user = requireAuth();
-    $leadId = $input['lead_id'] ?? $_GET['lead_id'] ?? '';
-    if (!$leadId) respond(['success' => false, 'error' => 'lead_id required'], 400);
-
-    if ($method === 'GET') {
-        $userData = getUserData($user['id']);
-        foreach ($userData['leads'] as $l) {
-            if ($l['id'] === $leadId) respond(['success' => true, 'comments' => $l['comments'] ?? []]);
-        }
-        respond(['success' => false, 'error' => 'Lead not found'], 404);
-    }
-
-    if ($method === 'POST' && !empty($input['delete'])) {
-        $commentId = $input['comment_id'] ?? '';
-        $userData = getUserData($user['id']);
-        foreach ($userData['leads'] as &$l) {
-            if ($l['id'] === $leadId) {
-                $l['comments'] = array_values(array_filter($l['comments'] ?? [], function($c) use ($commentId, $user) {
-                    if ($c['id'] !== $commentId) return true;
-                    return !($c['user_id'] === $user['id'] || ($user['is_admin'] ?? false));
-                }));
-                saveUserData($user['id'], $userData);
-                respond(['success' => true]);
-            }
-        }
-        respond(['success' => false, 'error' => 'Lead not found'], 404);
-    }
-
-    if ($method === 'POST') {
-        $text = trim($input['text'] ?? '');
-        if (!$text) respond(['success' => false, 'error' => 'Comment required'], 400);
-        $userData = getUserData($user['id']);
-        foreach ($userData['leads'] as &$l) {
-            if ($l['id'] === $leadId) {
-                if (!isset($l['comments'])) $l['comments'] = [];
-                $comment = [
-                    'id'        => 'cmt_' . bin2hex(random_bytes(6)),
-                    'user_id'   => $user['id'],
-                    'user_name' => $user['name'] ?? $user['email'],
-                    'text'      => htmlspecialchars($text, ENT_QUOTES, 'UTF-8'),
-                    'created_at'=> date('c')
-                ];
-                $l['comments'][] = $comment;
-                if (function_exists('logActivity')) logActivity($l, 'comment', 'Comment on lead: ' . substr($text, 0, 50));
-                $l['updated_at'] = date('c');
-                saveUserData($user['id'], $userData);
-
-                // @mention notifications
-                $leadName = trim(($l['first_name'] ?? '') . ' ' . ($l['last_name'] ?? ''));
-                if (preg_match_all('/@([a-zA-Z0-9_\- ]+)/', $text, $matches)) {
-                    $senderName = $user['name'] ?? $user['email'];
-                    foreach ($matches[1] as $mentionedName) {
-                        $mentionedName = trim($mentionedName);
-                        foreach (getUsers() as $u) {
-                            if ($u['id'] === $user['id']) continue;
-                            $uName = trim($u['name'] ?? '');
-                            if ($uName && (stripos($uName, $mentionedName) !== false || stripos($mentionedName, $uName) !== false)) {
-                                $uData = getUserData($u['id']);
-                                $uData['notifications'] = $uData['notifications'] ?? [];
-                                $notifKey = "leadcomment_{$comment['id']}_{$u['id']}";
-                                $dup = false;
-                                foreach ($uData['notifications'] as $n) { if (($n['notif_key'] ?? '') === $notifKey) { $dup = true; break; } }
-                                if (!$dup) {
-                                    $uData['notifications'][] = [
-                                        'id' => 'notif_' . bin2hex(random_bytes(6)), 'notif_key' => $notifKey,
-                                        'type' => 'mention', 'lead_id' => $leadId,
-                                        'title' => "{$senderName} mentioned you",
-                                        'body' => "On lead {$leadName}: " . substr($text, 0, 70),
-                                        'created_at' => date('c'), 'read' => false
-                                    ];
-                                    usort($uData['notifications'], fn($a,$b) => strtotime($b['created_at']??'0') - strtotime($a['created_at']??'0'));
-                                    $uData['notifications'] = array_slice($uData['notifications'], 0, 50);
-                                    saveUserData($u['id'], $uData);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                respond(['success' => true, 'comment' => $comment]);
-            }
-        }
-        respond(['success' => false, 'error' => 'Lead not found'], 404);
-    }
-
-    if ($method === 'DELETE') {
-        $commentId = $input['comment_id'] ?? '';
-        $userData = getUserData($user['id']);
-        foreach ($userData['leads'] as &$l) {
-            if ($l['id'] === $leadId) {
-                $l['comments'] = array_values(array_filter($l['comments'] ?? [], function($c) use ($commentId, $user) {
-                    if ($c['id'] !== $commentId) return true;
-                    // Remove only if owner or admin
-                    return !($c['user_id'] === $user['id'] || ($user['is_admin'] ?? false));
-                }));
-                saveUserData($user['id'], $userData);
-                respond(['success' => true]);
-            }
-        }
-        respond(['success' => false, 'error' => 'Lead not found'], 404);
-    }
     break;
 
 default:

@@ -444,9 +444,6 @@
         .skip-reason { margin-top: 12px; padding: 12px; background: var(--bg-main); border-radius: var(--radius-md); }
         .skip-reason-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary); }
 
-        /* Lead discussion @mention highlight */
-        .chat-mention { font-weight:600;border-radius:4px;padding:0 3px;background:rgba(227,112,90,0.15);color:var(--gold-dark); }
-
         /* === CALL PITCH SECTION HEADERS === */
         /* === CALL SCRIPT === */
         .pitch-section { margin: 0 0 24px 0; }
@@ -503,6 +500,9 @@
         .admin-only { display: none; }
         .is-admin .admin-only { display: block; }
         .is-admin .nav-item.admin-only { display: flex; }
+        .super-admin-only { display: none; }
+        .is-super-admin .super-admin-only { display: block; }
+        .is-super-admin .nav-item.super-admin-only { display: flex; }
         .checkbox { width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--border); cursor: pointer; appearance: none; background: var(--bg-white); flex-shrink: 0; }
         .checkbox:checked { background: var(--gold); border-color: var(--gold); }
         .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -735,6 +735,7 @@
                 <div class="nav-item rep-nav" data-page="my-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>My Context</span></div>
                 <div class="nav-section-title manager-nav">Manager</div>
                 <div class="nav-item manager-nav" data-page="command-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>Admin Dashboard</span></div>
+                <div class="nav-item manager-nav super-admin-only" data-page="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span>Reports</span></div>
                 <div class="nav-item manager-nav" data-page="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Pipeline</span></div>
                 <div class="nav-item manager-nav" data-page="dashboard" data-manager-label="Team Activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg><span>Team Activity</span></div>
                 <div class="nav-item manager-nav admin-only" data-page="admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></div>
@@ -1544,6 +1545,39 @@ Phone: +1 234 567 890"></textarea></div>
                 </div>
             </section>
 
+            <section class="page-section" id="page-reports">
+                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Activity Report</h1><p>Sales rep activity & KPIs by date range</p></div></div></div>
+                <div class="page-content">
+                    <div class="card" style="margin-bottom:16px;">
+                        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding:4px;">
+                            <div style="display:flex;gap:6px;">
+                                <button class="btn btn-secondary btn-sm report-range-btn" data-range="today" onclick="setReportRange('today')">Today</button>
+                                <button class="btn btn-secondary btn-sm report-range-btn active" data-range="week" onclick="setReportRange('week')">This Week</button>
+                                <button class="btn btn-secondary btn-sm report-range-btn" data-range="month" onclick="setReportRange('month')">This Month</button>
+                            </div>
+                            <div style="display:flex;align-items:flex-end;gap:8px;">
+                                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px;">From</label><input type="date" class="form-input" id="report-from" style="padding:6px 8px;"></div>
+                                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px;">To</label><input type="date" class="form-input" id="report-to" style="padding:6px 8px;"></div>
+                                <button class="btn btn-primary btn-sm" onclick="loadActivityReport('custom')">Apply</button>
+                            </div>
+                            <div style="margin-left:auto;font-size:12px;color:var(--text-muted);" id="report-range-label"></div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="cc-progress-title" style="padding:4px 4px 12px;">Per-Rep KPIs</div>
+                        <div class="table-wrap"><table class="table">
+                            <thead><tr><th>Rep</th><th>Calls</th><th>Conversions</th><th>Conv. Rate</th><th>Emails</th><th>Research</th><th>Outcomes</th><th>Leads Created</th><th>Active Days</th><th>Avg Calls/Day</th></tr></thead>
+                            <tbody id="report-kpi-body"></tbody>
+                            <tfoot id="report-kpi-foot"></tfoot>
+                        </table></div>
+                    </div>
+                    <div class="card">
+                        <div class="cc-progress-title" style="padding:4px 4px 12px;">Activity Timeline</div>
+                        <div id="report-feed" style="max-height:480px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </section>
+
             <section class="page-section" id="page-users">
                 <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Users</h1><p>Manage accounts</p></div><button class="btn btn-primary btn-sm" onclick="openModal('create-user-modal')">+ User</button></div></div>
                 <div class="page-content">
@@ -1693,7 +1727,8 @@ function applyRoleNavigation(){
     const isManager=!!user?.is_admin;
     document.body.classList.toggle('is-manager', isManager);
     document.body.classList.toggle('is-rep', !isManager);
-    document.querySelectorAll('.manager-nav').forEach(el=>{el.hidden=!isManager});
+    const isSuper=!!user?.is_super_admin;
+    document.querySelectorAll('.manager-nav').forEach(el=>{el.hidden=!isManager || (el.classList.contains('super-admin-only') && !isSuper)});
     document.querySelectorAll('.rep-nav').forEach(el=>{el.hidden=isManager && !el.classList.contains('manager-nav')});
     document.querySelectorAll('.nav-item').forEach(item=>setNavLabel(item, isManager?'manager':'rep'));
 }
@@ -2923,8 +2958,6 @@ const NOTIF_ICONS = {
     callback_overdue: '⚠️',
     going_cold:       '❄️',
     stale_research:   '🔍',
-    // Chat
-    mention:          '💬',
     // Activity
     stage_change:     '🔄',
     email_sent:       '📧',
@@ -3378,76 +3411,16 @@ ${stageOptions(getStage(l))}
 <button class="tab-btn ${emailTabClass}" onclick="${!emailTabLocked?"switchTab(this,'tab-email')":"toast('Complete Research first','warning')"}">Email</button>
 <button class="tab-btn ${callPitchTabClass}" onclick="${!callPitchTabLocked?"switchTab(this,'tab-call')":"toast('Send email first','warning')"}">Call</button>
 <button class="tab-btn" onclick="switchTab(this,'tab-outcome')">Outcome</button>
-<button class="tab-btn" onclick="switchTab(this,'tab-comments');loadLeadComments('${l.id}')">Discussion${(l.comments&&l.comments.length)?` (${l.comments.length})`:''}</button>
 </div>
 <div class="tab-content active" id="tab-profile">${profileHtml}<button class="btn btn-secondary btn-sm copy-summary-btn" onclick="copySummary()" style="margin-top:16px;">Copy Summary</button></div>
 <div class="tab-content" id="tab-research"><button class="btn btn-primary btn-sm" onclick="researchLead()" id="research-btn">${hasResearch?'Re-run Research':'Research Lead'}</button>${hasResearch && !l.fit_grade ? '<button class="btn btn-secondary btn-sm" onclick="recalculateGrade()" style="margin-left:8px;" id="regrade-btn">Calculate ICP Grade</button>':''}<div style="margin-top:12px;">${l.fit_grade?`<span class="grade-badge grade-${l.fit_grade.toLowerCase()}" style="font-size:13px;padding:6px 12px;">Grade ${l.fit_grade} (${l.fit_score || 0}%)</span>`:''}${l.grade_override?.enabled?'<span style="margin-left:8px;font-size:11px;color:var(--warning);">Overridden</span>':''}</div>${researchHtml}</div>
 <div class="tab-content" id="tab-email">${emailTabContent}</div>
 <div class="tab-content" id="tab-call">${callPitchContent}</div>
-<div class="tab-content" id="tab-outcome">${callOutcomeContent}</div>
-<div class="tab-content" id="tab-comments">
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Team discussion about this lead — visible to everyone. Use @ to notify a teammate.</p>
-    <div id="lead-comments-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;max-height:340px;overflow-y:auto;"></div>
-    <div style="display:flex;gap:8px;align-items:flex-end;">
-        <textarea id="lead-comment-input" rows="2" placeholder="Add a comment... use @name to notify" style="flex:1;resize:none;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;"></textarea>
-        <button class="btn btn-gold btn-sm" onclick="postLeadComment('${l.id}')">Post</button>
-    </div>
-</div>`;
+<div class="tab-content" id="tab-outcome">${callOutcomeContent}</div>`;
 
 // Setup event listeners
 document.querySelectorAll('#modal-body .email-type-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('#modal-body .email-type-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active')}));
 document.querySelectorAll('.outcome-option').forEach(opt=>{opt.addEventListener('click',function(){const parent=this.parentElement;const isMulti=parent.dataset.type==='multi';if(!isMulti)parent.querySelectorAll('.outcome-option').forEach(o=>o.classList.remove('selected'));this.classList.toggle('selected');if(this.dataset.value==='followup_date')document.getElementById('followup-date-picker').style.display=this.classList.contains('selected')?'block':'none'})});
-}
-
-async function loadLeadComments(leadId) {
-    const r = await api(`lead-comment&lead_id=${leadId}`);
-    const list = document.getElementById('lead-comments-list');
-    if (!list) return;
-    if (!r.success || !r.comments || !r.comments.length) {
-        list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No comments yet. Start the discussion 💬</div>';
-        return;
-    }
-    list.innerHTML = r.comments.map(c => {
-        const isMe = c.user_id === user?.id;
-        const canDelete = isMe || user?.is_admin === true;
-        const time = new Date(c.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-        const text = esc(c.text).replace(/@([a-zA-Z0-9_\- ]+)/g, '<span class="chat-mention">@$1</span>').replace(/\n/g,'<br>');
-        return `<div style="display:flex;gap:10px;align-items:flex-start;">
-            <div class="chat-avatar" style="width:28px;height:28px;font-size:12px;">${(c.user_name||'?')[0].toUpperCase()}</div>
-            <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:8px;"><span style="font-weight:600;font-size:12px;">${esc(c.user_name)}</span><span style="font-size:11px;color:var(--text-muted);">${time}</span>${canDelete?`<span onclick="deleteLeadComment('${leadId}','${c.id}')" style="cursor:pointer;font-size:11px;color:var(--text-muted);margin-left:auto;" title="Delete">🗑</span>`:''}</div>
-                <div style="font-size:13px;color:var(--text-primary);margin-top:2px;background:var(--bg-main);padding:8px 12px;border-radius:8px;">${text}</div>
-            </div>
-        </div>`;
-    }).join('');
-    list.scrollTop = list.scrollHeight;
-}
-
-async function postLeadComment(leadId) {
-    const input = document.getElementById('lead-comment-input');
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    const r = await api('lead-comment', 'POST', {lead_id: leadId, text});
-    if (r.success) {
-        // keep currentLead.comments in sync so tab count updates next render
-        if (currentLead && currentLead.id === leadId) {
-            currentLead.comments = currentLead.comments || [];
-            currentLead.comments.push(r.comment);
-        }
-        loadLeadComments(leadId);
-    } else toast(r.error || 'Failed', 'error');
-}
-
-async function deleteLeadComment(leadId, commentId) {
-    if (!confirm('Delete this comment?')) return;
-    const r = await api('lead-comment', 'POST', {lead_id: leadId, comment_id: commentId, delete: true});
-    if (r.success) {
-        if (currentLead && currentLead.comments) {
-            currentLead.comments = currentLead.comments.filter(c => c.id !== commentId);
-        }
-        loadLeadComments(leadId);
-    } else toast(r.error || 'Failed', 'error');
 }
 
 function renderResearchCollapsible(data,callAnchor){
@@ -4324,6 +4297,56 @@ function editReq(i){const r=reqConfig[i];document.getElementById('add-req-title'
 async function deleteReq(i){const ok=await customConfirm('Delete this qualification question?','Delete Question',{danger:true,confirmText:'Delete'});if(!ok)return;reqConfig.splice(i,1);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();toast('Deleted','success')}
 function fmtAgo(iso){if(!iso)return'<span style="color:var(--text-muted)">Never</span>';const s=Math.floor((Date.now()-new Date(iso))/1000);if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m ago';return Math.floor(s/86400)+'d ago';}
 function fmtDuration(startIso,lastActiveIso){if(!startIso||!lastActiveIso)return'<span style="color:var(--text-muted)">—</span>';const s=Math.floor((new Date(lastActiveIso)-new Date(startIso))/1000);if(s<60)return'<1m';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
+function setReportRange(range){document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.range===range));loadActivityReport(range);}
+async function loadActivityReport(mode){
+    let qs;
+    if(mode==='custom'){
+        const from=document.getElementById('report-from').value;
+        const to=document.getElementById('report-to').value;
+        if(!from||!to){toast('Pick both dates','error');return;}
+        document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.remove('active'));
+        qs=`activity-report&from=${from}&to=${to}`;
+    } else {
+        qs=`activity-report&range=${mode||'week'}`;
+    }
+    const body=document.getElementById('report-kpi-body');
+    body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:20px;">Loading…</td></tr>';
+    const r=await api(qs);
+    if(!r.success){body.innerHTML=`<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:20px;">${r.error||'Failed to load'}</td></tr>`;return;}
+    // Sync date inputs + label to the resolved range
+    document.getElementById('report-from').value=r.from;
+    document.getElementById('report-to').value=r.to;
+    document.getElementById('report-range-label').textContent=`${r.from}  →  ${r.to}`;
+    // KPI rows
+    if(!r.reps.length){
+        body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:20px;">No reps found</td></tr>';
+    } else {
+        body.innerHTML=r.reps.map(s=>`<tr>
+            <td>${s.name}${s.is_admin?' <span class="badge badge-admin" style="font-size:9px;">Admin</span>':''}</td>
+            <td>${s.calls}</td><td><strong>${s.conversions}</strong></td><td>${s.conversion_rate}%</td>
+            <td>${s.emails}</td><td>${s.research}</td><td>${s.outcomes}</td>
+            <td>${s.leads_created}</td><td>${s.active_days}</td><td>${s.avg_calls_per_day}</td>
+        </tr>`).join('');
+    }
+    const t=r.totals;
+    document.getElementById('report-kpi-foot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);">
+        <td>Team Total</td><td>${t.calls}</td><td>${t.conversions}</td><td>${t.conversion_rate}%</td>
+        <td>${t.emails}</td><td>${t.research}</td><td>${t.outcomes}</td>
+        <td>${t.leads_created}</td><td>—</td><td>—</td>
+    </tr>`;
+    // Activity feed
+    const feed=document.getElementById('report-feed');
+    const icons={call:'📞',email:'✉️',researched:'🔍',created:'➕'};
+    feed.innerHTML=r.feed.length?r.feed.map(a=>{
+        const d=new Date(a.timestamp);
+        const when=d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        return `<div class="activity-item" style="cursor:default;">
+            <span class="activity-icon">${icons[a.type]||'•'}</span>
+            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${a.rep_name} — ${a.detail}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${a.lead} · ${when}</div></div>
+        </div>`;
+    }).join(''):'<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">No activity in this range.</div>';
+}
 async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td><td>${fmtAgo(u.last_login_at)}</td><td>${fmtDuration(u.session_start,u.last_active_at)}</td><td>${fmtAgo(u.last_active_at)}</td><td style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`}).join('');}
 async function deleteUser(id){const ok=await customConfirm('Delete this user? This cannot be undone.','Delete User',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-user','POST',{id});loadUsers();toast('Deleted','success')}
 async function impersonateUser(id,name){const ok=await customConfirm(`Log in as ${name}? Your current session will be replaced.`,'Impersonate User',{confirmText:'Impersonate'});if(!ok)return;const r=await api('impersonate','POST',{user_id:id});if(!r.success)return toast(r.error||'Failed','error');const prevToken=localStorage.token;localStorage.setItem('impersonate_return_token',prevToken);localStorage.token=r.token;user=r.user;showApp();toast(`Now viewing as ${name} — refresh to return to your account`,'success')}
@@ -4661,6 +4684,7 @@ function showPage(p){
     nav?.classList.add('active');
     if(p==='dashboard')loadTodayOperations();
     if(p==='command-center')loadCommandCenter();
+    if(p==='reports')loadActivityReport('week');
     if(p==='workbench')loadWorkbench();
     if(p==='commitments')loadCommitments();
 }
