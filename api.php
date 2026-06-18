@@ -3569,10 +3569,11 @@ case 'command-center':
 
 case 'activity-report':
     if ($method !== 'GET') break;
-    $user = requireSuperAdmin();
+    $user = requireAdmin();
     $allUsers = getUsers();
-    // Super admin only — sees everyone
-    $reportUsers = $allUsers;
+    $isSuperAdmin = $user['is_super_admin'] ?? false;
+    // Super admin sees everyone; regular admin sees non-super-admins only
+    $reportUsers = $isSuperAdmin ? $allUsers : array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
 
     // Resolve date range. Accepts ?range=today|week|month or explicit ?from=YYYY-MM-DD&to=YYYY-MM-DD
     $range = $_GET['range'] ?? '';
