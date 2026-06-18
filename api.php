@@ -1416,7 +1416,11 @@ function respond($data, $code = 200) { http_response_code($code); echo json_enco
 function getCurrentUser() {
     $token = $_SERVER['HTTP_X_USER_TOKEN'] ?? '';
     if (empty($token)) return null;
-    foreach (getUsers() as $user) { if (($user['token'] ?? '') === $token) return $user; }
+    foreach (getUsers() as $user) {
+        // Legacy single token (backward compatible) OR any active token in the tokens[] list
+        if (($user['token'] ?? '') === $token) return $user;
+        if (!empty($user['tokens']) && is_array($user['tokens']) && in_array($token, $user['tokens'], true)) return $user;
+    }
     return null;
 }
 
@@ -1461,7 +1465,9 @@ case 'reset-password':
             $u['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
             unset($u['reset_token']);
             unset($u['reset_expires']);
-            $u['token'] = bin2hex(random_bytes(32));
+            // Invalidate all existing sessions on password change
+            $u['token'] = '';
+            $u['tokens'] = [];
             saveUsers($users);
             respond(['success' => true, 'message' => 'Password reset successful. Please login with your new password.']);
         }
@@ -1477,7 +1483,15 @@ case 'login':
     foreach ($users as &$user) {
         if ($user['email'] === $email && password_verify($password, $user['password'])) {
             $token = generateToken();
-            $user['token'] = $token;
+            // Support multiple concurrent sessions: keep a list of active tokens
+            // instead of overwriting a single one (so logins don't kick each other out).
+            $tokens = (!empty($user['tokens']) && is_array($user['tokens'])) ? $user['tokens'] : [];
+            if (!empty($user['token'])) { $tokens[] = $user['token']; }   // migrate any legacy token in
+            $tokens[] = $token;
+            $tokens = array_values(array_unique($tokens));
+            if (count($tokens) > 10) { $tokens = array_slice($tokens, -10); }  // cap to last 10 sessions
+            $user['tokens'] = $tokens;
+            $user['token'] = $token;   // keep legacy field as the most recent, for compatibility
             $user['last_login_at'] = date('c');
             $user['session_start'] = date('c');
             $user['last_active_at'] = date('c');
@@ -1663,6 +1677,13 @@ case 'impersonate':
     foreach ($users as &$u) {
         if ($u['id'] === $targetId) {
             $token = bin2hex(random_bytes(32));
+            // Add to the target's active tokens (don't evict their real sessions)
+            $tokens = (!empty($u['tokens']) && is_array($u['tokens'])) ? $u['tokens'] : [];
+            if (!empty($u['token'])) { $tokens[] = $u['token']; }
+            $tokens[] = $token;
+            $tokens = array_values(array_unique($tokens));
+            if (count($tokens) > 10) { $tokens = array_slice($tokens, -10); }
+            $u['tokens'] = $tokens;
             $u['token'] = $token;
             saveUsers($users);
             respond(['success' => true, 'token' => $token, 'user' => ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'is_super_admin' => $u['is_super_admin'] ?? false]]);
