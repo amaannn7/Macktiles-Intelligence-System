@@ -22,6 +22,14 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-User-Token'
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 
+// ── Storage layer ─────────────────────────────────────────────────────────────
+// Auto-select: if a ./local-data directory exists, use the JSON flat-file layer
+// (db.local.php) for local testing; otherwise use PostgreSQL (db.php).
+// Both expose identical helper signatures (dbLoadAll, kvGet, dbLoadLeadsByOwner…).
+define('LOCAL_MODE', is_dir(__DIR__ . '/local-data'));
+require_once __DIR__ . (LOCAL_MODE ? '/db.local.php' : '/db.php');
+// ──────────────────────────────────────────────────────────────────────────────
+
 define('DATA_DIR', __DIR__ . '/data');
 define('USERS_FILE', DATA_DIR . '/users.json');
 define('ADMIN_FILE', DATA_DIR . '/admin.json');
@@ -123,8 +131,8 @@ $defaultOutreachRules = [
     'call_outcomes' => ['no_answer_retry', 'left_voicemail', 'gatekeeper', 'wrong_number', 'not_interested', 'interested_followup', 'consultation_booked', 'callback_requested', 'not_right_time_park_90']
 ];
 
-if (!file_exists(ADMIN_FILE)) {
-    file_put_contents(ADMIN_FILE, json_encode([
+if (kvGet('config', 'admin') === null) {
+    kvSet('config', 'admin', [
         'groq_key' => '',
         'gemini_key' => '',
         'anthropic_key' => '',
@@ -133,10 +141,10 @@ if (!file_exists(ADMIN_FILE)) {
         'icp_config' => $defaultIcpConfig,
         'stage_validation_rules' => $defaultStageRules,
         'outreach_rules' => $defaultOutreachRules
-    ], JSON_PRETTY_PRINT));
+    ]);
 }
 
-if (!file_exists(USERS_FILE)) {
+if (empty(dbLoadAll('users'))) {
     $adminId = 'user_' . bin2hex(random_bytes(8));
     $defaultAdmin = [
         'id' => $adminId,
@@ -147,24 +155,12 @@ if (!file_exists(USERS_FILE)) {
         'created_at' => date('c'),
         'is_admin' => true
     ];
-    file_put_contents(USERS_FILE, json_encode([$defaultAdmin], JSON_PRETTY_PRINT));
-    file_put_contents(DATA_DIR . "/user_{$adminId}.json", json_encode([
-        'leads' => [],
-        'settings' => ['sender_name' => 'Admin', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => '']
-    ], JSON_PRETTY_PRINT));
+    dbSaveAll('users', [$defaultAdmin]);
+    kvSet('settings', $adminId, ['sender_name' => 'Admin', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => '']);
 }
 
-function getUsers() { return json_decode(file_get_contents(USERS_FILE), true) ?: []; }
-function saveUsers($users) {
-    $fp = fopen(USERS_FILE, 'c');
-    if (flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
-        fwrite($fp, json_encode($users, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-    }
-    fclose($fp);
-}
+function getUsers() { return dbLoadAll('users'); }
+function saveUsers($users) { dbSaveAll('users', array_values($users)); }
 
 function getMacktilesStages() {
     return [
@@ -284,7 +280,7 @@ function macktilesCallOutcomeConfig($outcome) {
 }
 function getAdmin() {
     global $defaultRequisitions, $defaultIcpConfig, $defaultStageRules, $defaultOutreachRules;
-    $admin = json_decode(file_get_contents(ADMIN_FILE), true) ?: [];
+    $admin = kvGet('config', 'admin') ?: [];
     if (!isset($admin['requisitions'])) $admin['requisitions'] = $defaultRequisitions;
     $reqIds = array_map(fn($r) => $r['id'] ?? '', $admin['requisitions'] ?? []);
     if (!in_array('project_context', $reqIds, true) || !in_array('next_step_agreed', $reqIds, true)) {
@@ -300,25 +296,21 @@ function getAdmin() {
     if (!isset($admin['outreach_rules'])) $admin['outreach_rules'] = $defaultOutreachRules;
     return $admin;
 }
-function saveAdmin($admin) {
-    $fp = fopen(ADMIN_FILE, 'c');
-    if (flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
-        fwrite($fp, json_encode($admin, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-    }
-    fclose($fp);
+function saveAdmin($admin) { kvSet('config', 'admin', $admin); }
+
+function defaultUserSettings() {
+    return ['sender_name' => '', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => ''];
 }
 
 function getUserData($userId) {
-    $file = DATA_DIR . "/user_{$userId}.json";
-    if (!file_exists($file)) {
-        $default = ['leads' => [], 'settings' => ['sender_name' => '', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => '']];
-        file_put_contents($file, json_encode($default, JSON_PRETTY_PRINT));
-        return $default;
+    $settings = kvGet('settings', $userId);
+    $leads = dbLoadLeadsByOwner($userId);
+    if ($settings === null) {
+        // First access for this user: seed default settings.
+        $settings = defaultUserSettings();
+        kvSet('settings', $userId, $settings);
     }
-    $data = json_decode(file_get_contents($file), true) ?: [];
+    $data = ['leads' => $leads, 'settings' => $settings];
 
     // Migrate existing leads with default values for new fields
     if (!empty($data['leads'])) {
@@ -355,15 +347,11 @@ function getUserData($userId) {
 }
 
 function saveUserData($userId, $data) {
-    $file = DATA_DIR . "/user_{$userId}.json";
-    $fp = fopen($file, 'c');
-    if (flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
+    // Leads are stored in the flat leads table keyed by owner; settings in kv_store.
+    dbSaveLeadsForOwner($userId, array_values($data['leads'] ?? []));
+    if (array_key_exists('settings', $data)) {
+        kvSet('settings', $userId, $data['settings']);
     }
-    fclose($fp);
 }
 function generateId($prefix = '') { return $prefix . bin2hex(random_bytes(8)); }
 function generateToken() { return bin2hex(random_bytes(32)); }
@@ -1666,6 +1654,7 @@ case 'delete-user':
     if ($target && !empty($target['is_super_admin']) && empty($admin['is_super_admin'])) respond(['success' => false, 'error' => 'Cannot delete a super admin'], 403);
     $users = array_values(array_filter(getUsers(), function($u) use ($userId) { return $u['id'] !== $userId; }));
     saveUsers($users);
+    dbDeleteUserData($userId);
     respond(['success' => true]);
     break;
 

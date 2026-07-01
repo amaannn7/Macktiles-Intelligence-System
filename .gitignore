@@ -13,3 +13,9 @@ data/uploads/*
 data/admin.json
 data/users.json
 data/user_*.json
+
+# Database credentials — NEVER commit (deploy db.php via cPanel File Manager)
+db.php
+
+# Local JSON testing storage (auto-selects db.local.php when present)
+local-data/
