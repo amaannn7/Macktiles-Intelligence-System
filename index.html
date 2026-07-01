@@ -350,7 +350,7 @@
         .attention-actions .btn { padding: 4px 10px; font-size: 11px; }
 
         /* ========== NOTIFICATION BELL ========== */
-        .notification-bell { position: relative; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s; }
+        .notification-bell { position: fixed; top: 14px; right: 20px; z-index: 900; cursor: pointer; padding: 8px; border-radius: 50%; background: var(--bg-white); box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: background 0.2s; }
         .notification-bell:hover { background: var(--bg-main); }
         .notification-bell svg { width: 22px; height: 22px; color: var(--text-secondary); }
         .notification-badge { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
@@ -784,15 +784,14 @@
                 <div class="nav-item rep-nav" data-page="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Import</span></div>
                 <div class="nav-item rep-nav" data-page="add-lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg><span>Add Lead</span></div>
                 <div class="nav-item rep-nav" data-page="my-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>My Context</span></div>
-                <div class="nav-item" data-page="chat" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Team Chat</span><span id="chat-unread-badge" style="display:none;position:absolute;top:8px;right:14px;background:var(--danger);color:white;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;">0</span></div>
                 <div class="nav-section-title manager-nav">Manager</div>
                 <div class="nav-item manager-nav" data-page="command-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>Admin Dashboard</span></div>
                 <div class="nav-item manager-nav admin-only" data-page="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span>Reports</span></div>
                 <div class="nav-item manager-nav" data-page="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Pipeline</span></div>
                 <div class="nav-item manager-nav" data-page="dashboard" data-manager-label="Team Activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg><span>Team Activity</span></div>
-                <div class="nav-item manager-nav admin-only" data-page="admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></div>
                 <div class="nav-item manager-nav admin-only" data-page="users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Users</span></div>
-                <div class="nav-item manager-nav admin-only" data-page="sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Sessions</span></div>
+                <div class="nav-item" data-page="chat" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Team Chat</span><span id="chat-unread-badge" style="display:none;position:absolute;top:8px;right:14px;background:var(--danger);color:white;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;">0</span></div>
+                <div class="nav-item manager-nav admin-only" data-page="admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></div>
             </nav>
             <div class="sidebar-footer">
                 <div class="user-info">
@@ -804,10 +803,11 @@
         </aside>
 
         <main class="main-content">
+            <div class="notification-bell" id="notification-bell" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notification-badge" id="notification-badge" style="display:none;">0</span><div class="notification-dropdown" id="notification-dropdown"><div class="notification-header"><h4>Notifications</h4><span class="notification-mark-all" onclick="markAllNotificationsRead()">Mark all read</span></div><div class="notification-list" id="notification-list"></div></div></div>
             <div class="mobile-header"><div class="mobile-header-content"><button class="menu-btn" id="menu-btn">☰</button><div class="logo"><img src="logo-inverse.png" alt="Macktiles Australia"></div><div style="width:32px;"></div></div></div>
 
             <section class="page-section active" id="page-dashboard">
-                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1 id="dashboard-title">Today</h1><p id="dashboard-subtitle">Ordered daily work and pipeline follow-up</p></div><div class="notification-bell" id="notification-bell" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notification-badge" id="notification-badge" style="display:none;">0</span><div class="notification-dropdown" id="notification-dropdown"><div class="notification-header"><h4>Notifications</h4><span class="notification-mark-all" onclick="markAllNotificationsRead()">Mark all read</span></div><div class="notification-list" id="notification-list"></div></div></div></div></div>
+                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1 id="dashboard-title">Today</h1><p id="dashboard-subtitle">Ordered daily work and pipeline follow-up</p></div></div></div>
                 <div class="page-content">
                     <!-- Daily Summary -->
                     <div id="ai-briefing" class="card" style="margin-bottom:16px;display:none;">
@@ -1634,16 +1634,17 @@ Phone: +1 234 567 890"></textarea></div>
             <section class="page-section" id="page-users">
                 <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Users</h1><p>Manage accounts</p></div><button class="btn btn-primary btn-sm" onclick="openModal('create-user-modal')">+ User</button></div></div>
                 <div class="page-content">
-                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last Login</th><th>Session Duration</th><th>Last Active</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
-                </div>
-            </section>
-            <section class="page-section" id="page-sessions">
-                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>User Sessions</h1><p>Login activity and time-on-app per user</p></div><div class="btn-group">
-                    <select class="form-select" id="sessions-days" style="width:auto;" onchange="loadUserSessions()"><option value="1">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
-                    <button class="btn btn-sm btn-secondary" onclick="loadUserSessions()">Refresh</button>
-                </div></div></div>
-                <div class="page-content">
-                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Last Seen</th><th>Last Page</th><th>Active Today</th><th>Sessions</th><th></th></tr></thead><tbody id="sessions-table-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody></table></div></div>
+                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
+                    <div class="card" style="margin-top:20px;">
+                        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+                            <h3 class="card-title">Session Activity</h3>
+                            <div class="btn-group">
+                                <select class="form-select" id="sessions-days" style="width:auto;" onchange="loadUserSessions()"><option value="1">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
+                                <button class="btn btn-sm btn-secondary" onclick="loadUserSessions()">Refresh</button>
+                            </div>
+                        </div>
+                        <div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Last Seen</th><th>Last Page</th><th>Active Today</th><th>Sessions</th><th></th></tr></thead><tbody id="sessions-table-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody></table></div>
+                    </div>
                 </div>
             </section>
             <section class="page-section" id="page-chat">
@@ -3078,6 +3079,10 @@ const NOTIF_ICONS = {
     deleted:          '🗑️',
     restored:         '♻️',
     win:              '🏆',
+    // Chat
+    mention:          '💬',
+    chat_dm:          '✉️',
+    chat_message:     '💬',
 };
 
 async function loadNotifications() {
@@ -3168,6 +3173,21 @@ async function handleNotificationClick(notifId, leadId, threadId) {
     renderNotificationBadge();
     document.getElementById('notification-dropdown').classList.remove('show');
 
+    if (threadId) {
+        // Jump to Team Chat and open the referenced thread.
+        showPage('chat');
+        // loadChat() runs async; wait for channel/DM lists, then open the thread.
+        setTimeout(async () => {
+            let name = '', isDm = threadId.startsWith('dm_'), desc = '';
+            const ch = (chatChannelData || []).find(c => c.id === threadId);
+            const dm = (chatDmData || []).find(t => t.thread_id === threadId);
+            if (ch) { name = ch.name; desc = ch.description || ''; }
+            else if (dm) { name = dm.user_name; isDm = true; }
+            else { name = isDm ? 'Direct message' : threadId; }
+            openChatThread(threadId, name, isDm, desc);
+        }, 350);
+        return;
+    }
     if (leadId) {
         openLead(leadId);
     }
@@ -4458,7 +4478,7 @@ async function loadActivityReport(mode){
         </div>`;
     }).join(''):'<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">No activity in this range.</div>';
 }
-async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td><td>${fmtAgo(u.last_login_at)}</td><td>${fmtDuration(u.session_start,u.last_active_at)}</td><td>${fmtAgo(u.last_active_at)}</td><td style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`}).join('');}
+async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td><td style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`}).join('');}
 async function deleteUser(id){const ok=await customConfirm('Delete this user? This cannot be undone.','Delete User',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-user','POST',{id});loadUsers();toast('Deleted','success')}
 async function impersonateUser(id,name){const ok=await customConfirm(`Log in as ${name}? Your current session will be replaced.`,'Impersonate User',{confirmText:'Impersonate'});if(!ok)return;const r=await api('impersonate','POST',{user_id:id});if(!r.success)return toast(r.error||'Failed','error');const prevToken=localStorage.token;localStorage.setItem('impersonate_return_token',prevToken);localStorage.token=r.token;user=r.user;showApp();toast(`Now viewing as ${name} — refresh to return to your account`,'success')}
 async function resetUserData(id,name){const ok=await customConfirm(`Delete ALL leads for ${name}? This cannot be undone.`,'Reset User Data',{danger:true,confirmText:'Reset'});if(!ok)return;const r=await api('reset-user-data','POST',{user_id:id});if(r.success)toast(`${name}'s data reset`,'success');else toast(r.error||'Failed','error')}
@@ -4798,7 +4818,7 @@ function showPage(p){
     if(p==='reports')loadActivityReport('week');
     if(p==='workbench')loadWorkbench();
     if(p==='commitments')loadCommitments();
-    if(p==='sessions')loadUserSessions();
+    if(p==='users'){loadUsers();loadUserSessions();}
     if(p==='chat')loadChat();
     else if(chatState.pollTimer){clearInterval(chatState.pollTimer);chatState.pollTimer=null;}
     _activityPage=p;
