@@ -3724,6 +3724,90 @@ case 'activity-report':
     ]);
     break;
 
+// ===== ACTIVITY PING (records a heartbeat for session analytics) =====
+case 'activity-ping':
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $page = trim($input['page'] ?? $_GET['page'] ?? '');
+    dbRecordPing(
+        $user['id'],
+        $user['name'] ?? $user['email'] ?? '',
+        !empty($user['is_super_admin']) ? 'super_admin' : (!empty($user['is_admin']) ? 'admin' : 'rep'),
+        $page
+    );
+    respond(['success' => true]);
+    break;
+
+// ===== USER SESSIONS (admin analytics: groups pings into sessions) =====
+case 'user-sessions':
+    if ($method !== 'GET') break;
+    $user = requireAdmin();
+    $isSuperAdmin = $user['is_super_admin'] ?? false;
+
+    $days = intval($_GET['days'] ?? 7);
+    if ($days < 1 || $days > 90) $days = 7;
+
+    $allPings = dbLoadPings($days);        // ordered by user_id, pinged_at ASC
+    $lastSeenAll = dbLoadLastSeen();
+    $lastSeenMap = [];
+    foreach ($lastSeenAll as $ls) $lastSeenMap[$ls['user_id']] = $ls;
+
+    // Group each user's pings into sessions (gap > 30 min starts a new session).
+    $userPings = [];
+    foreach ($allPings as $p) $userPings[$p['user_id']][] = $p;
+
+    $userSessions = [];
+    foreach ($userPings as $uid => $pings) {
+        $sessions = [];
+        $sessStart = null; $sessEnd = null; $sessPages = []; $prevT = null;
+        foreach ($pings as $p) {
+            $t = strtotime($p['pinged_at']);
+            if ($prevT === null || ($t - $prevT) > 1800) {
+                if ($sessStart !== null) {
+                    $dur = max(1, round(($prevT - strtotime($sessStart)) / 60) + 1);
+                    $sessions[] = ['start' => $sessStart, 'end' => $sessEnd, 'duration_mins' => $dur, 'pages' => array_values(array_unique($sessPages))];
+                }
+                $sessStart = $p['pinged_at']; $sessPages = [];
+            }
+            $sessEnd = $p['pinged_at'];
+            if (!empty($p['page'])) $sessPages[] = $p['page'];
+            $prevT = $t;
+        }
+        if ($sessStart !== null) {
+            $dur = max(1, round(($prevT - strtotime($sessStart)) / 60) + 1);
+            $sessions[] = ['start' => $sessStart, 'end' => $sessEnd, 'duration_mins' => $dur, 'pages' => array_values(array_unique($sessPages))];
+        }
+        $userSessions[$uid] = $sessions;
+    }
+
+    // Build per-user summary. Super admin sees everyone; regular admin excludes super admins.
+    $result = [];
+    $allUsers = getUsers();
+    foreach ($allUsers as $u) {
+        if (!$isSuperAdmin && !empty($u['is_super_admin'])) continue;
+        $uid = $u['id'];
+        $ls = $lastSeenMap[$uid] ?? null;
+        $sessions = $userSessions[$uid] ?? [];
+        $today = date('Y-m-d');
+        $todayMins = 0;
+        foreach ($sessions as $s) {
+            if (substr($s['start'], 0, 10) === $today) $todayMins += $s['duration_mins'];
+        }
+        $result[] = [
+            'user_id'              => $uid,
+            'user_name'            => $u['name'] ?? $u['email'],
+            'user_role'            => !empty($u['is_super_admin']) ? 'super_admin' : (!empty($u['is_admin']) ? 'admin' : 'rep'),
+            'last_seen'            => $ls['pinged_at'] ?? null,
+            'last_page'            => $ls['page'] ?? null,
+            'active_mins_today'    => min($todayMins, 480),
+            'sessions_this_period' => count($sessions),
+            'sessions'             => array_reverse($sessions),
+        ];
+    }
+    usort($result, fn($a, $b) => strcmp($b['last_seen'] ?? '', $a['last_seen'] ?? ''));
+    respond(['success' => true, 'sessions' => $result, 'days' => $days]);
+    break;
+
 case 'lead-batches':
     if ($method !== 'GET') break;
     $user = requireAuth();
