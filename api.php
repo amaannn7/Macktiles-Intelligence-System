@@ -310,7 +310,10 @@ function getUserData($userId) {
         $settings = defaultUserSettings();
         kvSet('settings', $userId, $settings);
     }
-    $data = ['leads' => $leads, 'settings' => $settings];
+    // Everything that isn't leads/settings (notifications, onboarding_completed,
+    // etc.) is round-tripped through the usermeta kv bucket.
+    $meta = kvGet('usermeta', $userId) ?: [];
+    $data = array_merge($meta, ['leads' => $leads, 'settings' => $settings]);
 
     // Migrate existing leads with default values for new fields
     if (!empty($data['leads'])) {
@@ -347,11 +350,15 @@ function getUserData($userId) {
 }
 
 function saveUserData($userId, $data) {
-    // Leads are stored in the flat leads table keyed by owner; settings in kv_store.
+    // Leads → flat leads table (by owner); settings → its own kv bucket;
+    // everything else (notifications, onboarding_completed, …) → usermeta bucket.
     dbSaveLeadsForOwner($userId, array_values($data['leads'] ?? []));
     if (array_key_exists('settings', $data)) {
         kvSet('settings', $userId, $data['settings']);
     }
+    $meta = $data;
+    unset($meta['leads'], $meta['settings']);
+    kvSet('usermeta', $userId, $meta);
 }
 function generateId($prefix = '') { return $prefix . bin2hex(random_bytes(8)); }
 function generateToken() { return bin2hex(random_bytes(32)); }

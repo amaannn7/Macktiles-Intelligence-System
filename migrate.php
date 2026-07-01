@@ -141,7 +141,12 @@ foreach ($userFiles as $uf) {
         $settingsCount++;
     }
 
-    migrateLog("  {$base}: {$fileLeadCount} leads" . (isset($data['settings']) ? " + settings" : ""));
+    // Everything else (notifications, onboarding_completed, …) → usermeta bucket.
+    $meta = $data;
+    unset($meta['leads'], $meta['settings']);
+    if (!empty($meta)) kvSet('usermeta', $ownerId, $meta);
+
+    migrateLog("  {$base}: {$fileLeadCount} leads" . (isset($data['settings']) ? " + settings" : "") . (!empty($meta) ? " + meta" : ""));
 }
 $counts['leads'] = $totalLeads;
 $counts['settings'] = $settingsCount;
