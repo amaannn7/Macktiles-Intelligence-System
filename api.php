@@ -1423,6 +1423,95 @@ function requireAuth() { $user = getCurrentUser(); if (!$user) respond(['success
 function requireAdmin() { $user = requireAuth(); if (!($user['is_admin'] ?? false) && !($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Admin access required'], 403); return $user; }
 function requireSuperAdmin() { $user = requireAuth(); if (!($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Super admin access required'], 403); return $user; }
 
+// ===== TEAM CHAT HELPERS =====
+function isChatAdmin(array $user): bool {
+    return !empty($user['is_admin']) || !empty($user['is_super_admin']);
+}
+
+$_channelsCache = null;
+function getChatChannels(): array {
+    global $_channelsCache;
+    if ($_channelsCache !== null) return $_channelsCache;
+    $channels = dbLoadAll('chat_channels');
+    if (empty($channels)) {
+        $channels = [
+            ['id'=>'channel_general','name'=>'general','description'=>'Company-wide chat','members'=>[],'created_by'=>'system','created_at'=>date('c')],
+            ['id'=>'channel_deals','name'=>'deals','description'=>'Deal updates','members'=>[],'created_by'=>'system','created_at'=>date('c')]
+        ];
+        dbSaveAll('chat_channels', $channels);
+    }
+    $_channelsCache = $channels;
+    return $_channelsCache;
+}
+function saveChatChannels(array $channels): void {
+    global $_channelsCache;
+    dbSaveAll('chat_channels', array_values($channels));
+    $_channelsCache = array_values($channels);
+}
+function getChannelMessages(string $channelId): array { return dbLoadMessages($channelId); }
+function saveChannelMessages(string $channelId, array $messages): void { dbSaveMessages($channelId, array_values($messages)); }
+function getDmThreadId(string $a, string $b): string { $ids = [$a, $b]; sort($ids); return 'dm_' . md5($ids[0] . '_' . $ids[1]); }
+
+function getChatUnreadCounts(string $userId): array {
+    $counts = [];
+    foreach (getChatChannels() as $ch) {
+        $messages = getChannelMessages($ch['id']);
+        $last = dbGetLastRead($userId, $ch['id']) ?: '1970-01-01T00:00:00+00:00';
+        $counts[$ch['id']] = count(array_filter($messages, fn($m) => ($m['sent_at'] ?? '') > $last && ($m['user_id'] ?? '') !== $userId));
+    }
+    foreach (getUsers() as $u) {
+        if ($u['id'] === $userId) continue;
+        $threadId = getDmThreadId($userId, $u['id']);
+        $messages = getChannelMessages($threadId);
+        $last = dbGetLastRead($userId, $threadId) ?: '1970-01-01T00:00:00+00:00';
+        $counts[$threadId] = count(array_filter($messages, fn($m) => ($m['sent_at'] ?? '') > $last && ($m['user_id'] ?? '') !== $userId));
+    }
+    return $counts;
+}
+
+// Push a chat notification onto a user's per-user data (Macktiles stores
+// notifications in user_<id> data, not on the users record). De-dupes on notif_key.
+function pushChatNotification(string $userId, array $notif): void {
+    $data = getUserData($userId);
+    $data['notifications'] = $data['notifications'] ?? [];
+    $key = $notif['notif_key'] ?? '';
+    if ($key !== '') {
+        foreach ($data['notifications'] as $n) {
+            if (($n['notif_key'] ?? '') === $key) return;
+        }
+    }
+    $data['notifications'][] = $notif;
+    usort($data['notifications'], fn($a,$b) => strtotime($b['created_at']??'0') - strtotime($a['created_at']??'0'));
+    $data['notifications'] = array_slice($data['notifications'], 0, 50);
+    saveUserData($userId, $data);
+}
+
+// Notify @mentioned users in a message (matches full name or first name, case-insensitive).
+function notifyChatMentions(array $sender, string $text, string $threadId, string $threadLabel): void {
+    if (strpos($text, '@') === false) return;
+    $senderName = $sender['name'] ?? $sender['email'] ?? 'Someone';
+    foreach (getUsers() as $u) {
+        if (($u['id'] ?? '') === ($sender['id'] ?? '')) continue;
+        $fullName  = trim($u['name'] ?? '');
+        $firstName = $fullName !== '' ? strtok($fullName, ' ') : '';
+        $matched = false;
+        foreach (array_filter([$fullName, $firstName]) as $cand) {
+            if (preg_match('/@' . preg_quote($cand, '/') . '(?![a-zA-Z0-9_])/i', $text)) { $matched = true; break; }
+        }
+        if (!$matched) continue;
+        pushChatNotification($u['id'], [
+            'id'         => 'notif_' . bin2hex(random_bytes(6)),
+            'notif_key'  => "mention_{$threadId}_{$u['id']}_" . substr(md5($text), 0, 8),
+            'type'       => 'mention',
+            'title'      => "{$senderName} mentioned you",
+            'body'       => "In {$threadLabel}: " . substr($text, 0, 80),
+            'thread_id'  => $threadId,
+            'created_at' => date('c'),
+            'read'       => false,
+        ]);
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_GET['action'] ?? '';
 $input = in_array($method, ['POST', 'PUT']) ? (json_decode(file_get_contents('php://input'), true) ?: []) : [];
@@ -3060,6 +3149,289 @@ case 'next-best-action':
         }
     }
     respond(['success' => false, 'error' => 'Lead not found'], 404);
+    break;
+
+// ===== TEAM CHAT =====
+case 'chat-channels':
+    $user = requireAuth();
+    if ($method === 'GET') {
+        $channels = getChatChannels();
+        $unread = getChatUnreadCounts($user['id']);
+        $isAdmin = isChatAdmin($user);
+        $channels = array_values(array_filter($channels, function($ch) use ($user, $isAdmin) {
+            $members = $ch['members'] ?? [];
+            return empty($members) || $isAdmin || in_array($user['id'], $members, true);
+        }));
+        foreach ($channels as &$ch) $ch['unread'] = $unread[$ch['id']] ?? 0;
+        respond(['success' => true, 'channels' => $channels]);
+    }
+    if ($method === 'POST') {
+        $name = strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]/', '', $input['name'] ?? '')));
+        if (!$name) respond(['success' => false, 'error' => 'Channel name required'], 400);
+        $channels = getChatChannels();
+        foreach ($channels as $ch) {
+            if ($ch['name'] === $name) respond(['success' => false, 'error' => 'Channel already exists'], 400);
+        }
+        $members = array_values(array_filter((array)($input['members'] ?? []), fn($id) => is_string($id) && $id !== ''));
+        $newChannel = ['id' => 'channel_' . bin2hex(random_bytes(4)), 'name' => $name, 'description' => $input['description'] ?? '', 'members' => $members, 'created_by' => $user['id'], 'created_at' => date('c')];
+        $channels[] = $newChannel;
+        saveChatChannels($channels);
+        respond(['success' => true, 'channel' => $newChannel]);
+    }
+    if ($method === 'DELETE') {
+        if (empty($user['is_super_admin'])) respond(['success' => false, 'error' => 'Only super admin can delete channels'], 403);
+        $channelId = $input['id'] ?? '';
+        if ($channelId === 'channel_general') respond(['success' => false, 'error' => 'Cannot delete the general channel'], 400);
+        if (!$channelId) respond(['success' => false, 'error' => 'Channel ID required'], 400);
+        $channels = array_values(array_filter(getChatChannels(), fn($ch) => $ch['id'] !== $channelId));
+        saveChatChannels($channels);
+        respond(['success' => true]);
+    }
+    break;
+
+case 'chat-channel-members':
+    $user = requireAuth();
+    if (!isChatAdmin($user)) respond(['success' => false, 'error' => 'Admin only'], 403);
+    if ($method === 'POST') {
+        $channelId = $input['channel_id'] ?? '';
+        $members = array_values(array_filter((array)($input['members'] ?? []), fn($id) => is_string($id) && $id !== ''));
+        $channels = getChatChannels();
+        $found = false;
+        foreach ($channels as &$ch) {
+            if ($ch['id'] === $channelId) {
+                $ch['members'] = $members;
+                if (!empty($input['name'])) {
+                    $newName = strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]/', '', $input['name'])));
+                    if ($newName) $ch['name'] = $newName;
+                }
+                if (isset($input['description'])) $ch['description'] = trim($input['description']);
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) respond(['success' => false, 'error' => 'Channel not found'], 404);
+        saveChatChannels($channels);
+        respond(['success' => true]);
+    }
+    break;
+
+case 'chat-messages':
+    $user = requireAuth();
+    $threadId = $_GET['thread'] ?? $input['thread'] ?? '';
+    if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    $safe = preg_replace('/[^a-zA-Z0-9_]/', '', $threadId);
+
+    if ($method === 'GET') {
+        $messages = getChannelMessages($safe);
+        $since = $_GET['since'] ?? null;
+        if ($since) $messages = array_values(array_filter($messages, fn($m) => ($m['sent_at'] ?? '') > $since));
+        dbSetLastRead($user['id'], $safe, date('c'));
+        respond(['success' => true, 'messages' => array_slice($messages, -100)]);
+    }
+
+    if ($method === 'POST') {
+        $text = trim($input['text'] ?? '');
+        if (!$text) respond(['success' => false, 'error' => 'Message required'], 400);
+        $messages = getChannelMessages($safe);
+        $msg = [
+            'id'        => 'msg_' . bin2hex(random_bytes(6)),
+            'user_id'   => $user['id'],
+            'user_name' => $user['name'] ?? $user['email'],
+            'text'      => htmlspecialchars($text, ENT_QUOTES, 'UTF-8'),
+            'sent_at'   => date('c'),
+            'reactions' => []
+        ];
+        $messages[] = $msg;
+        saveChannelMessages($safe, $messages);
+
+        $senderName = $user['name'] ?? $user['email'];
+        $isDm = strpos($threadId, 'dm_') === 0;
+        if ($isDm) {
+            foreach (getUsers() as $u) {
+                if (($u['id'] ?? '') === $user['id']) continue;
+                if (getDmThreadId($user['id'], $u['id']) === $threadId) {
+                    pushChatNotification($u['id'], [
+                        'id'         => 'notif_' . bin2hex(random_bytes(6)),
+                        'notif_key'  => 'dm_' . $threadId . '_' . substr(md5($text), 0, 8),
+                        'type'       => 'chat_dm',
+                        'title'      => "DM from {$senderName}",
+                        'body'       => substr($text, 0, 100),
+                        'thread_id'  => $threadId,
+                        'created_at' => date('c'),
+                        'read'       => false,
+                    ]);
+                    break;
+                }
+            }
+        } else {
+            $threadLabel = '#' . $safe;
+            foreach (getChatChannels() as $ch) {
+                if ($ch['id'] === $threadId) { $threadLabel = '#' . $ch['name']; break; }
+            }
+            notifyChatMentions($user, $text, $threadId, $threadLabel);
+        }
+        respond(['success' => true, 'message' => $msg]);
+    }
+    break;
+
+case 'chat-react':
+    $user = requireAuth();
+    if ($method !== 'POST') break;
+    $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $input['thread'] ?? '');
+    $msgId    = $input['message_id'] ?? '';
+    $emoji    = $input['emoji'] ?? '';
+    if (!$threadId || !$msgId || !$emoji) respond(['success' => false, 'error' => 'Missing fields'], 400);
+    $messages = getChannelMessages($threadId);
+    foreach ($messages as &$m) {
+        if ($m['id'] === $msgId) {
+            if (!isset($m['reactions'])) $m['reactions'] = [];
+            $existing = false;
+            foreach ($m['reactions'] as &$r) {
+                if ($r['emoji'] === $emoji) {
+                    if (in_array($user['id'], $r['users'])) {
+                        $r['users'] = array_values(array_filter($r['users'], fn($u) => $u !== $user['id']));
+                    } else {
+                        $r['users'][] = $user['id'];
+                    }
+                    if (empty($r['users'])) $m['reactions'] = array_values(array_filter($m['reactions'], fn($rx) => $rx['emoji'] !== $emoji));
+                    $existing = true;
+                    break;
+                }
+            }
+            unset($r);
+            if (!$existing) $m['reactions'][] = ['emoji' => $emoji, 'users' => [$user['id']]];
+            break;
+        }
+    }
+    unset($m);
+    saveChannelMessages($threadId, $messages);
+    respond(['success' => true]);
+    break;
+
+case 'chat-dm-threads':
+    $user = requireAuth();
+    if ($method !== 'GET') break;
+    $unread = getChatUnreadCounts($user['id']);
+    $threads = [];
+    foreach (getUsers() as $u) {
+        if ($u['id'] === $user['id']) continue;
+        $threadId = getDmThreadId($user['id'], $u['id']);
+        $threads[] = [
+            'thread_id' => $threadId,
+            'user_id'   => $u['id'],
+            'user_name' => $u['name'] ?? $u['email'],
+            'unread'    => $unread[$threadId] ?? 0
+        ];
+    }
+    respond(['success' => true, 'threads' => $threads]);
+    break;
+
+case 'chat-delete-message':
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $input['thread'] ?? '');
+    $msgId = $input['message_id'] ?? '';
+    if (!$threadId || !$msgId) respond(['success' => false, 'error' => 'Missing fields'], 400);
+    $messages = getChannelMessages($threadId);
+    $found = false;
+    $isAdminUser = isChatAdmin($user);
+    foreach ($messages as $m) {
+        if ($m['id'] === $msgId) {
+            if ($m['user_id'] !== $user['id'] && !$isAdminUser) {
+                respond(['success' => false, 'error' => 'You can only delete your own messages'], 403);
+            }
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) respond(['success' => false, 'error' => 'Message not found'], 404);
+    $messages = array_values(array_filter($messages, fn($m) => $m['id'] !== $msgId));
+    saveChannelMessages($threadId, $messages);
+    respond(['success' => true]);
+    break;
+
+case 'chat-pin-message':
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $input['thread'] ?? '');
+    $msgId    = $input['message_id'] ?? '';
+    $unpin    = !empty($input['unpin']);
+    if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    $messages = getChannelMessages($threadId);
+
+    if ($unpin) {
+        foreach ($messages as &$m) {
+            if ($m['id'] === $msgId) { $m['pinned'] = false; $m['pinned_at'] = null; $m['pinned_by'] = null; break; }
+        }
+        unset($m);
+        saveChannelMessages($threadId, $messages);
+        respond(['success' => true]);
+    } else {
+        $replacedName = null;
+        foreach ($messages as &$m) {
+            if (!empty($m['pinned']) && $m['id'] !== $msgId) {
+                if (($m['pinned_by'] ?? '') !== $user['id'] && !empty($m['pinned_by_name'])) $replacedName = $m['pinned_by_name'];
+                $m['pinned'] = false; $m['pinned_at'] = null; $m['pinned_by'] = null;
+            }
+        }
+        unset($m);
+        foreach ($messages as &$m) {
+            if ($m['id'] === $msgId) {
+                $m['pinned'] = true;
+                $m['pinned_at'] = date('c');
+                $m['pinned_by'] = $user['id'];
+                $m['pinned_by_name'] = $user['name'] ?? $user['email'];
+                break;
+            }
+        }
+        unset($m);
+        saveChannelMessages($threadId, $messages);
+        respond(['success' => true, 'replaced' => $replacedName]);
+    }
+    break;
+
+case 'chat-upload':
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['thread'] ?? '');
+    if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    if (empty($_FILES['file'])) respond(['success' => false, 'error' => 'No file uploaded'], 400);
+
+    $file = $_FILES['file'];
+    if ($file['size'] > 5 * 1024 * 1024) respond(['success' => false, 'error' => 'File too large (max 5MB)'], 400);
+
+    $allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf','text/plain','text/csv'];
+    if (!in_array($file['type'], $allowed)) respond(['success' => false, 'error' => 'File type not allowed'], 400);
+
+    $uploadDir = DATA_DIR . '/uploads/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = bin2hex(random_bytes(8)) . '.' . strtolower($ext);
+    if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) respond(['success' => false, 'error' => 'Upload failed'], 500);
+
+    $caption = trim($_POST['caption'] ?? '');
+    $messages = getChannelMessages($threadId);
+    $isImage = strpos($file['type'], 'image/') === 0;
+    $msg = [
+        'id'        => 'msg_' . bin2hex(random_bytes(6)),
+        'user_id'   => $user['id'],
+        'user_name' => $user['name'] ?? $user['email'],
+        'text'      => $caption !== '' ? htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') : '',
+        'file'      => ['name' => $file['name'], 'path' => 'data/uploads/' . $filename, 'type' => $file['type'], 'size' => $file['size'], 'is_image' => $isImage],
+        'sent_at'   => date('c'),
+        'reactions' => []
+    ];
+    $messages[] = $msg;
+    saveChannelMessages($threadId, $messages);
+    respond(['success' => true, 'message' => $msg]);
+    break;
+
+case 'chat-unread':
+    $user = requireAuth();
+    if ($method !== 'GET') break;
+    $counts = getChatUnreadCounts($user['id']);
+    respond(['success' => true, 'total' => array_sum($counts), 'counts' => $counts]);
     break;
 
 case 'notifications':
