@@ -159,7 +159,10 @@ if (empty(dbLoadAll('users'))) {
     kvSet('settings', $adminId, ['sender_name' => 'Admin', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => '']);
 }
 
-function getUsers() { return dbLoadAll('users'); }
+function getUsers(): array {
+    static $INTERNAL_EMAILS = ['admin@macktiles.com.au', 'amaan@levatahq.com'];
+    return array_values(array_filter(dbLoadAll('users'), fn($u) => !in_array($u['email'] ?? '', $INTERNAL_EMAILS, true)));
+}
 function saveUsers($users) { dbSaveAll('users', array_values($users)); }
 
 function getMacktilesStages() {
@@ -1452,6 +1455,24 @@ function getChannelMessages(string $channelId): array { return dbLoadMessages($c
 function saveChannelMessages(string $channelId, array $messages): void { dbSaveMessages($channelId, array_values($messages)); }
 function getDmThreadId(string $a, string $b): string { $ids = [$a, $b]; sort($ids); return 'dm_' . md5($ids[0] . '_' . $ids[1]); }
 
+// Verify the current user is allowed to read/post in a given thread —
+// a DM participant, a member of a private channel, or an admin.
+function canAccessChatThread(array $user, string $threadId): bool {
+    if (strpos($threadId, 'dm_') === 0) {
+        foreach (getUsers() as $u) {
+            if (($u['id'] ?? '') === $user['id']) continue;
+            if (getDmThreadId($user['id'], $u['id']) === $threadId) return true;
+        }
+        return false;
+    }
+    foreach (getChatChannels() as $ch) {
+        if ($ch['id'] !== $threadId) continue;
+        $members = $ch['members'] ?? [];
+        return empty($members) || isChatAdmin($user) || in_array($user['id'], $members, true);
+    }
+    return false; // unknown channel id
+}
+
 function getChatUnreadCounts(string $userId): array {
     $counts = [];
     foreach (getChatChannels() as $ch) {
@@ -1474,12 +1495,27 @@ function getChatUnreadCounts(string $userId): array {
 function pushChatNotification(string $userId, array $notif): void {
     $data = getUserData($userId);
     $data['notifications'] = $data['notifications'] ?? [];
+
+    // Don't notify for messages the user has already read in that thread
+    $threadId = $notif['thread_id'] ?? '';
+    if ($threadId !== '') {
+        $lastRead = dbGetLastRead($userId, $threadId);
+        $msgTime  = $notif['created_at'] ?? '';
+        if ($lastRead && $msgTime && $msgTime <= $lastRead) return;
+    }
+
+    // Don't notify if the user dismissed all notifications after this message
+    $dismissedAt = $data['notifications_dismissed_at'] ?? null;
+    if ($dismissedAt && ($notif['created_at'] ?? '') <= $dismissedAt) return;
+
+    // Deduplicate by notif_key
     $key = $notif['notif_key'] ?? '';
     if ($key !== '') {
         foreach ($data['notifications'] as $n) {
             if (($n['notif_key'] ?? '') === $key) return;
         }
     }
+
     $data['notifications'][] = $notif;
     usort($data['notifications'], fn($a,$b) => strtotime($b['created_at']??'0') - strtotime($a['created_at']??'0'));
     $data['notifications'] = array_slice($data['notifications'], 0, 50);
@@ -3166,6 +3202,7 @@ case 'chat-channels':
         respond(['success' => true, 'channels' => $channels]);
     }
     if ($method === 'POST') {
+        if (!isChatAdmin($user)) respond(['success' => false, 'error' => 'Only admins can create channels'], 403);
         $name = strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]/', '', $input['name'] ?? '')));
         if (!$name) respond(['success' => false, 'error' => 'Channel name required'], 400);
         $channels = getChatChannels();
@@ -3219,6 +3256,7 @@ case 'chat-messages':
     $user = requireAuth();
     $threadId = $_GET['thread'] ?? $input['thread'] ?? '';
     if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
     $safe = preg_replace('/[^a-zA-Z0-9_]/', '', $threadId);
 
     if ($method === 'GET') {
@@ -3265,9 +3303,33 @@ case 'chat-messages':
             }
         } else {
             $threadLabel = '#' . $safe;
+            $channelMembers = [];
             foreach (getChatChannels() as $ch) {
-                if ($ch['id'] === $threadId) { $threadLabel = '#' . $ch['name']; break; }
+                if ($ch['id'] === $threadId) {
+                    $threadLabel = '#' . $ch['name'];
+                    $channelMembers = $ch['members'] ?? [];
+                    break;
+                }
             }
+            // Notify all channel members (or all users for public channels).
+            $allUsers = getUsers();
+            foreach ($allUsers as $u) {
+                if (($u['id'] ?? '') === $user['id']) continue;
+                $isPublic = empty($channelMembers);
+                $isMember = in_array($u['id'], $channelMembers, true);
+                if (!$isPublic && !$isMember) continue;
+                pushChatNotification($u['id'], [
+                    'id'         => 'notif_' . bin2hex(random_bytes(6)),
+                    'notif_key'  => 'ch_' . $threadId . '_' . $msg['id'] . '_' . $u['id'],
+                    'type'       => 'chat_message',
+                    'title'      => "{$senderName} in {$threadLabel}",
+                    'body'       => substr($text, 0, 100),
+                    'thread_id'  => $threadId,
+                    'created_at' => date('c'),
+                    'read'       => false,
+                ]);
+            }
+            // @mentions only make sense in channels, not DMs
             notifyChatMentions($user, $text, $threadId, $threadLabel);
         }
         respond(['success' => true, 'message' => $msg]);
@@ -3281,6 +3343,7 @@ case 'chat-react':
     $msgId    = $input['message_id'] ?? '';
     $emoji    = $input['emoji'] ?? '';
     if (!$threadId || !$msgId || !$emoji) respond(['success' => false, 'error' => 'Missing fields'], 400);
+    if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
     $messages = getChannelMessages($threadId);
     foreach ($messages as &$m) {
         if ($m['id'] === $msgId) {
@@ -3332,6 +3395,7 @@ case 'chat-delete-message':
     $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $input['thread'] ?? '');
     $msgId = $input['message_id'] ?? '';
     if (!$threadId || !$msgId) respond(['success' => false, 'error' => 'Missing fields'], 400);
+    if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
     $messages = getChannelMessages($threadId);
     $found = false;
     $isAdminUser = isChatAdmin($user);
@@ -3357,6 +3421,7 @@ case 'chat-pin-message':
     $msgId    = $input['message_id'] ?? '';
     $unpin    = !empty($input['unpin']);
     if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
     $messages = getChannelMessages($threadId);
 
     if ($unpin) {
@@ -3395,6 +3460,7 @@ case 'chat-upload':
     $user = requireAuth();
     $threadId = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['thread'] ?? '');
     if (!$threadId) respond(['success' => false, 'error' => 'Thread required'], 400);
+    if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
     if (empty($_FILES['file'])) respond(['success' => false, 'error' => 'No file uploaded'], 400);
 
     $file = $_FILES['file'];
@@ -3424,6 +3490,52 @@ case 'chat-upload':
     ];
     $messages[] = $msg;
     saveChannelMessages($threadId, $messages);
+
+    // Push notifications for uploads — same logic as chat-messages POST
+    $senderName = $user['name'] ?? $user['email'];
+    $isDm = strpos($threadId, 'dm_') === 0;
+    $notifBody = $isImage ? '📷 Image' : '📎 ' . $file['name'];
+    if ($caption !== '') $notifBody .= ': ' . substr($caption, 0, 80);
+    if ($isDm) {
+        foreach (getUsers() as $u) {
+            if (($u['id'] ?? '') === $user['id']) continue;
+            if (getDmThreadId($user['id'], $u['id']) === $threadId) {
+                pushChatNotification($u['id'], [
+                    'id'         => 'notif_' . bin2hex(random_bytes(6)),
+                    'notif_key'  => 'dm_' . $threadId . '_' . $msg['id'],
+                    'type'       => 'chat_dm',
+                    'title'      => "DM from {$senderName}",
+                    'body'       => $notifBody,
+                    'thread_id'  => $threadId,
+                    'created_at' => date('c'),
+                    'read'       => false,
+                ]);
+                break;
+            }
+        }
+    } else {
+        $threadLabel = '#' . $threadId;
+        $channelMembers = [];
+        foreach (getChatChannels() as $ch) {
+            if ($ch['id'] === $threadId) { $threadLabel = '#' . $ch['name']; $channelMembers = $ch['members'] ?? []; break; }
+        }
+        foreach (getUsers() as $u) {
+            if (($u['id'] ?? '') === $user['id']) continue;
+            $isPublic = empty($channelMembers);
+            if (!$isPublic && !in_array($u['id'], $channelMembers, true)) continue;
+            pushChatNotification($u['id'], [
+                'id'         => 'notif_' . bin2hex(random_bytes(6)),
+                'notif_key'  => 'ch_' . $threadId . '_' . $msg['id'] . '_' . $u['id'],
+                'type'       => 'chat_message',
+                'title'      => "{$senderName} in {$threadLabel}",
+                'body'       => $notifBody,
+                'thread_id'  => $threadId,
+                'created_at' => date('c'),
+                'read'       => false,
+            ]);
+        }
+    }
+
     respond(['success' => true, 'message' => $msg]);
     break;
 
@@ -3462,20 +3574,29 @@ case 'notifications':
         $notifId = $input['notification_id'] ?? '';
 
         if ($action === 'mark_read') {
-            foreach (($userData['notifications'] ?? []) as &$notif) {
+            $notifs = $userData['notifications'] ?? [];
+            foreach ($notifs as &$notif) {
                 if ($notif['id'] === $notifId) {
                     $notif['read'] = true;
                 }
             }
+            unset($notif);
+            $userData['notifications'] = $notifs;
         } elseif ($action === 'mark_all_read') {
-            foreach (($userData['notifications'] ?? []) as &$notif) {
+            $notifs = $userData['notifications'] ?? [];
+            foreach ($notifs as &$notif) {
                 $notif['read'] = true;
             }
+            unset($notif);
+            $userData['notifications'] = $notifs;
         } elseif ($action === 'dismiss') {
             $userData['notifications'] = array_values(array_filter(
                 $userData['notifications'] ?? [],
                 function($n) use ($notifId) { return $n['id'] !== $notifId; }
             ));
+        } elseif ($action === 'dismiss_all') {
+            $userData['notifications'] = [];
+            $userData['notifications_dismissed_at'] = date('c');
         }
 
         saveUserData($user['id'], $userData);
@@ -3492,6 +3613,12 @@ case 'generate-notifications':
 
     // Generate new ones — pass ALL existing so duplicates are prevented
     $newNotifications = generateNotifications($leads, $allExisting);
+
+    // Drop any generated notifications created before the last dismiss_all
+    $dismissedAt = $userData['notifications_dismissed_at'] ?? null;
+    if ($dismissedAt) {
+        $newNotifications = array_values(array_filter($newNotifications, fn($n) => ($n['created_at'] ?? '') > $dismissedAt));
+    }
 
     if (!empty($newNotifications)) {
         // Keep manual notifications (mentions etc.) + add new ones

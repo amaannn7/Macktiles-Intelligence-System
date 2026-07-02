@@ -58,7 +58,7 @@
         .mobile-header .logo img { height: 34px; }
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
 
-        .top-bar { background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); padding: 14px 24px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); }
+        .top-bar { background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border); padding: 14px 24px; padding-right: 64px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); }
         .top-bar-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
         .page-title h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
         .page-title p { font-size: 13px; color: var(--text-secondary); }
@@ -1039,7 +1039,13 @@
 
                     <div class="cc-progress-row">
                         <div class="cc-progress-card" style="flex:1;">
-                            <div class="cc-progress-title">User Sessions</div>
+                            <div class="cc-progress-title" style="display:flex;align-items:center;justify-content:space-between;">
+                                <span>Session Activity</span>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <span id="cc-sessions-online" style="font-size:12px;font-weight:500;color:var(--success);"></span>
+                                    <button class="btn btn-xs btn-secondary" onclick="showPage('users')">View Full</button>
+                                </div>
+                            </div>
                             <div id="cc-user-sessions"></div>
                         </div>
                     </div>
@@ -1654,7 +1660,7 @@ Phone: +1 234 567 890"></textarea></div>
         <div id="chat-sidebar" style="width:220px;flex-shrink:0;background:var(--bg-main);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;">
             <div style="padding:12px 16px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
                 Channels
-                <button class="btn btn-xs" onclick="openCreateChannel()" style="font-size:10px;padding:2px 8px;">+ New</button>
+                <button id="chat-new-channel-btn" class="btn btn-xs" onclick="openCreateChannel()" style="font-size:10px;padding:2px 8px;display:none;">+ New</button>
             </div>
             <div id="chat-channel-list"></div>
             <div style="padding:12px 16px 6px;margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-muted);">Direct Messages</div>
@@ -1861,7 +1867,8 @@ async function requestPasswordReset(){
 function logout(){localStorage.removeItem('token');user=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex'}
 async function checkAuth(){if(!localStorage.token)return;const r=await api('me');if(r.success){user=r.user;showApp()}}
 function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
-    setInterval(pollNotifications, 8000);
+    setInterval(pollNotifications, 3000);
+    setInterval(() => api('generate-notifications', 'POST'), 8000);
     updateChatUnreadBadge();
     setInterval(()=>{ if(chatState.thread===null||document.getElementById('page-chat')?.classList.contains('active')===false) updateChatUnreadBadge(); }, 15000);
     // Check onboarding
@@ -2464,20 +2471,43 @@ async function loadCommandCenter() {
         renderConversionFunnel(r.funnel || []);
         renderManagementMetrics(r.management || {});
 
-        // User sessions
+        // Session activity widget
         const sessionsEl = document.getElementById('cc-user-sessions');
-        if(sessionsEl){
-            const ur = await api('users');
-            if(ur.success && ur.users.length){
-                sessionsEl.innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Last Login</th><th>Session Duration</th><th>Last Active</th></tr></thead><tbody>${ur.users.map(u=>{
-                    const loginAgo = u.last_login_at ? fmtAgo(u.last_login_at) : '<span style="color:var(--text-muted)">Never</span>';
-                    const lastActiveAgo = u.last_active_at ? fmtAgo(u.last_active_at) : '<span style="color:var(--text-muted)">—</span>';
-                    const duration = fmtDuration(u.session_start, u.last_active_at);
-                    const isOnline = u.last_active_at && (Date.now()-new Date(u.last_active_at))<5*60*1000;
-                    return `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isOnline?'var(--success)':'var(--border)'};margin-right:6px;"></span>${u.name}</td><td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':'User'}</td><td>${loginAgo}</td><td>${duration}</td><td>${lastActiveAgo}</td></tr>`;
-                }).join('')}</tbody></table></div>`;
+        if (sessionsEl) {
+            const sr = await api('user-sessions&days=7');
+            if (sr.success && sr.sessions.length) {
+                const localToday = new Date().toLocaleDateString('en-CA');
+                const onlineCount = sr.sessions.filter(s => s.last_seen && (Date.now() - new Date(s.last_seen)) < 3 * 60 * 1000).length;
+                const onlineEl = document.getElementById('cc-sessions-online');
+                if (onlineEl) onlineEl.textContent = onlineCount > 0 ? `● ${onlineCount} online now` : '';
+
+                sessionsEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="border-bottom:1px solid var(--border);">
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">User</th>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Last Seen</th>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Active Today</th>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Sessions (7d)</th>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Last Page</th>
+                    </tr></thead>
+                    <tbody>${sr.sessions.map(s => {
+                        const isOnline = s.last_seen && (Date.now() - new Date(s.last_seen)) < 3 * 60 * 1000;
+                        const todayMins = (s.sessions || [])
+                            .filter(x => (x.start || '').slice(0, 10) === localToday)
+                            .reduce((sum, x) => sum + (x.duration_mins || 0), 0);
+                        return `<tr style="border-bottom:1px solid var(--border-light);">
+                            <td style="padding:8px 8px;">
+                                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isOnline ? 'var(--success)' : 'var(--border)'};margin-right:6px;vertical-align:middle;"></span>
+                                <span style="font-weight:500;">${esc(s.user_name)}</span>
+                            </td>
+                            <td style="padding:8px;color:${isOnline ? 'var(--success)' : 'var(--text-muted)'};">${isOnline ? 'Online now' : (s.last_seen ? getTimeAgo(s.last_seen) : '—')}</td>
+                            <td style="padding:8px;font-weight:600;color:var(--navy);">${todayMins > 0 ? _fmtMins(todayMins) : '—'}</td>
+                            <td style="padding:8px;color:var(--text-secondary);">${s.sessions_this_period || 0}</td>
+                            <td style="padding:8px;color:var(--text-muted);font-size:12px;">${esc(s.last_page || '—')}</td>
+                        </tr>`;
+                    }).join('')}</tbody>
+                </table>`;
             } else {
-                sessionsEl.innerHTML = emptyState('No session data', 'Sessions appear after users log in.');
+                sessionsEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:12px 0;">No activity recorded yet.</div>';
             }
         }
 
@@ -3098,8 +3128,6 @@ async function loadNotifications() {
 
 async function pollNotifications() {
     try {
-        // Generate any new lead-based notifications, then fetch the full list
-        await api('generate-notifications', 'POST');
         const r = await api('notifications');
         if (r.success) {
             const prevIds = new Set(notifications.map(n => n.id));
@@ -3126,13 +3154,24 @@ function renderNotificationBadge() {
     }
 }
 
-function toggleNotifications() {
+async function toggleNotifications() {
     const dropdown = document.getElementById('notification-dropdown');
     if (dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
     } else {
+        // Fetch fresh list from server
+        try {
+            const r = await api('notifications');
+            if (r.success) notifications = r.notifications || [];
+        } catch(e) {}
         renderNotificationList();
         dropdown.classList.add('show');
+        // Dismiss all from server so they never reappear
+        if (notifications.length) {
+            api('notifications', 'POST', {action: 'dismiss_all'});
+            notifications = [];
+            renderNotificationBadge();
+        }
     }
 }
 
@@ -3174,18 +3213,19 @@ async function handleNotificationClick(notifId, leadId, threadId) {
     document.getElementById('notification-dropdown').classList.remove('show');
 
     if (threadId) {
-        // Jump to Team Chat and open the referenced thread.
+        const isDm = threadId.startsWith('dm_');
+        // Set thread before showPage so loadChat() won't override with general
+        chatState.thread = threadId;
         showPage('chat');
-        // loadChat() runs async; wait for channel/DM lists, then open the thread.
-        setTimeout(async () => {
-            let name = '', isDm = threadId.startsWith('dm_'), desc = '';
-            const ch = (chatChannelData || []).find(c => c.id === threadId);
-            const dm = (chatDmData || []).find(t => t.thread_id === threadId);
-            if (ch) { name = ch.name; desc = ch.description || ''; }
-            else if (dm) { name = dm.user_name; isDm = true; }
-            else { name = isDm ? 'Direct message' : threadId; }
-            openChatThread(threadId, name, isDm, desc);
-        }, 350);
+        // Always fetch fresh so we have the correct name
+        await Promise.all([loadChatChannels(), loadChatDms()]);
+        let name = '', desc = '';
+        const ch = (chatChannelData || []).find(c => c.id === threadId);
+        const dm = (chatDmData || []).find(t => t.thread_id === threadId);
+        if (ch) { name = ch.name; desc = ch.description || ''; }
+        else if (dm) { name = dm.user_name; }
+        else { name = isDm ? 'Direct Message' : threadId; }
+        openChatThread(threadId, name, isDm, desc);
         return;
     }
     if (leadId) {
@@ -4839,16 +4879,20 @@ async function loadUserSessions(){
     const r=await api(`user-sessions&days=${days}`);
     if(!r.success){body.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">${r.error||'Failed to load'}</td></tr>`;return;}
     if(!r.sessions.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No activity recorded.</td></tr>';return;}
+    const localToday = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local tz
     body.innerHTML=r.sessions.map(s=>{
         const roleBadge=s.user_role==='super_admin'?'Super Admin':(s.user_role==='admin'?'Admin':'Rep');
-        const detailId=`sess-detail-${s.user_id}`;
+        const detailId=`sess-detail-${s.user_id.replace(/[^a-z0-9]/gi,'_')}`;
+        // Compute active today in browser local timezone
+        const todayMins = (s.sessions||[]).filter(x => x.start && x.start.slice(0,10) === localToday)
+            .reduce((sum, x) => sum + (x.duration_mins||0), 0);
         const rows=(s.sessions||[]).map(x=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;"><span>${_fmtDT(x.start)} → ${_fmtDT(x.end)}</span><span style="color:var(--text-muted);">${_fmtMins(x.duration_mins)} · ${(x.pages||[]).join(', ')||'—'}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">No sessions in range.</div>';
         return `<tr>
             <td>${s.user_name||'—'}</td>
             <td><span class="badge">${roleBadge}</span></td>
             <td>${_fmtDT(s.last_seen)}</td>
             <td>${s.last_page||'—'}</td>
-            <td>${_fmtMins(s.active_mins_today)}</td>
+            <td>${todayMins > 0 ? _fmtMins(todayMins) : '—'}</td>
             <td>${s.sessions_this_period}</td>
             <td><button class="btn btn-xs btn-secondary" onclick="document.getElementById('${detailId}').classList.toggle('hidden')">View</button></td>
         </tr>
@@ -4868,13 +4912,16 @@ setInterval(()=>{
 },60000);
 
 // ==================== TEAM CHAT ====================
-let chatState = { thread: null, threadName: '', isDm: false, lastMsg: null, allMessages: [], pollTimer: null };
+let chatState = { thread: null, threadName: '', isDm: false, allMessages: [], pollTimer: null };
 let chatChannelData = [];
 let chatDmData = [];
 let chatUsers = [];
 async function loadChat() {
     await Promise.all([loadChatChannels(), loadChatDms()]);
-    openChatThread('channel_general', 'general', false, '');
+    // Only open general if no thread is already open (e.g. opened from notification)
+    if (!chatState.thread) {
+        openChatThread('channel_general', 'general', false, '');
+    }
     if (window.innerWidth <= 768) {
         document.getElementById('chat-wrapper')?.classList.remove('show-conversation');
     }
@@ -4886,6 +4933,8 @@ async function loadChatChannels() {
     chatChannelData = r.channels;
     const list = document.getElementById('chat-channel-list');
     const isAdmin = (user.is_admin||user.is_super_admin);
+    const newChanBtn = document.getElementById('chat-new-channel-btn');
+    if (newChanBtn) newChanBtn.style.display = isAdmin ? '' : 'none';
     list.innerHTML = '';
     r.channels.forEach(ch => {
         const el = document.createElement('div');
@@ -4894,7 +4943,7 @@ async function loadChatChannels() {
         el.onclick = (e) => { if (!e.target.closest('.ch-settings-btn')) openChatThread(ch.id, ch.name, false, ch.description || ''); };
         const memberCount = ch.members?.length ? `<span title="${ch.members.length} members" style="font-size:10px;color:var(--text-muted);margin-right:4px;">🔒</span>` : '';
         const settingsBtn = isAdmin ? `<button class="ch-settings-btn" onclick="openEditChannel('${ch.id}')" title="Manage members" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-muted);font-size:13px;opacity:0.6;line-height:1;">⚙</button>` : '';
-        el.innerHTML = `<span style="color:var(--text-muted);margin-right:6px;font-size:15px;">#</span><span style="flex:1;">${esc(ch.name)}</span>${memberCount}${ch.unread > 0 ? `<span style="background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">${ch.unread}</span>` : ''}${settingsBtn}`;
+        el.innerHTML = `<span style="color:var(--text-muted);margin-right:6px;font-size:15px;">#</span><span style="flex:1;">${esc(ch.name)}</span>${memberCount}${settingsBtn}`;
         list.appendChild(el);
     });
 }
@@ -4910,8 +4959,36 @@ async function loadChatDms() {
         el.className = 'chat-nav-item' + (chatState.thread === t.thread_id ? ' active' : '');
         el.dataset.threadId = t.thread_id;
         el.onclick = () => openChatThread(t.thread_id, t.user_name, true, '');
-        el.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:8px;flex-shrink:0;"></div><span style="flex:1;">${esc(t.user_name)}</span>${t.unread > 0 ? `<span style="background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">${t.unread}</span>` : ''}`;
+        el.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:8px;flex-shrink:0;"></div><span style="flex:1;">${esc(t.user_name)}</span>`;
         list.appendChild(el);
+    });
+}
+
+async function refreshChatUnreadBadges() {
+    const r = await api('chat-unread');
+    if (!r.success) return;
+    const counts = r.counts || {};
+    // Update channel badges in-place
+    document.querySelectorAll('#chat-channel-list .chat-nav-item').forEach(el => {
+        const tid = el.dataset.threadId;
+        if (!tid) return;
+        const count = counts[tid] || 0;
+        let badge = el.querySelector('.chat-unread-badge');
+        if (count > 0) {
+            if (!badge) { badge = document.createElement('span'); badge.className = 'chat-unread-badge'; badge.style.cssText = 'background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;'; el.appendChild(badge); }
+            badge.textContent = count;
+        } else if (badge) badge.remove();
+    });
+    // Update DM badges in-place
+    document.querySelectorAll('#chat-dm-list .chat-nav-item').forEach(el => {
+        const tid = el.dataset.threadId;
+        if (!tid) return;
+        const count = counts[tid] || 0;
+        let badge = el.querySelector('.chat-unread-badge');
+        if (count > 0) {
+            if (!badge) { badge = document.createElement('span'); badge.className = 'chat-unread-badge'; badge.style.cssText = 'background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;'; el.appendChild(badge); }
+            badge.textContent = count;
+        } else if (badge) badge.remove();
     });
 }
 
@@ -4922,8 +4999,10 @@ async function openChatThread(threadId, name, isDm, desc) {
     chatState.thread = threadId;
     chatState.threadName = name;
     chatState.isDm = isDm;
-    chatState.lastMsg = null;
     chatState.allMessages = [];
+
+    // Clear unread badge instantly for this thread
+    document.querySelectorAll(`[data-thread-id="${threadId}"] .chat-unread-badge`).forEach(b => b.remove());
 
     // Update header instantly — UI switches right away
     document.getElementById('chat-thread-icon').textContent = isDm ? '👤' : '#';
@@ -4944,7 +5023,10 @@ async function openChatThread(threadId, name, isDm, desc) {
     // Load messages then start poll
     await fetchChatMessages(true);
     loadPinnedBar();
-    chatState.pollTimer = setInterval(() => fetchChatMessages(false), 2000);
+    chatState.pollTimer = setInterval(async () => {
+        await fetchChatMessages(false);
+        refreshChatUnreadBadges();
+    }, 2000);
 }
 
 function chatShowSidebar() {
@@ -5041,7 +5123,6 @@ function buildMessageEl(m, grouped) {
 async function pinMessage(msgId, pin) {
     const r = await api('chat-pin-message', 'POST', {thread: chatState.thread, message_id: msgId, unpin: !pin});
     if (r.success) {
-        chatState.lastMsg = null;
         chatState.allMessages = [];
         document.getElementById('chat-messages').innerHTML = '';
         await fetchChatMessages(true);
@@ -5093,40 +5174,52 @@ function jumpToMessage(msgId) {
 
 async function fetchChatMessages(scrollToBottom) {
     const threadAtCall = chatState.thread;
-    const params = chatState.lastMsg ? `&since=${encodeURIComponent(chatState.lastMsg)}` : '';
-    const r = await api(`chat-messages&thread=${threadAtCall}${params}`);
+    const r = await api(`chat-messages&thread=${threadAtCall}`);
     if (!r.success) return;
-    // Thread changed while we were waiting — discard stale response
     if (chatState.thread !== threadAtCall) return;
+
     const container = document.getElementById('chat-messages');
-
-    if (scrollToBottom && !chatState.lastMsg) {
-        container.innerHTML = '';
-        chatState.allMessages = [];
-        if (!r.messages.length) {
-            container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">No messages yet. Say hello! 👋</div>';
-            return;
-        }
-    }
-    if (!r.messages.length) return;
-
     const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+
+    // Sort by sent_at ascending so oldest is always first
+    const sorted = (r.messages || []).slice().sort((a, b) =>
+        new Date(a.sent_at) - new Date(b.sent_at)
+    );
+
+    if (!sorted.length) {
+        if (scrollToBottom) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">No messages yet. Say hello! 👋</div>';
+            chatState.allMessages = [];
+        }
+        return;
+    }
+
+    const seenIds = new Set(chatState.allMessages.map(m => m.id));
+    const hasNew = sorted.some(m => !seenIds.has(m.id));
+    if (!hasNew) return;
+
+    // Rebuild from scratch with correct order
     const emptyEl = container.querySelector('div[style*="text-align:center"]');
     if (emptyEl) emptyEl.remove();
 
-    const seenIds = new Set(chatState.allMessages.map(m => m.id));
-    r.messages.forEach(m => {
-        if (seenIds.has(m.id)) return; // already rendered (e.g. from optimistic send)
-        seenIds.add(m.id);
-        const prev = chatState.allMessages[chatState.allMessages.length - 1];
+    chatState.allMessages = sorted;
+    container.innerHTML = '';
+    const shouldStickToBottom = scrollToBottom || wasAtBottom;
+    sorted.forEach((m, i) => {
+        const prev = sorted[i - 1];
         const grouped = prev && prev.user_id === m.user_id &&
             (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
-        chatState.allMessages.push(m);
-        container.appendChild(buildMessageEl(m, grouped));
-        chatState.lastMsg = m.sent_at;
+        const el = buildMessageEl(m, grouped);
+        container.appendChild(el);
+        // Images load async and grow the container after we scroll — re-stick to bottom once loaded
+        if (shouldStickToBottom) {
+            el.querySelectorAll('img').forEach(img => {
+                img.addEventListener('load', () => { container.scrollTop = container.scrollHeight; }, { once: true });
+            });
+        }
     });
 
-    if (scrollToBottom || wasAtBottom) container.scrollTop = container.scrollHeight;
+    if (shouldStickToBottom) container.scrollTop = container.scrollHeight;
     updateChatUnreadBadge();
 }
 
@@ -5201,7 +5294,6 @@ function showEmojiPicker(msgId, anchor) {
 
 async function reactToMessage(msgId, emoji) {
     await api('chat-react', 'POST', {thread: chatState.thread, message_id: msgId, emoji});
-    chatState.lastMsg = null;
     chatState.allMessages = [];
     document.getElementById('chat-messages').innerHTML = '';
     await fetchChatMessages(true);
@@ -5212,7 +5304,6 @@ async function unsendMessage(msgId) {
     if (!ok) return;
     const r = await api('chat-delete-message', 'POST', {thread: chatState.thread, message_id: msgId});
     if (r.success) {
-        chatState.lastMsg = null;
         chatState.allMessages = [];
         document.getElementById('chat-messages').innerHTML = '';
         await fetchChatMessages(true);
@@ -5244,7 +5335,6 @@ async function sendChatMessage() {
         const grouped = prev && prev.user_id === m.user_id &&
             (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
         chatState.allMessages.push(m);
-        chatState.lastMsg = m.sent_at;
         container.appendChild(buildMessageEl(m, grouped));
         container.scrollTop = container.scrollHeight;
         updateChatUnreadBadge();
@@ -5314,10 +5404,16 @@ async function sendStagedFile(caption) {
         const r = await res.json();
         if (r.success) {
             cancelStagedFile();
-            chatState.lastMsg = null;
-            chatState.allMessages = [];
-            document.getElementById('chat-messages').innerHTML = '';
-            await fetchChatMessages(true);
+            const container = document.getElementById('chat-messages');
+            const emptyEl = container.querySelector('div[style*="text-align:center"]');
+            if (emptyEl) emptyEl.remove();
+            const m = r.message;
+            const prev = chatState.allMessages[chatState.allMessages.length - 1];
+            const grouped = prev && prev.user_id === m.user_id &&
+                (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
+            chatState.allMessages.push(m);
+            container.appendChild(buildMessageEl(m, grouped));
+            container.scrollTop = container.scrollHeight;
             toast('File sent', 'success');
             return true;
         } else { toast(r.error || 'Upload failed', 'error'); return false; }
@@ -5351,7 +5447,7 @@ function handleMentionTyping(input) {
     const before = val.substring(0, pos);
     const mentionMatch = before.match(/@([a-zA-Z0-9_\- ]*)$/);
     const picker = document.getElementById('mention-picker');
-    if (!mentionMatch) { if (picker) picker.innerHTML = ''; return; }
+    if (!mentionMatch || chatState.isDm) { if (picker) picker.innerHTML = ''; return; }
     const query = mentionMatch[1].toLowerCase();
     const names = chatDmData.map(t => t.user_name);
     const filtered = names.filter(n => n.toLowerCase().includes(query));
