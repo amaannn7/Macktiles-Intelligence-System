@@ -1869,6 +1869,7 @@ async function checkAuth(){if(!localStorage.token)return;const r=await api('me')
 function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
     setInterval(pollNotifications, 3000);
     setInterval(() => api('generate-notifications', 'POST'), 8000);
+    _sendActivityPing();
     updateChatUnreadBadge();
     setInterval(()=>{ if(chatState.thread===null||document.getElementById('page-chat')?.classList.contains('active')===false) updateChatUnreadBadge(); }, 15000);
     // Check onboarding
@@ -4905,11 +4906,12 @@ async function loadUserSessions(){
 let _activityPage='dashboard';
 let _lastInteraction=Date.now();
 ['mousemove','keydown','click','scroll'].forEach(ev=>document.addEventListener(ev,()=>{_lastInteraction=Date.now();},{passive:true}));
-setInterval(()=>{
+function _sendActivityPing(){
     if(!user||!localStorage.token)return;
     if(Date.now()-_lastInteraction>60000)return; // skip if idle > 60s
     api('activity-ping','POST',{page:_activityPage}).catch(()=>{});
-},60000);
+}
+setInterval(_sendActivityPing,60000);
 
 // ==================== TEAM CHAT ====================
 let chatState = { thread: null, threadName: '', isDm: false, allMessages: [], pollTimer: null };

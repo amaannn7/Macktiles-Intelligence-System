@@ -159,9 +159,19 @@ if (empty(dbLoadAll('users'))) {
     kvSet('settings', $adminId, ['sender_name' => 'Admin', 'sender_company' => 'Macktiles Australia', 'sender_title' => '', 'company_description' => '', 'value_proposition' => '', 'social_proof' => '', 'calendar_link' => '', 'email_tone' => 'professional', 'signature' => '']);
 }
 
+// Internal/test accounts — hidden from user-facing lists (Users page, chat,
+// sessions, notifications) but must still be able to authenticate normally.
+function internalAccountEmails(): array {
+    return ['admin@macktiles.com.au', 'amaan@levatahq.com'];
+}
 function getUsers(): array {
-    static $INTERNAL_EMAILS = ['admin@macktiles.com.au', 'amaan@levatahq.com'];
-    return array_values(array_filter(dbLoadAll('users'), fn($u) => !in_array($u['email'] ?? '', $INTERNAL_EMAILS, true)));
+    $hidden = internalAccountEmails();
+    return array_values(array_filter(dbLoadAll('users'), fn($u) => !in_array($u['email'] ?? '', $hidden, true)));
+}
+// Unfiltered lookup — use ONLY for authentication (login/token checks), never
+// for anything that renders a user list to other users.
+function getAllUsersIncludingInternal(): array {
+    return dbLoadAll('users');
 }
 function saveUsers($users) { dbSaveAll('users', array_values($users)); }
 
@@ -1414,7 +1424,7 @@ function respond($data, $code = 200) { http_response_code($code); echo json_enco
 function getCurrentUser() {
     $token = $_SERVER['HTTP_X_USER_TOKEN'] ?? '';
     if (empty($token)) return null;
-    foreach (getUsers() as $user) {
+    foreach (getAllUsersIncludingInternal() as $user) {
         // Legacy single token (backward compatible) OR any active token in the tokens[] list
         if (($user['token'] ?? '') === $token) return $user;
         if (!empty($user['tokens']) && is_array($user['tokens']) && in_array($token, $user['tokens'], true)) return $user;
@@ -1558,7 +1568,7 @@ switch ($path) {
 case 'request-password-reset':
     if ($method !== 'POST') break;
     $email = trim(strtolower($input['email'] ?? ''));
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     foreach ($users as &$u) {
         if ($u['email'] === $email) {
             $resetToken = bin2hex(random_bytes(32));
@@ -1579,7 +1589,7 @@ case 'reset-password':
     $newPassword = $input['new_password'] ?? '';
     if (strlen($newPassword) < 6) respond(['success' => false, 'error' => 'Password must be at least 6 characters'], 400);
 
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     foreach ($users as &$u) {
         if (($u['reset_token'] ?? '') === $resetToken && !empty($u['reset_expires']) && strtotime($u['reset_expires']) > time()) {
             $u['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -1599,7 +1609,7 @@ case 'login':
     if ($method !== 'POST') break;
     $email = trim(strtolower($input['email'] ?? ''));
     $password = $input['password'] ?? '';
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     foreach ($users as &$user) {
         if ($user['email'] === $email && password_verify($password, $user['password'])) {
             $token = generateToken();
@@ -1626,7 +1636,7 @@ case 'me':
     if ($method !== 'GET') break;
     $user = getCurrentUser();
     if ($user) {
-        $users = getUsers();
+        $users = getAllUsersIncludingInternal();
         foreach ($users as &$u) {
             if ($u['id'] === $user['id']) {
                 $u['last_active_at'] = date('c');
@@ -1743,7 +1753,7 @@ case 'create-user':
     $isSuperAdmin = (bool)($input['is_super_admin'] ?? false);
     if ($isSuperAdmin) requireSuperAdmin();
     if (!$name || !$email) respond(['success' => false, 'error' => 'Name and email required'], 400);
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     foreach ($users as $u) { if ($u['email'] === $email) respond(['success' => false, 'error' => 'Email exists'], 400); }
     $password = generatePassword();
     $userId = generateId('user_');
@@ -1757,7 +1767,7 @@ case 'update-user':
     if ($method !== 'POST') break;
     $admin = requireAdmin();
     $userId = $input['id'] ?? '';
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     $newPass = null;
     foreach ($users as &$u) {
         if ($u['id'] === $userId) {
@@ -1783,8 +1793,9 @@ case 'delete-user':
     if ($userId === $admin['id']) respond(['success' => false, 'error' => 'Cannot delete yourself'], 400);
     $target = null;
     foreach (getUsers() as $u) { if ($u['id'] === $userId) { $target = $u; break; } }
-    if ($target && !empty($target['is_super_admin']) && empty($admin['is_super_admin'])) respond(['success' => false, 'error' => 'Cannot delete a super admin'], 403);
-    $users = array_values(array_filter(getUsers(), function($u) use ($userId) { return $u['id'] !== $userId; }));
+    if (!$target) respond(['success' => false, 'error' => 'User not found'], 404);
+    if (!empty($target['is_super_admin']) && empty($admin['is_super_admin'])) respond(['success' => false, 'error' => 'Cannot delete a super admin'], 403);
+    $users = array_values(array_filter(getAllUsersIncludingInternal(), function($u) use ($userId) { return $u['id'] !== $userId; }));
     saveUsers($users);
     dbDeleteUserData($userId);
     respond(['success' => true]);
@@ -1794,7 +1805,7 @@ case 'impersonate':
     if ($method !== 'POST') break;
     requireSuperAdmin();
     $targetId = $input['user_id'] ?? '';
-    $users = getUsers();
+    $users = getAllUsersIncludingInternal();
     foreach ($users as &$u) {
         if ($u['id'] === $targetId) {
             $token = bin2hex(random_bytes(32));
