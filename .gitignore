@@ -8,6 +8,7 @@ data/.rate_limits.json
 data/chat_last_read_*.json
 data/uploads/*
 !data/uploads/.gitkeep
+data/recordings/*
 
 # Sensitive data — NEVER commit (contains API keys, passwords, lead data)
 data/admin.json

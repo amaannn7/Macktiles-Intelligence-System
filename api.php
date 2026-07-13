@@ -28,11 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 // Both expose identical helper signatures (dbLoadAll, kvGet, dbLoadLeadsByOwner…).
 define('LOCAL_MODE', is_dir(__DIR__ . '/local-data'));
 require_once __DIR__ . (LOCAL_MODE ? '/db.local.php' : '/db.php');
+require_once __DIR__ . '/support.php';
 // ──────────────────────────────────────────────────────────────────────────────
 
 define('DATA_DIR', __DIR__ . '/data');
 define('USERS_FILE', DATA_DIR . '/users.json');
 define('ADMIN_FILE', DATA_DIR . '/admin.json');
+
+// Feature-disabled: flip this to true to re-enable click-to-dial, the
+// webhook receiver, live "on a call" status, and the admin test-connection
+// endpoint. Every Aircall case checks this first. No other code needs to change.
+define('AIRCALL_ENABLED', false);
 
 if (!is_dir(DATA_DIR)) mkdir(DATA_DIR, 0755, true);
 
@@ -136,6 +142,7 @@ if (kvGet('config', 'admin') === null) {
         'groq_key' => '',
         'gemini_key' => '',
         'anthropic_key' => '',
+        'cerebras_key' => '',
         'default_provider' => 'groq',
         'requisitions' => $defaultRequisitions,
         'icp_config' => $defaultIcpConfig,
@@ -233,7 +240,7 @@ function normalizeLeadSource($source) {
 function initialStageForSource($source, $warm = false) {
     $source = normalizeLeadSource($source);
     if ($source === 'inbound') return 'call_attempted';
-    if ($source === 'manual') return $warm ? 'engaged' : 'research';
+    if ($warm) return 'engaged';
     return 'new_lead';
 }
 
@@ -510,6 +517,12 @@ function calculateLeadGrade($lead, $admin, $enrichmentData = null) {
     $gradeBThreshold = $stageRules['grade_b_threshold'] ?? 60;
     $gradeCThreshold = $stageRules['grade_c_threshold'] ?? 40;
 
+    // Distinguish "actively disqualified" (a real red flag was found) from
+    // "not enough data yet to grade" (no requisitions/research at all) — the
+    // latter must never look like a rejection, or leads silently disappear
+    // from the Focus Queue and pipeline views that filter out Disqualified.
+    $hasQualificationData = !empty(array_filter($req)) || !empty($enrichmentData);
+
     if ($disqualifiers && $score < $gradeBThreshold) {
         $grade = 'Disqualified';
     } elseif ($score >= $gradeAThreshold) {
@@ -518,6 +531,8 @@ function calculateLeadGrade($lead, $admin, $enrichmentData = null) {
         $grade = 'B';
     } elseif ($score >= $gradeCThreshold) {
         $grade = 'C';
+    } elseif (!$hasQualificationData) {
+        $grade = 'Unscored';
     } else {
         $grade = 'Disqualified';
     }
@@ -1005,7 +1020,11 @@ function generateFocusQueue($leads, $admin, $limit = 10) {
             'days_since_activity' => $daysSinceActivity,
             'followup_date' => $lead['followup_date'] ?? null,
             'is_overdue' => $isOverdue,
-            'sla' => $slaStatus
+            'sla' => $slaStatus,
+            // Present only when the caller merged in leads from multiple reps
+            // (admin team-wide view) — absent for a rep's own single-owner queue.
+            'owner_id' => $lead['_owner_id'] ?? null,
+            'owner_name' => $lead['_owner_name'] ?? null
         ];
     }
 
@@ -1014,8 +1033,9 @@ function generateFocusQueue($leads, $admin, $limit = 10) {
         return $b['priority_score'] - $a['priority_score'];
     });
 
-    // Return top N
-    return array_slice($queue, 0, $limit);
+    // Return top N alongside the true total so callers can show an accurate
+    // count badge instead of the capped list length.
+    return ['items' => array_slice($queue, 0, $limit), 'total' => count($queue)];
 }
 
 /**
@@ -1095,7 +1115,9 @@ function findAttentionNeeded($leads) {
                 'fit_grade' => $lead['fit_grade'] ?? '',
                 'status' => $status,
                 'issues' => $issues,
-                'days_since_activity' => $daysSinceActivity
+                'days_since_activity' => $daysSinceActivity,
+                'owner_id' => $lead['_owner_id'] ?? null,
+                'owner_name' => $lead['_owner_name'] ?? null
             ];
         }
     }
@@ -1207,7 +1229,7 @@ Only return valid JSON, no other text.
 PROMPT;
 
     try {
-        $result = callLLM($provider, $apiKey, $prompt);
+        $result = callLLM($provider, $apiKey, $prompt, $admin);
 
         if (!$result['success'] || empty($result['content'])) {
             return generateRuleBasedNBA($lead, $daysSinceActivity);
@@ -1436,6 +1458,70 @@ function requireAuth() { $user = getCurrentUser(); if (!$user) respond(['success
 function requireAdmin() { $user = requireAuth(); if (!($user['is_admin'] ?? false) && !($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Admin access required'], 403); return $user; }
 function requireSuperAdmin() { $user = requireAuth(); if (!($user['is_super_admin'] ?? false)) respond(['success' => false, 'error' => 'Super admin access required'], 403); return $user; }
 
+// ===== REAL-TIME (Pusher Channels) =====
+// Thin wrapper around Pusher's REST API using raw cURL + HMAC-SHA256 signing
+// (same pattern as callGroq/callAnthropic/notifySupportEmail — no SDK needed).
+// Configured via admin.json 'pusher_app_id'/'pusher_key'/'pusher_secret'/'pusher_cluster'
+// (Settings, super-admin-only). Every call is best-effort: a Pusher outage or
+// missing config must never block the underlying save (message/notification/ticket).
+function pusherConfig() {
+    $admin = getAdmin();
+    $appId = trim($admin['pusher_app_id'] ?? '');
+    $key = trim($admin['pusher_key'] ?? '');
+    $secret = trim($admin['pusher_secret'] ?? '');
+    $cluster = trim($admin['pusher_cluster'] ?? '') ?: 'mt1';
+    if ($appId === '' || $key === '' || $secret === '') return null;
+    return ['app_id' => $appId, 'key' => $key, 'secret' => $secret, 'cluster' => $cluster];
+}
+
+/** Push an event to a Pusher channel. Best-effort — never throws, returns bool. */
+function pusherTrigger($channel, $event, $data) {
+    $cfg = pusherConfig();
+    if ($cfg === null) return false;
+
+    $body = json_encode(['name' => $event, 'channel' => $channel, 'data' => json_encode($data)]);
+    $path = "/apps/{$cfg['app_id']}/events";
+    $authTs = time();
+    $authVersion = '1.0';
+    $bodyMd5 = md5($body);
+    $params = [
+        'auth_key' => $cfg['key'],
+        'auth_timestamp' => $authTs,
+        'auth_version' => $authVersion,
+        'body_md5' => $bodyMd5,
+    ];
+    ksort($params);
+    $query = http_build_query($params);
+    $stringToSign = "POST\n{$path}\n{$query}";
+    $signature = hash_hmac('sha256', $stringToSign, $cfg['secret']);
+    $url = "https://api-{$cfg['cluster']}.pusher.com{$path}?{$query}&auth_signature={$signature}";
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $body,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT => 5,
+    ]);
+    curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $code >= 200 && $code < 300;
+}
+
+/**
+ * Sign a private-channel subscription request from the Pusher JS client.
+ * Returns ['auth' => "key:signature"] on success, or null if Pusher isn't configured.
+ */
+function pusherAuthenticate($channelName, $socketId) {
+    $cfg = pusherConfig();
+    if ($cfg === null) return null;
+    $stringToSign = "{$socketId}:{$channelName}";
+    $signature = hash_hmac('sha256', $stringToSign, $cfg['secret']);
+    return ['auth' => "{$cfg['key']}:{$signature}"];
+}
+
 // ===== TEAM CHAT HELPERS =====
 function isChatAdmin(array $user): bool {
     return !empty($user['is_admin']) || !empty($user['is_super_admin']);
@@ -1514,9 +1600,11 @@ function pushChatNotification(string $userId, array $notif): void {
         if ($lastRead && $msgTime && $msgTime <= $lastRead) return;
     }
 
-    // Don't notify if the user dismissed all notifications after this message
+    // Don't notify if the user dismissed all notifications after this message.
+    // Strict "<" only — date('c') truncates to whole seconds, so a message sent
+    // in the same second as the dismiss must still notify, not be swallowed by it.
     $dismissedAt = $data['notifications_dismissed_at'] ?? null;
-    if ($dismissedAt && ($notif['created_at'] ?? '') <= $dismissedAt) return;
+    if ($dismissedAt && ($notif['created_at'] ?? '') < $dismissedAt) return;
 
     // Deduplicate by notif_key
     $key = $notif['notif_key'] ?? '';
@@ -1530,6 +1618,10 @@ function pushChatNotification(string $userId, array $notif): void {
     usort($data['notifications'], fn($a,$b) => strtotime($b['created_at']??'0') - strtotime($a['created_at']??'0'));
     $data['notifications'] = array_slice($data['notifications'], 0, 50);
     saveUserData($userId, $data);
+    // Push instantly to the bell if the user's browser is connected — covers chat
+    // DMs/mentions/channel messages AND Feedback & Support ticket replies, since
+    // all of them funnel through this one function.
+    pusherTrigger('private-user-' . $userId, 'new-notification', $notif);
 }
 
 // Notify @mentioned users in a message (matches full name or first name, case-insensitive).
@@ -1686,7 +1778,7 @@ case 'admin-settings':
         $admin = getAdmin();
 
         // LLM API keys
-        foreach (['groq_key', 'gemini_key', 'anthropic_key'] as $k) {
+        foreach (['groq_key', 'gemini_key', 'anthropic_key', 'cerebras_key'] as $k) {
             if (isset($input[$k]) && strpos($input[$k], '****') === false) $admin[$k] = trim($input[$k]);
         }
         if (isset($input['default_provider'])) $admin['default_provider'] = $input['default_provider'];
@@ -1709,9 +1801,112 @@ case 'admin-settings':
             $admin['zoho_auto_sync'] = (bool)$input['zoho_auto_sync'];
         }
 
+        // Aircall settings
+        if (isset($input['aircall_api_id']) && strpos($input['aircall_api_id'], '****') === false) {
+            $admin['aircall_api_id'] = trim($input['aircall_api_id']);
+        }
+        if (isset($input['aircall_api_token']) && strpos($input['aircall_api_token'], '****') === false) {
+            $admin['aircall_api_token'] = trim($input['aircall_api_token']);
+        }
+        if (isset($input['aircall_webhook_token']) && strpos($input['aircall_webhook_token'], '****') === false) {
+            $admin['aircall_webhook_token'] = trim($input['aircall_webhook_token']);
+        }
+
         saveAdmin($admin);
         respond(['success' => true]);
     }
+    break;
+
+case 'ticket-sync-settings':
+    // Super-admin-only: hub URL/secret for the Feedback & Support -> Levata sync.
+    // Kept out of 'admin-settings' so regular admins never see it, even masked.
+    // Stays super-admin-only even after Feedback & Support itself opens up to
+    // everyone — this is infra config (webhook secret), not a support feature.
+    if ($method === 'GET') {
+        requireSuperAdmin();
+        $admin = getAdmin();
+        $mask = function ($v) { return ($v && is_string($v)) ? ('********' . substr($v, -4)) : ''; };
+        respond(['success' => true, 'settings' => [
+            'ticket_hub_url' => $admin['ticket_hub_url'] ?? '',
+            'ticket_hub_secret' => $mask($admin['ticket_hub_secret'] ?? ''),
+            'ticket_client_name' => $admin['ticket_client_name'] ?? '',
+        ]]);
+    }
+    if ($method === 'POST') {
+        requireSuperAdmin();
+        $admin = getAdmin();
+        if (isset($input['ticket_hub_url'])) $admin['ticket_hub_url'] = trim($input['ticket_hub_url']);
+        if (isset($input['ticket_hub_secret']) && strpos($input['ticket_hub_secret'], '****') === false) {
+            $admin['ticket_hub_secret'] = trim($input['ticket_hub_secret']);
+        }
+        if (isset($input['ticket_client_name'])) $admin['ticket_client_name'] = trim($input['ticket_client_name']);
+        saveAdmin($admin);
+        respond(['success' => true]);
+    }
+    break;
+
+case 'realtime-settings':
+    // Super-admin-only: Pusher app credentials for real-time chat/notifications/tickets.
+    // Kept out of 'admin-settings' so regular admins never see it, even masked.
+    if ($method === 'GET') {
+        requireSuperAdmin();
+        $admin = getAdmin();
+        $mask = function ($v) { return ($v && is_string($v)) ? ('********' . substr($v, -4)) : ''; };
+        respond(['success' => true, 'settings' => [
+            'pusher_app_id' => $admin['pusher_app_id'] ?? '',
+            'pusher_key' => $admin['pusher_key'] ?? '',
+            'pusher_secret' => $mask($admin['pusher_secret'] ?? ''),
+            'pusher_cluster' => $admin['pusher_cluster'] ?? '',
+        ]]);
+    }
+    if ($method === 'POST') {
+        requireSuperAdmin();
+        $admin = getAdmin();
+        if (isset($input['pusher_app_id'])) $admin['pusher_app_id'] = trim($input['pusher_app_id']);
+        if (isset($input['pusher_key'])) $admin['pusher_key'] = trim($input['pusher_key']);
+        if (isset($input['pusher_secret']) && strpos($input['pusher_secret'], '****') === false) {
+            $admin['pusher_secret'] = trim($input['pusher_secret']);
+        }
+        if (isset($input['pusher_cluster'])) $admin['pusher_cluster'] = trim($input['pusher_cluster']);
+        saveAdmin($admin);
+        respond(['success' => true]);
+    }
+    break;
+
+case 'realtime-config':
+    // Public (any logged-in user): just the Pusher key + cluster needed to open a
+    // client-side connection. Never includes the secret — that's what pusher-auth
+    // is for. Returns 'enabled'=>false if not configured, so the frontend can fall
+    // back to polling silently.
+    if ($method !== 'GET') break;
+    requireAuth();
+    $cfg = pusherConfig();
+    if ($cfg === null) respond(['success' => true, 'enabled' => false]);
+    respond(['success' => true, 'enabled' => true, 'key' => $cfg['key'], 'cluster' => $cfg['cluster']]);
+    break;
+
+case 'pusher-auth':
+    // Authenticates a logged-in user's subscription to their own private channel
+    // (private-user-{id}) or a chat thread they're allowed to see
+    // (private-thread-{id}). Called by the Pusher JS client automatically.
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $socketId = $input['socket_id'] ?? '';
+    $channelName = $input['channel_name'] ?? '';
+    if ($socketId === '' || $channelName === '') respond(['success' => false, 'error' => 'Missing socket_id/channel_name'], 400);
+
+    if ($channelName === 'private-user-' . $user['id']) {
+        // always allowed: a user may subscribe to their own notification channel
+    } elseif (strpos($channelName, 'private-thread-') === 0) {
+        $threadId = substr($channelName, strlen('private-thread-'));
+        if (!canAccessChatThread($user, $threadId)) respond(['success' => false, 'error' => 'Not authorized for this thread'], 403);
+    } else {
+        respond(['success' => false, 'error' => 'Not authorized for this channel'], 403);
+    }
+
+    $auth = pusherAuthenticate($channelName, $socketId);
+    if ($auth === null) respond(['success' => false, 'error' => 'Realtime not configured'], 404);
+    respond($auth);
     break;
 
 case 'get-requisitions':
@@ -1740,7 +1935,7 @@ case 'users':
     if (!$isSuperAdmin) {
         $allUsers = array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
     }
-    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'is_super_admin' => $u['is_super_admin'] ?? false, 'created_at' => $u['created_at'] ?? '', 'last_login_at' => $u['last_login_at'] ?? null, 'session_start' => $u['session_start'] ?? null, 'last_active_at' => $u['last_active_at'] ?? null]; }, $allUsers);
+    $users = array_map(function($u) { return ['id' => $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'is_admin' => $u['is_admin'] ?? false, 'is_super_admin' => $u['is_super_admin'] ?? false, 'created_at' => $u['created_at'] ?? '', 'last_login_at' => $u['last_login_at'] ?? null, 'session_start' => $u['session_start'] ?? null, 'last_active_at' => $u['last_active_at'] ?? null, 'aircall_user_id' => $u['aircall_user_id'] ?? '', 'aircall_number_id' => $u['aircall_number_id'] ?? '']; }, $allUsers);
     respond(['success' => true, 'users' => $users]);
     break;
 
@@ -1776,6 +1971,8 @@ case 'update-user':
             if (!empty($input['email'])) $u['email'] = trim(strtolower($input['email']));
             if (isset($input['is_admin'])) $u['is_admin'] = (bool)$input['is_admin'];
             if (isset($input['is_super_admin'])) { requireSuperAdmin(); $u['is_super_admin'] = (bool)$input['is_super_admin']; }
+            if (isset($input['aircall_user_id'])) $u['aircall_user_id'] = trim((string)$input['aircall_user_id']);
+            if (isset($input['aircall_number_id'])) $u['aircall_number_id'] = trim((string)$input['aircall_number_id']);
             if (!empty($input['reset_password'])) { $newPass = generatePassword(); $u['password'] = password_hash($newPass, PASSWORD_DEFAULT); }
             saveUsers($users);
             $res = ['success' => true];
@@ -1899,6 +2096,17 @@ case 'lead':
     
     if ($method === 'GET' && isset($_GET['id'])) {
         foreach ($userData['leads'] as $l) { if ($l['id'] === $_GET['id']) respond(['success' => true, 'lead' => $l]); }
+        // Admins can be notified about (and need to open) a lead owned by another
+        // rep — e.g. the Aircall missed-call notification. Fall back to a
+        // cross-user lookup for admins only.
+        if (!empty($user['is_admin']) || !empty($user['is_super_admin'])) {
+            foreach (getUsers() as $u) {
+                if ($u['id'] === $user['id']) continue;
+                foreach (dbLoadLeadsByOwner($u['id']) as $l) {
+                    if ($l['id'] === $_GET['id']) respond(['success' => true, 'lead' => $l, 'owner_id' => $u['id'], 'owner_name' => $u['name'] ?? $u['email']]);
+                }
+            }
+        }
         respond(['success' => false, 'error' => 'Not found'], 404);
     }
     
@@ -2601,15 +2809,17 @@ case 'generate-email':
     
     // Use new template-based generator
     $res = generateEmailContent(
-        $provider, 
-        $apiKey, 
-        $lead, 
-        $emailType, 
-        $input['custom_instructions'] ?? '', 
-        $enrichment, 
-        $userData['settings'] ?? [], 
+        $provider,
+        $apiKey,
+        $lead,
+        $emailType,
+        $input['custom_instructions'] ?? '',
+        $enrichment,
+        $userData['settings'] ?? [],
         $previousEmail,
-        $includeSignature
+        $includeSignature,
+        $admin,
+        $user['name'] ?? ''
     );
     
     if ($res['success']) {
@@ -2637,7 +2847,6 @@ case 'generate-email':
 case 'generate-call-pitch':
     if ($method !== 'POST') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
     $admin = getAdmin();
     $provider = $admin['default_provider'] ?? 'groq';
     $apiKey = $admin[$provider . '_key'] ?? '';
@@ -2653,13 +2862,20 @@ case 'generate-call-pitch':
 
     if (!$name) respond(['success' => false, 'error' => 'Name is required'], 400);
 
-    // Find the lead to get stage intelligence data
+    // Resolve which account owns this lead — admins generating a pitch for a
+    // lead from the team-wide queue may not be its owner, so the save target
+    // must follow the lead, not default to the caller. Mirrors enrich-lead.
+    $ownerId = $user['id'];
+    $userData = getUserData($ownerId);
     $leadData = null;
     if ($leadId) {
-        foreach ($userData['leads'] as $l) {
-            if ($l['id'] === $leadId) {
-                $leadData = $l;
-                break;
+        foreach ($userData['leads'] as $l) { if ($l['id'] === $leadId) { $leadData = $l; break; } }
+        if (!$leadData && (!empty($user['is_admin']) || !empty($user['is_super_admin']))) {
+            foreach (getUsers() as $u) {
+                if ($u['id'] === $user['id']) continue;
+                foreach (dbLoadLeadsByOwner($u['id']) as $l) {
+                    if ($l['id'] === $leadId) { $ownerId = $u['id']; $userData = getUserData($ownerId); $leadData = $l; break 2; }
+                }
             }
         }
     }
@@ -2674,27 +2890,64 @@ case 'generate-call-pitch':
         $pitchType,
         $customInstructions,
         $userData['settings'] ?? [],
-        $leadData
+        $leadData,
+        $admin,
+        $user['name'] ?? ''
     );
 
-    if ($res['success']) {
-        respond(['success' => true, 'title' => $res['title'], 'pitch' => $res['pitch']]);
+    if (!$res['success']) respond(['success' => false, 'error' => $res['error'] ?? 'Generation failed'], 500);
+
+    // Persist onto the lead so it's still there next time the modal opens —
+    // same durability as enrichment/research.
+    $updatedLead = $leadData;
+    if ($leadId && $leadData) {
+        foreach ($userData['leads'] as &$l) {
+            if ($l['id'] === $leadId) {
+                $l['call_pitch'] = [
+                    'title' => $res['title'],
+                    'pitch' => $res['pitch'],
+                    'pitch_type' => $pitchType,
+                    'generated_at' => date('c'),
+                ];
+                $l['updated_at'] = date('c');
+                $updatedLead = $l;
+                break;
+            }
+        }
+        unset($l);
+        saveUserData($ownerId, $userData);
     }
-    respond(['success' => false, 'error' => $res['error'] ?? 'Generation failed'], 500);
+
+    respond(['success' => true, 'title' => $res['title'], 'pitch' => $res['pitch'], 'lead' => $updatedLead]);
     break;
 
 case 'enrich-lead':
     if ($method !== 'POST') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
     $admin = getAdmin();
     $provider = $admin['default_provider'] ?? 'groq';
     $apiKey = $admin[$provider . '_key'] ?? '';
     if (!$apiKey) respond(['success' => false, 'error' => 'AI not configured'], 400);
-    
+
     $lead = $input['lead'] ?? [];
+    // Resolve which account actually owns this lead — admins researching a
+    // lead from the team-wide queue may not be its owner, so the save target
+    // must follow the lead, not default to the caller.
+    $ownerId = $user['id'];
+    $userData = getUserData($ownerId);
+    $ownsIt = false;
+    foreach ($userData['leads'] as $l) { if ($l['id'] === ($lead['id'] ?? null)) { $ownsIt = true; break; } }
+    if (!$ownsIt && (!empty($user['is_admin']) || !empty($user['is_super_admin']))) {
+        foreach (getUsers() as $u) {
+            if ($u['id'] === $user['id']) continue;
+            foreach (dbLoadLeadsByOwner($u['id']) as $l) {
+                if ($l['id'] === ($lead['id'] ?? null)) { $ownerId = $u['id']; $userData = getUserData($ownerId); $ownsIt = true; break 2; }
+            }
+        }
+    }
+
     $prompt = buildResearchPrompt($lead);
-    $res = callLLM($provider, $apiKey, $prompt);
+    $res = callLLM($provider, $apiKey, $prompt, $admin);
     
     if ($res['success']) {
         // Clean up the response - extract JSON if wrapped in markdown
@@ -2801,7 +3054,7 @@ case 'enrich-lead':
                     break;
                 }
             }
-            saveUserData($user['id'], $userData);
+            saveUserData($ownerId, $userData);
         }
         respond([
             'success' => true,
@@ -3044,18 +3297,48 @@ case 'recalculate-all-scores':
 case 'dashboard-briefing':
     if ($method !== 'GET') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
     $admin = getAdmin();
-    $leads = $userData['leads'] ?? [];
+    $teamWide = !empty($user['is_admin']) && ($_GET['scope'] ?? '') === 'team';
 
-    // First, recalculate all scores to ensure they're current
-    foreach ($leads as &$lead) {
-        $scores = recalculateAllLeadScores($lead, $admin);
-        $lead = array_merge($lead, $scores);
+    if ($teamWide) {
+        // Admin team-wide view: pull every rep's leads, recalculate + save each
+        // back to its own owner (never cross-write into another user's bucket),
+        // then tag each lead with who owns it so the queue/attention items can
+        // show a rep name.
+        $isSuperAdmin = $user['is_super_admin'] ?? false;
+        $allUsers = getUsers();
+        $teamUsers = $isSuperAdmin ? $allUsers : array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
+        $leads = [];
+        foreach ($teamUsers as $teamUser) {
+            $teamUserData = getUserData($teamUser['id']);
+            $teamLeads = $teamUserData['leads'] ?? [];
+            foreach ($teamLeads as &$lead) {
+                $scores = recalculateAllLeadScores($lead, $admin);
+                $lead = array_merge($lead, $scores);
+            }
+            unset($lead);
+            $teamUserData['leads'] = $teamLeads;
+            saveUserData($teamUser['id'], $teamUserData);
+            foreach ($teamLeads as $lead) {
+                $lead['_owner_id'] = $teamUser['id'];
+                $lead['_owner_name'] = $teamUser['name'] ?? 'User';
+                $leads[] = $lead;
+            }
+        }
+    } else {
+        $userData = getUserData($user['id']);
+        $leads = $userData['leads'] ?? [];
+
+        // First, recalculate all scores to ensure they're current
+        foreach ($leads as &$lead) {
+            $scores = recalculateAllLeadScores($lead, $admin);
+            $lead = array_merge($lead, $scores);
+        }
+        unset($lead);
+        // Save updated scores
+        $userData['leads'] = $leads;
+        saveUserData($user['id'], $userData);
     }
-    // Save updated scores
-    $userData['leads'] = $leads;
-    saveUserData($user['id'], $userData);
 
     // Group leads by temperature
     $temperatureGroups = [
@@ -3076,13 +3359,17 @@ case 'dashboard-briefing':
                 'fit_grade' => $lead['fit_grade'] ?? '',
                 'engagement_score' => $lead['engagement_score'] ?? 0,
                 'velocity' => $lead['velocity'] ?? 'stalled',
-                'days_since_activity' => calculateDaysSinceLastActivity($lead)
+                'days_since_activity' => calculateDaysSinceLastActivity($lead),
+                'owner_id' => $lead['_owner_id'] ?? null,
+                'owner_name' => $lead['_owner_name'] ?? null
             ];
         }
     }
 
     // Generate focus queue
-    $focusQueue = generateFocusQueue($leads, $admin, 10);
+    $focusQueueResult = generateFocusQueue($leads, $admin, 10);
+    $focusQueue = $focusQueueResult['items'];
+    $focusQueueTotal = $focusQueueResult['total'];
 
     // Find attention-needed leads
     $attentionNeeded = findAttentionNeeded($leads);
@@ -3110,7 +3397,10 @@ case 'dashboard-briefing':
         'summary' => $summary,
         'temperature_groups' => $temperatureGroups,
         'focus_queue' => $focusQueue,
-        'attention_needed' => $attentionNeeded
+        'focus_queue_total' => $focusQueueTotal,
+        'attention_needed' => $attentionNeeded,
+        'team_scope' => $teamWide,
+        'can_view_team' => !empty($user['is_admin'])
     ]);
     break;
 
@@ -3122,16 +3412,18 @@ case 'focus-queue':
     $leads = $userData['leads'] ?? [];
     $limit = intval($_GET['limit'] ?? 10);
 
-    $focusQueue = generateFocusQueue($leads, $admin, $limit);
-    respond(['success' => true, 'focus_queue' => $focusQueue]);
+    $focusQueueResult = generateFocusQueue($leads, $admin, $limit);
+    respond(['success' => true, 'focus_queue' => $focusQueueResult['items'], 'focus_queue_total' => $focusQueueResult['total']]);
     break;
 
 case 'skip-focus-item':
     if ($method !== 'POST') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
     $leadId = $input['lead_id'] ?? '';
     $duration = $input['duration'] ?? '1day'; // 1hour, 1day, 3days, 1week
+    // Admins can skip an item from the team-wide queue that belongs to
+    // another rep; everyone else can only skip their own leads.
+    $ownerId = (!empty($user['is_admin']) && !empty($input['owner_id'])) ? $input['owner_id'] : $user['id'];
 
     $skipDurations = [
         '1hour' => '+1 hour',
@@ -3142,11 +3434,12 @@ case 'skip-focus-item':
 
     $skipUntil = date('c', strtotime($skipDurations[$duration] ?? '+1 day'));
 
+    $userData = getUserData($ownerId);
     foreach ($userData['leads'] as &$lead) {
         if ($lead['id'] === $leadId) {
             $lead['skipped_until'] = $skipUntil;
             $lead['updated_at'] = date('c');
-            saveUserData($user['id'], $userData);
+            saveUserData($ownerId, $userData);
             respond(['success' => true, 'skipped_until' => $skipUntil]);
         }
     }
@@ -3156,9 +3449,12 @@ case 'skip-focus-item':
 case 'drop-lead':
     if ($method !== 'POST') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
     $leadId = $input['lead_id'] ?? '';
     $reason = $input['reason'] ?? '';
+    // Admins can drop a lead from the team-wide queue that belongs to
+    // another rep; everyone else can only drop their own leads.
+    $ownerId = (!empty($user['is_admin']) && !empty($input['owner_id'])) ? $input['owner_id'] : $user['id'];
+    $userData = getUserData($ownerId);
 
     foreach ($userData['leads'] as &$lead) {
         if ($lead['id'] === $leadId) {
@@ -3169,7 +3465,7 @@ case 'drop-lead':
             $lead['last_action'] = 'disqualified';
             $lead['last_action_at'] = date('c');
             $lead['updated_at'] = date('c');
-            saveUserData($user['id'], $userData);
+            saveUserData($ownerId, $userData);
             respond(['success' => true, 'lead' => $lead]);
         }
     }
@@ -3227,7 +3523,7 @@ case 'chat-channels':
         respond(['success' => true, 'channel' => $newChannel]);
     }
     if ($method === 'DELETE') {
-        if (empty($user['is_super_admin'])) respond(['success' => false, 'error' => 'Only super admin can delete channels'], 403);
+        if (!isChatAdmin($user)) respond(['success' => false, 'error' => 'Only admins can delete channels'], 403);
         $channelId = $input['id'] ?? '';
         if ($channelId === 'channel_general') respond(['success' => false, 'error' => 'Cannot delete the general channel'], 400);
         if (!$channelId) respond(['success' => false, 'error' => 'Channel ID required'], 400);
@@ -3274,7 +3570,7 @@ case 'chat-messages':
         $messages = getChannelMessages($safe);
         $since = $_GET['since'] ?? null;
         if ($since) $messages = array_values(array_filter($messages, fn($m) => ($m['sent_at'] ?? '') > $since));
-        dbSetLastRead($user['id'], $safe, date('c'));
+        if (empty($_GET['peek'])) dbSetLastRead($user['id'], $safe, date('c'));
         respond(['success' => true, 'messages' => array_slice($messages, -100)]);
     }
 
@@ -3292,6 +3588,8 @@ case 'chat-messages':
         ];
         $messages[] = $msg;
         saveChannelMessages($safe, $messages);
+        // Push instantly to anyone with this thread open right now.
+        pusherTrigger('private-thread-' . $safe, 'new-message', $msg);
 
         $senderName = $user['name'] ?? $user['email'];
         $isDm = strpos($threadId, 'dm_') === 0;
@@ -3379,6 +3677,7 @@ case 'chat-react':
     }
     unset($m);
     saveChannelMessages($threadId, $messages);
+    pusherTrigger('private-thread-' . $threadId, 'thread-updated', ['reason' => 'reaction']);
     respond(['success' => true]);
     break;
 
@@ -3422,6 +3721,7 @@ case 'chat-delete-message':
     if (!$found) respond(['success' => false, 'error' => 'Message not found'], 404);
     $messages = array_values(array_filter($messages, fn($m) => $m['id'] !== $msgId));
     saveChannelMessages($threadId, $messages);
+    pusherTrigger('private-thread-' . $threadId, 'thread-updated', ['reason' => 'delete']);
     respond(['success' => true]);
     break;
 
@@ -3441,6 +3741,7 @@ case 'chat-pin-message':
         }
         unset($m);
         saveChannelMessages($threadId, $messages);
+        pusherTrigger('private-thread-' . $threadId, 'thread-updated', ['reason' => 'unpin']);
         respond(['success' => true]);
     } else {
         $replacedName = null;
@@ -3462,6 +3763,7 @@ case 'chat-pin-message':
         }
         unset($m);
         saveChannelMessages($threadId, $messages);
+        pusherTrigger('private-thread-' . $threadId, 'thread-updated', ['reason' => 'pin']);
         respond(['success' => true, 'replaced' => $replacedName]);
     }
     break;
@@ -4241,6 +4543,81 @@ case 'activity-report':
     ]);
     break;
 
+case 'calls-report':
+    if ($method !== 'GET') break;
+    $user = requireAdmin();
+    $allUsers = getUsers();
+    $isSuperAdmin = $user['is_super_admin'] ?? false;
+    $reportUsers = $isSuperAdmin ? $allUsers : array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
+
+    $range = $_GET['range'] ?? '';
+    $fromDate = $_GET['from'] ?? '';
+    $toDate = $_GET['to'] ?? '';
+    if ($range === 'today') { $fromDate = date('Y-m-d'); $toDate = date('Y-m-d'); }
+    elseif ($range === 'week') { $fromDate = date('Y-m-d', strtotime('monday this week')); $toDate = date('Y-m-d'); }
+    elseif ($range === 'month') { $fromDate = date('Y-m-01'); $toDate = date('Y-m-d'); }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) $fromDate = date('Y-m-d', strtotime('monday this week'));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) $toDate = date('Y-m-d');
+    $fromTs = strtotime($fromDate . ' 00:00:00');
+    $toTs = strtotime($toDate . ' 23:59:59');
+
+    $repFilter = trim((string)($_GET['rep_id'] ?? ''));
+    $outcomeFilter = trim((string)($_GET['outcome'] ?? '')); // '', 'answered', 'missed'
+
+    $calls = [];
+    foreach ($reportUsers as $rep) {
+        if ($repFilter && $rep['id'] !== $repFilter) continue;
+        $repData = getUserData($rep['id']);
+        foreach (($repData['leads'] ?? []) as $lead) {
+            if (empty($lead['call_history'])) continue;
+            $leadName = trim(($lead['first_name'] ?? '') . ' ' . ($lead['last_name'] ?? ''));
+            if ($leadName === '') $leadName = $lead['company'] ?? 'Unknown lead';
+            foreach ($lead['call_history'] as $call) {
+                $when = $call['completed_at'] ?? $call['started_at'] ?? '';
+                $t = strtotime($when);
+                if ($t === false || $t < $fromTs || $t > $toTs) continue;
+                $isAircall = ($call['via'] ?? '') === 'aircall';
+                $outcome = $isAircall ? ($call['outcome'] ?? '') : '';
+                if ($outcomeFilter && $outcomeFilter !== $outcome) continue;
+                $calls[] = [
+                    'lead_id' => $lead['id'],
+                    'lead_name' => $leadName,
+                    'company' => $lead['company'] ?? '',
+                    'rep_id' => $rep['id'],
+                    'rep_name' => $rep['name'] ?? $rep['email'] ?? 'User',
+                    'via' => $call['via'] ?? 'manual',
+                    'direction' => $call['direction'] ?? '',
+                    'outcome' => $outcome,
+                    'outcome_label' => $call['outcome_label'] ?? ($call['status'] ?? ''),
+                    'duration_seconds' => (int)($call['duration_seconds'] ?? 0),
+                    'recording_url' => $call['recording_url'] ?? '',
+                    'notes' => $call['notes'] ?? '',
+                    'tags' => $call['tags'] ?? [],
+                    'timestamp' => $when,
+                ];
+            }
+        }
+    }
+
+    usort($calls, fn($a, $b) => strtotime($b['timestamp']) <=> strtotime($a['timestamp']));
+
+    $summary = ['total' => count($calls), 'answered' => 0, 'missed' => 0, 'manual' => 0, 'with_recording' => 0];
+    foreach ($calls as $c) {
+        if ($c['via'] === 'aircall') { $c['outcome'] === 'missed' ? $summary['missed']++ : $summary['answered']++; }
+        else $summary['manual']++;
+        if (!empty($c['recording_url'])) $summary['with_recording']++;
+    }
+
+    respond([
+        'success' => true,
+        'from' => $fromDate,
+        'to' => $toDate,
+        'calls' => array_slice($calls, 0, 500),
+        'summary' => $summary,
+        'reps' => array_map(fn($u) => ['id' => $u['id'], 'name' => $u['name'] ?? $u['email']], $reportUsers),
+    ]);
+    break;
+
 // ===== ACTIVITY PING (records a heartbeat for session analytics) =====
 case 'activity-ping':
     if ($method !== 'POST') break;
@@ -4328,8 +4705,23 @@ case 'user-sessions':
 case 'lead-batches':
     if ($method !== 'GET') break;
     $user = requireAuth();
-    $userData = getUserData($user['id']);
-    $leads = $userData['leads'] ?? [];
+    $teamWide = !empty($user['is_admin']) && ($_GET['scope'] ?? '') === 'team';
+    if ($teamWide) {
+        $isSuperAdmin = $user['is_super_admin'] ?? false;
+        $allUsers = getUsers();
+        $teamUsers = $isSuperAdmin ? $allUsers : array_values(array_filter($allUsers, fn($u) => empty($u['is_super_admin'])));
+        $leads = [];
+        foreach ($teamUsers as $teamUser) {
+            foreach ((getUserData($teamUser['id'])['leads'] ?? []) as $lead) {
+                $lead['_owner_id'] = $teamUser['id'];
+                $lead['_owner_name'] = $teamUser['name'] ?? 'User';
+                $leads[] = $lead;
+            }
+        }
+    } else {
+        $userData = getUserData($user['id']);
+        $leads = $userData['leads'] ?? [];
+    }
     $today = date('Y-m-d');
     $now = time();
 
@@ -4422,13 +4814,15 @@ case 'lead-batches':
                     'stage' => getLeadStage($l),
                     'temperature' => $l['temperature'] ?? 'cold',
                     'fit_grade' => $l['fit_grade'] ?? '',
-                    'days_inactive' => calculateDaysSinceLastActivity($l)
+                    'days_inactive' => calculateDaysSinceLastActivity($l),
+                    'owner_id' => $l['_owner_id'] ?? null,
+                    'owner_name' => $l['_owner_name'] ?? null
                 ];
             }, $batch), 0, 20) // Limit to 20 per batch for performance
         ];
     }
 
-    respond(['success' => true, 'batches' => $batchSummary]);
+    respond(['success' => true, 'batches' => $batchSummary, 'team_scope' => $teamWide, 'can_view_team' => !empty($user['is_admin'])]);
     break;
 
 case 'daily-targets':
@@ -5136,6 +5530,350 @@ case 'zoho-sync-lead':
     respond($result);
     break;
 
+// ============ AIRCALL INTEGRATION ============
+
+case 'test-aircall':
+    if (!AIRCALL_ENABLED) respond(['success' => false, 'error' => 'Aircall integration is currently disabled'], 503);
+    requireAdmin();
+    $res = aircallRequest('GET', '/ping');
+    if ($res['ok']) {
+        respond(['success' => true, 'message' => 'Aircall connected']);
+    }
+    respond(['success' => false, 'error' => $res['error'] ?: ('Aircall returned HTTP ' . $res['status'])], 200);
+    break;
+
+case 'aircall-dial':
+    if (!AIRCALL_ENABLED) respond(['success' => false, 'error' => 'Aircall integration is currently disabled'], 503);
+    if ($method !== 'POST') break;
+    $user = requireAuth();
+    $admin = getAdmin();
+    if (empty($admin['aircall_api_id']) || empty($admin['aircall_api_token'])) {
+        respond(['success' => false, 'error' => 'Aircall is not configured yet. An admin must add the API keys in the Admin Panel.'], 400);
+    }
+    $aUserId = trim((string)($user['aircall_user_id'] ?? ''));
+    $aNumberId = trim((string)($user['aircall_number_id'] ?? ''));
+    if (!$aUserId || !$aNumberId) {
+        respond(['success' => false, 'error' => 'Your account is not linked to Aircall. Ask an admin to set your Aircall User ID and Number ID on the Users page.'], 400);
+    }
+    $leadId = $input['lead_id'] ?? '';
+    $userData = getUserData($user['id']);
+    foreach ($userData['leads'] as &$lead) {
+        if ($lead['id'] === $leadId) {
+            $phone = trim((string)($lead['phone'] ?? ''));
+            if (!$phone) respond(['success' => false, 'error' => 'This lead has no phone number'], 400);
+            $res = aircallRequest('POST', '/users/' . rawurlencode($aUserId) . '/calls', ['number_id' => (int)$aNumberId, 'to' => $phone]);
+            if (!$res['ok']) {
+                $msg = $res['error'] ?: ('Aircall rejected the call (HTTP ' . $res['status'] . '). Check your Aircall User ID / Number ID.');
+                respond(['success' => false, 'error' => $msg], 200);
+            }
+            // Call accepted — Aircall now rings the rep's app. The webhook
+            // (call.ended) writes the authoritative call_history entry.
+            $lead['call_started_at'] = date('c');
+            $lead['calls_made'] = ($lead['calls_made'] ?? 0) + 1;
+            $lead['last_action'] = 'call_started';
+            $lead['last_action_at'] = date('c');
+            $lead['updated_at'] = date('c');
+            if (in_array(getLeadStage($lead), ['email_sent', 'research', 'new_lead'])) {
+                setLeadStage($lead, 'call_attempted', 'call_started', $user['id']);
+            }
+            logActivity($lead, 'call_started', 'Call started via Aircall');
+            saveUserData($user['id'], $userData);
+            respond(['success' => true, 'lead' => $lead, 'message' => 'Dialing — answer the call in your Aircall app']);
+        }
+    }
+    respond(['success' => false, 'error' => 'Lead not found'], 404);
+    break;
+
+case 'aircall-status':
+    if (!AIRCALL_ENABLED) respond(['success' => false, 'error' => 'Aircall integration is currently disabled'], 503);
+    if ($method !== 'GET') break;
+    requireAdmin();
+    $state = kvGet('aircall', 'oncall') ?: [];
+    // Prune stale entries (calls that never got a hungup/ended event)
+    $changed = false;
+    foreach ($state as $cid => $c) {
+        if (strtotime($c['started_at'] ?? '') < time() - 4 * 3600) { unset($state[$cid]); $changed = true; }
+    }
+    if ($changed) kvSet('aircall', 'oncall', $state);
+    respond(['success' => true, 'on_call' => array_values($state)]);
+    break;
+
+case 'aircall-webhook':
+    if (!AIRCALL_ENABLED) respond(['success' => true, 'ignored' => true]);
+    if ($method !== 'POST') break;
+    $admin = getAdmin();
+    // Integration inactive → acknowledge quietly so Aircall doesn't disable the webhook
+    if (empty($admin['aircall_api_id']) && empty($admin['aircall_webhook_token'])) {
+        respond(['success' => true, 'ignored' => true]);
+    }
+    // Verify the webhook token if one is configured
+    $expected = $admin['aircall_webhook_token'] ?? '';
+    if ($expected && !hash_equals($expected, (string)($input['token'] ?? ''))) {
+        respond(['success' => false, 'error' => 'Invalid webhook token'], 401);
+    }
+    $event = $input['event'] ?? '';
+    $data = $input['data'] ?? [];
+    $callId = (string)($data['id'] ?? '');
+    if (!$event || !$callId) respond(['success' => true, 'ignored' => true]);
+
+    $aircallUserId = (string)($data['user']['id'] ?? '');
+    $repUser = aircallFindUserByAircallId($aircallUserId);
+
+    switch ($event) {
+        case 'call.created':
+            $state = kvGet('aircall', 'oncall') ?: [];
+            $state[$callId] = [
+                'call_id' => $callId,
+                'aircall_user_id' => $aircallUserId,
+                'user_id' => $repUser['id'] ?? null,
+                'user_name' => $repUser['name'] ?? ($data['user']['name'] ?? 'Unknown'),
+                'phone' => (string)($data['raw_digits'] ?? ''),
+                'direction' => $data['direction'] ?? '',
+                'started_at' => date('c'),
+            ];
+            kvSet('aircall', 'oncall', $state);
+            break;
+
+        case 'call.hungup':
+            $state = kvGet('aircall', 'oncall') ?: [];
+            if (isset($state[$callId])) { unset($state[$callId]); kvSet('aircall', 'oncall', $state); }
+            break;
+
+        case 'call.ended':
+            // Clear live state (in case call.hungup was missed)
+            $state = kvGet('aircall', 'oncall') ?: [];
+            if (isset($state[$callId])) { unset($state[$callId]); kvSet('aircall', 'oncall', $state); }
+
+            $match = aircallFindLeadByPhone((string)($data['raw_digits'] ?? ''), $repUser['id'] ?? null);
+            if (!$match) break; // No matching lead — nothing to log against
+
+            $ownerData = getUserData($match['owner_id']);
+            foreach ($ownerData['leads'] as &$lead) {
+                if ($lead['id'] !== $match['lead_id']) continue;
+                $lead['call_history'] = $lead['call_history'] ?? [];
+                // Skip if this Aircall call was already logged (webhook retries)
+                foreach ($lead['call_history'] as $existing) {
+                    if (($existing['aircall_call_id'] ?? '') === $callId) { saveUserData($match['owner_id'], $ownerData); respond(['success' => true]); }
+                }
+                $answered = !empty($data['answered_at']);
+                $missed = !$answered || !empty($data['missed_call_reason']);
+                $recording = '';
+                if (!empty($data['recording'])) {
+                    $recording = aircallStoreRecording((string)$data['recording'], $callId);
+                }
+                // status/completed_at follow the vocabulary the rest of the app's stats
+                // and reports already key off (see activity-report, dashboard-briefing);
+                // outcome/outcome_label carry the Aircall-specific answered/missed detail.
+                $lead['call_history'][] = [
+                    'id' => 'call_' . bin2hex(random_bytes(8)),
+                    'aircall_call_id' => $callId,
+                    'via' => 'aircall',
+                    'direction' => $data['direction'] ?? 'outbound',
+                    'status' => 'completed',
+                    'outcome' => $missed ? 'missed' : 'answered',
+                    'outcome_label' => $missed ? 'Missed (Aircall)' : 'Answered (Aircall)',
+                    'started_at' => !empty($data['started_at']) ? date('c', (int)$data['started_at']) : date('c'),
+                    'completed_at' => !empty($data['ended_at']) ? date('c', (int)$data['ended_at']) : date('c'),
+                    'duration_seconds' => (int)($data['duration'] ?? 0),
+                    'recording_url' => $recording,
+                    'rep_id' => $repUser['id'] ?? '',
+                    'rep_name' => $repUser['name'] ?? ($data['user']['name'] ?? ''),
+                    'notes' => '',
+                    'tags' => [],
+                ];
+                if (!$missed) {
+                    $lead['calls_made'] = ($lead['calls_made'] ?? 0) + 1;
+                    if (in_array(getLeadStage($lead), ['email_sent', 'research', 'new_lead'])) {
+                        setLeadStage($lead, 'call_attempted', 'aircall_call', $repUser['id'] ?? 'aircall');
+                    }
+                }
+                $lead['last_action'] = $missed ? 'call_missed' : 'call_completed';
+                $lead['last_action_at'] = date('c');
+                $lead['updated_at'] = date('c');
+                logActivity($lead, $missed ? 'call_missed' : 'call_completed', 'Aircall ' . ($data['direction'] ?? 'outbound') . ' call — ' . ($missed ? 'missed' : gmdate('i\m s\s', (int)($data['duration'] ?? 0))));
+                notifyAdminsOfCall($lead, $repUser['name'] ?? ($data['user']['name'] ?? 'A rep'), $callId, $missed, (int)($data['duration'] ?? 0), $recording);
+                break;
+            }
+            unset($lead);
+            saveUserData($match['owner_id'], $ownerData);
+            break;
+
+        case 'call.commented':
+        case 'call.tagged':
+            $match = aircallFindLeadByPhone((string)($data['raw_digits'] ?? ''), $repUser['id'] ?? null);
+            if (!$match) break;
+            $ownerData = getUserData($match['owner_id']);
+            foreach ($ownerData['leads'] as &$lead) {
+                if ($lead['id'] !== $match['lead_id']) continue;
+                if (empty($lead['call_history'])) break;
+                foreach ($lead['call_history'] as &$entry) {
+                    if (($entry['aircall_call_id'] ?? '') !== $callId) continue;
+                    if ($event === 'call.commented') {
+                        $comments = array_map(fn($c) => $c['content'] ?? '', $data['comments'] ?? []);
+                        $entry['notes'] = trim(implode("\n", array_filter($comments)));
+                    } else {
+                        $entry['tags'] = array_values(array_map(fn($t) => $t['name'] ?? '', $data['tags'] ?? []));
+                    }
+                    break;
+                }
+                unset($entry);
+                $lead['updated_at'] = date('c');
+                break;
+            }
+            unset($lead);
+            saveUserData($match['owner_id'], $ownerData);
+            break;
+    }
+    respond(['success' => true]);
+    break;
+
+// ===== Feedback & Support (feedback/support channel to Levata; super-admin-only for now, see support.php) =====
+case 'tickets':
+    if ($method !== 'GET') break;
+    requireSuperAdmin();
+    $store = getTicketsStore();
+    $tickets = $store['tickets'];
+    usort($tickets, function ($a, $b) { return strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''); });
+    respond([
+        'success' => true,
+        'tickets' => $tickets,
+        'summary' => ticketsSummary($tickets),
+    ]);
+    break;
+
+case 'save-ticket':
+    if ($method !== 'POST') break;
+    $u = requireSuperAdmin();
+    $store = getTicketsStore();
+    $now = date('c');
+    $id = trim($input['id'] ?? '');
+
+    if ($id !== '') {
+        $found = false;
+        foreach ($store['tickets'] as &$ticket) {
+            if (($ticket['id'] ?? '') === $id) {
+                $ticket = applyTicketFields($ticket, $input);
+                $ticket['updated_at'] = $now;
+                $found = true;
+                break;
+            }
+        }
+        unset($ticket);
+        if (!$found) respond(['success' => false, 'error' => 'Ticket not found'], 404);
+        saveTicketsStore($store);
+        respond(['success' => true, 'id' => $id]);
+    }
+
+    $ticket = [
+        'id' => 'tkt_' . bin2hex(random_bytes(8)),
+        'ticket_no' => nextTicketNo($store),
+        'status' => 'open',
+        'created_by' => $u['id'] ?? '',
+        'created_by_name' => $u['name'] ?? '',
+        'created_by_email' => $u['email'] ?? '',
+        'created_at' => $now,
+        'updated_at' => $now,
+        'replies' => [],
+    ];
+    $ticket = applyTicketFields($ticket, $input);
+    if ($ticket['subject'] === '' || $ticket['message'] === '') {
+        respond(['success' => false, 'error' => 'Subject and message are required'], 400);
+    }
+    // Best-effort: forward to the Levata hub and remember its ticket id for reply routing.
+    $hubId = forwardTicketToHub($ticket);
+    if ($hubId) $ticket['hub_ticket_id'] = $hubId;
+    $store['tickets'][] = $ticket;
+    saveTicketsStore($store);
+    respond(['success' => true, 'id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no']]);
+    break;
+
+case 'ticket-reply':
+    if ($method !== 'POST') break;
+    $u = requireSuperAdmin();
+    $ticketId = trim($input['ticket_id'] ?? '');
+    $message = trim($input['message'] ?? '');
+    if ($message === '') respond(['success' => false, 'error' => 'Reply cannot be empty'], 400);
+    $store = getTicketsStore();
+    $target = null;
+    foreach ($store['tickets'] as &$ticket) {
+        if (($ticket['id'] ?? '') === $ticketId) { $target = &$ticket; break; }
+    }
+    if ($target === null) respond(['success' => false, 'error' => 'Ticket not found'], 404);
+    if (!isset($target['replies']) || !is_array($target['replies'])) $target['replies'] = [];
+    $reply = [
+        'id' => 'rep_' . bin2hex(random_bytes(6)),
+        'author_id' => $u['id'] ?? '',
+        'author_name' => $u['name'] ?? '',
+        'is_staff' => false,
+        'message' => $message,
+        'created_at' => date('c'),
+    ];
+    $target['replies'][] = $reply;
+    $target['updated_at'] = date('c');
+    $ticketCopy = $target;
+    unset($target);
+    saveTicketsStore($store);
+    // Best-effort: push this reply onward to the Levata hub so it sees the conversation.
+    forwardReplyToHub($ticketCopy, $reply);
+    respond(['success' => true]);
+    break;
+
+case 'update-ticket-status':
+    if ($method !== 'POST') break;
+    requireSuperAdmin();
+    global $VALID_TICKET_STATUS, $VALID_TICKET_PRIORITY;
+    $ticketId = trim($input['id'] ?? '');
+    $store = getTicketsStore();
+    $found = false;
+    foreach ($store['tickets'] as &$ticket) {
+        if (($ticket['id'] ?? '') === $ticketId) {
+            if (isset($input['status']) && in_array($input['status'], $VALID_TICKET_STATUS, true)) {
+                $ticket['status'] = $input['status'];
+            }
+            if (isset($input['priority']) && in_array($input['priority'], $VALID_TICKET_PRIORITY, true)) {
+                $ticket['priority'] = $input['priority'];
+            }
+            $ticket['updated_at'] = date('c');
+            $found = true;
+            break;
+        }
+    }
+    unset($ticket);
+    if (!$found) respond(['success' => false, 'error' => 'Ticket not found'], 404);
+    saveTicketsStore($store);
+    respond(['success' => true]);
+    break;
+
+case 'delete-ticket':
+    if ($method !== 'POST') break;
+    requireSuperAdmin();
+    $id = trim($input['id'] ?? '');
+    $store = getTicketsStore();
+    $store['tickets'] = array_values(array_filter($store['tickets'], function ($t) use ($id) {
+        return ($t['id'] ?? '') !== $id;
+    }));
+    saveTicketsStore($store);
+    respond(['success' => true]);
+    break;
+
+case 'ingest-reply':
+    // Public endpoint: the Levata hub pushes a staff reply back here. Authenticated
+    // solely by the shared secret (admin.json 'ticket_hub_secret'). Never exposed
+    // in the UI; disabled unless that secret is configured.
+    if ($method !== 'POST') break;
+    $admin = getAdmin();
+    $replySecret = trim($admin['ticket_hub_secret'] ?? '');
+    if ($replySecret === '') respond(['success' => false, 'error' => 'Reply ingest not enabled'], 404);
+    if (!hash_equals($replySecret, trim($input['secret'] ?? ''))) {
+        respond(['success' => false, 'error' => 'Invalid secret'], 403);
+    }
+    $localId = trim($input['remote_id'] ?? '');
+    $reply = $input['reply'] ?? null;
+    $ok = ingestReplyFromHub($localId, $reply);
+    if (!$ok) respond(['success' => false, 'error' => 'Ticket not found or empty reply'], 404);
+    respond(['success' => true]);
+    break;
+
 default:
     respond(['success' => false, 'error' => 'Invalid endpoint'], 404);
 }
@@ -5676,56 +6414,126 @@ function pushToZoho($module, $admin, $leads, $userId) {
 
 // ============ LLM FUNCTIONS ============
 
-function callLLM($provider, $apiKey, $prompt) {
+// Tries the requested provider first; on a rate-limit/quota error (e.g. Groq's
+// daily token cap) it transparently retries the same prompt against the next
+// configured provider instead of failing the whole request. $admin is needed
+// (not just $apiKey) so the fallback can look up the other providers' keys —
+// every call site already has $admin in scope, so nothing else needs to change.
+function callLLM($provider, $apiKey, $prompt, $admin = null) {
+    $result = callLLMProvider($provider, $apiKey, $prompt);
+    if ($result['success'] || !$admin || !isRateLimitError($result)) return $result;
+
+    $fallbackOrder = ['groq', 'cerebras', 'gemini', 'anthropic'];
+    foreach ($fallbackOrder as $fallbackProvider) {
+        if ($fallbackProvider === $provider) continue;
+        $fallbackKey = $admin[$fallbackProvider . '_key'] ?? '';
+        if (!$fallbackKey) continue;
+        $fallbackResult = callLLMProvider($fallbackProvider, $fallbackKey, $prompt);
+        if ($fallbackResult['success']) {
+            $fallbackResult['fallback_provider'] = $fallbackProvider;
+            $fallbackResult['fallback_reason'] = $result['error'] ?? 'Primary provider rate-limited';
+            return $fallbackResult;
+        }
+        // Keep trying the remaining providers only if this one also hit a
+        // rate limit; a non-rate-limit failure means don't cascade further.
+        if (!isRateLimitError($fallbackResult)) return $fallbackResult;
+    }
+    return $result; // All providers exhausted — surface the original error.
+}
+
+function callLLMProvider($provider, $apiKey, $prompt) {
     switch ($provider) {
         case 'groq': return callGroq($apiKey, $prompt);
         case 'gemini': return callGemini($apiKey, $prompt);
         case 'anthropic': return callAnthropic($apiKey, $prompt);
+        case 'cerebras': return callCerebras($apiKey, $prompt);
         default: return ['success' => false, 'error' => 'Unknown provider'];
     }
+}
+
+// Groq/Gemini/Anthropic all phrase rate-limit errors differently, and not
+// every failure includes a reliable status code from curl alone, so this
+// checks both the HTTP status (429) and common wording as a safety net.
+function isRateLimitError($result) {
+    if (($result['status'] ?? null) === 429) return true;
+    $msg = strtolower($result['error'] ?? '');
+    return $msg !== '' && (
+        strpos($msg, 'rate limit') !== false ||
+        strpos($msg, 'quota') !== false ||
+        strpos($msg, 'tokens per day') !== false ||
+        strpos($msg, 'resource_exhausted') !== false
+    );
 }
 
 function callGroq($apiKey, $prompt) {
     $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, 
-        CURLOPT_POST => true, 
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode([
-            'model' => 'llama-3.3-70b-versatile', 
-            'messages' => [['role' => 'user', 'content' => $prompt]], 
-            'max_tokens' => 2048, 
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+            'max_tokens' => 2048,
             'temperature' => 0.7
-        ]), 
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey], 
+        ]),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey],
         CURLOPT_TIMEOUT => 120
     ]);
-    $response = curl_exec($ch); 
-    $error = curl_error($ch); 
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($error) return ['success' => false, 'error' => $error];
+    if ($error) return ['success' => false, 'error' => $error, 'status' => 0];
     $r = json_decode($response, true);
-    return isset($r['choices'][0]['message']['content']) 
-        ? ['success' => true, 'content' => $r['choices'][0]['message']['content']] 
-        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error'];
+    return isset($r['choices'][0]['message']['content'])
+        ? ['success' => true, 'content' => $r['choices'][0]['message']['content']]
+        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
+}
+
+function callCerebras($apiKey, $prompt) {
+    // OpenAI-compatible chat/completions API, same response shape as Groq.
+    $ch = curl_init('https://api.cerebras.ai/v1/chat/completions');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode([
+            'model' => 'gpt-oss-120b',
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+            'max_tokens' => 2048,
+            'temperature' => 0.7
+        ]),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey],
+        CURLOPT_TIMEOUT => 120
+    ]);
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($error) return ['success' => false, 'error' => $error, 'status' => 0];
+    $r = json_decode($response, true);
+    return isset($r['choices'][0]['message']['content'])
+        ? ['success' => true, 'content' => $r['choices'][0]['message']['content']]
+        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
 }
 
 function callGemini($apiKey, $prompt) {
     $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey));
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, 
+        CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode(['contents' => [['parts' => [['text' => $prompt]]]]]),
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'], 
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_TIMEOUT => 120
     ]);
-    $response = curl_exec($ch); 
-    $error = curl_error($ch); 
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($error) return ['success' => false, 'error' => $error];
+    if ($error) return ['success' => false, 'error' => $error, 'status' => 0];
     $r = json_decode($response, true);
-    return isset($r['candidates'][0]['content']['parts'][0]['text']) 
-        ? ['success' => true, 'content' => $r['candidates'][0]['content']['parts'][0]['text']] 
-        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error'];
+    return isset($r['candidates'][0]['content']['parts'][0]['text'])
+        ? ['success' => true, 'content' => $r['candidates'][0]['content']['parts'][0]['text']]
+        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
 }
 
 function callAnthropic($apiKey, $prompt) {
@@ -5742,14 +6550,15 @@ function callAnthropic($apiKey, $prompt) {
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-api-key: ' . $apiKey, 'anthropic-version: 2023-06-01'],
         CURLOPT_TIMEOUT => 120
     ]);
-    $response = curl_exec($ch); 
-    $error = curl_error($ch); 
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($error) return ['success' => false, 'error' => $error];
+    if ($error) return ['success' => false, 'error' => $error, 'status' => 0];
     $r = json_decode($response, true);
     return isset($r['content'][0]['text'])
         ? ['success' => true, 'content' => $r['content'][0]['text']]
-        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error'];
+        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
 }
 
 
@@ -5850,14 +6659,17 @@ Generate the research now with real, specific insights based on the prospect inf
 // ============ EMAIL GENERATION ============
 // Template-based approach: LLM fills specific parts, we assemble the structure
 
-function generateEmailContent($provider, $apiKey, $lead, $emailType, $customInstructions, $enrichment, $settings, $previousEmail = '', $includeSignature = true) {
+function generateEmailContent($provider, $apiKey, $lead, $emailType, $customInstructions, $enrichment, $settings, $previousEmail = '', $includeSignature = true, $admin = null, $accountName = '') {
     $firstName = $lead['first_name'] ?? 'there';
     $lastName = $lead['last_name'] ?? '';
     $title = $lead['title'] ?? '';
     $company = $lead['company'] ?? '';
     $industry = $lead['industry'] ?? '';
-    
-    $senderName = $settings['sender_name'] ?? 'Your Name';
+
+    // Settings can be present-but-empty (not just unset), which ?? won't
+    // catch — so a blank sender_name would still leak through as "Your Name"
+    // literally in the email. Prefer the rep's real account name instead.
+    $senderName = trim($settings['sender_name'] ?? '') !== '' ? $settings['sender_name'] : ($accountName ?: 'Your Name');
     $senderTitle = $settings['sender_title'] ?? '';
     $senderCompany = $settings['sender_company'] ?? '';
     $companyDesc = $settings['company_description'] ?? 'Macktiles Australia is an Australian architectural tile brand with a Melbourne showroom, 14 contemporary designs, a Visualiser tool, Italian production technology, and the Batik Designer Collection pre-order range';
@@ -5892,10 +6704,6 @@ VALUE ANGLE: " . ($valueAngles[0]['angle'] ?? $valueProp) . "
 SENDER: {$senderName}, {$senderTitle} at {$senderCompany}
 WHAT WE SELL: {$companyDesc}
 SOCIAL PROOF: {$socialProof}";
-
-    if ($customInstructions) {
-        $context .= "\nSPECIAL INSTRUCTIONS: {$customInstructions}";
-    }
 
     // Add stage intelligence context if available
     if (!empty($lead['pain_hypothesis']['hypotheses'])) {
@@ -5964,11 +6772,18 @@ WRITING STYLE:
 - If manufacturing comes up, frame credibility as Italian robotics, Italian digital printing inks, and Italian production process
 ";
 
+    // Rendered as a hard requirement right before the task instructions (not
+    // buried in the context block) so the model can't skip it while following
+    // the strict part-by-part output format below.
+    $instructionsBlock = $customInstructions
+        ? "\nMANDATORY INSTRUCTIONS FROM THE REP — YOU MUST FOLLOW THESE, THEY OVERRIDE ANY CONFLICTING GUIDANCE ABOVE:\n{$customInstructions}\n"
+        : '';
+
     switch ($emailType) {
         case 'initial':
             $prompt = "{$context}
 {$languageRules}
-
+{$instructionsBlock}
 Generate these 4 parts for a cold email. Be SPECIFIC using the research above. No generic filler.
 
 1. SUBJECT (4-6 words, lowercase except proper nouns, specific to their business, creates curiosity, and does not make a sales claim - like \"tiles for {$company} projects?\" or \"tile options for {$industry}?\")
@@ -5989,7 +6804,7 @@ CTA: [your question]";
         case 'followup1':
             $prompt = "{$context}
 {$languageRules}
-
+{$instructionsBlock}
 PREVIOUS EMAIL SENT:
 {$previousEmail}
 
@@ -6010,7 +6825,7 @@ CTA: [your question]";
         case 'followup2':
             $prompt = "{$context}
 {$languageRules}
-
+{$instructionsBlock}
 PREVIOUS EMAIL SENT:
 {$previousEmail}
 
@@ -6031,7 +6846,7 @@ CTA_EASYOUT: [your ask with easy out]";
         case 'breakup':
             $prompt = "{$context}
 {$languageRules}
-
+{$instructionsBlock}
 Generate these 2 parts for a breakup email (final, closing the loop).
 
 1. SUBJECT (\"closing the loop\" or \"should I close your file?\" - use lowercase)
@@ -6044,12 +6859,12 @@ BODY: [your complete body]";
             break;
 
         default:
-            $prompt = "{$context}\n\nWrite a brief professional email.";
+            $prompt = "{$context}\n{$instructionsBlock}\nWrite a brief professional email.";
     }
 
     // Call LLM
-    $res = callLLM($provider, $apiKey, $prompt);
-    
+    $res = callLLM($provider, $apiKey, $prompt, $admin);
+
     if (!$res['success']) {
         return $res;
     }
@@ -6141,9 +6956,13 @@ BODY: [your complete body]";
 
 // ============ CALL PITCH GENERATION ============
 
-function generateCallPitch($provider, $apiKey, $name, $title, $company, $industry, $pitchType, $customInstructions, $settings, $leadData = null) {
-    $senderName = $settings['sender_name'] ?? '';
-    $senderTitle = $settings['sender_title'] ?? 'Business Development Manager';
+function generateCallPitch($provider, $apiKey, $name, $title, $company, $industry, $pitchType, $customInstructions, $settings, $leadData = null, $admin = null, $accountName = '') {
+    // Settings values can be present-but-empty (not just unset), which ??
+    // won't catch — so a blank string still needs an explicit fallback or the
+    // script reads "it's here" / "I'm the ." Prefer the rep's real account
+    // name over a generic placeholder since it's actually usable on a call.
+    $senderName = trim($settings['sender_name'] ?? '') !== '' ? $settings['sender_name'] : ($accountName ?: 'Your Name');
+    $senderTitle = trim($settings['sender_title'] ?? '') !== '' ? $settings['sender_title'] : 'Business Development Manager';
     $senderCompany = $settings['sender_company'] ?? 'Macktiles Australia';
     $companyDesc = $settings['company_description'] ?? 'Macktiles Australia is an Australian architectural tile brand with a Melbourne showroom, 14 contemporary designs, the Macktiles Visualiser tool, Italian production technology, and the Batik Designer Collection pre-order range';
     $valueProp = $settings['value_proposition'] ?? '';
@@ -6220,13 +7039,15 @@ Generate a call script following the EXACT structure below. Use the visual forma
 
 " . ($emailSent ? "\"{$reasonA}\"" : "\"{$reasonB}\"") . "
 
-┌─────────────────────────────────────────────────────────────┐
-│  → THEY SAY NO / UNSURE                                     │
-└─────────────────────────────────────────────────────────────┘
-\"No problem at all. If you could spare 30 seconds, I'll explain why I'm calling. If it's not relevant, we can leave it there. Does that sound fair?\"
+\"Do you have a couple of minutes, or is now a bad time?\"
 
-      ↳ They say YES → Continue to WHO WE ARE ⬇️
-      ↳ They say NO  → Skip to GRACEFUL EXIT 🚪
+┌─────────────────────────────────────────────────────────────┐
+│  → THEY SAY NOW IS NOT A GOOD TIME                           │
+└─────────────────────────────────────────────────────────────┘
+\"No problem at all — when would be a better time to call back?\"
+
+      ↳ They say YES, they have a couple of minutes → Continue to WHO WE ARE ⬇️
+      ↳ They say NOT INTERESTED at all → Skip to GRACEFUL EXIT
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  🏢 WHO WE ARE                                                ║
@@ -6257,7 +7078,7 @@ Does any of that sound familiar?\"
 • Are you happy with the pricing you are getting right now?\"
 
       ↳ Something resonates → Continue to THE ASK ⬇️
-      ↳ Still no           → Skip to GRACEFUL EXIT 🚪
+      ↳ Still no           → Skip to GRACEFUL EXIT
 
 ┌─────────────────────────────────────────────────────────────┐
 │  → THEY SAY YES (something resonates)                       │
@@ -6293,8 +7114,14 @@ No pressure at all, just a practical look at whether there is a fit. Would you b
 \"Thanks {$name}, looking forward to [Day]. Have a great day.\"
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🚪 GRACEFUL EXIT (if not interested)                        │
+│  → THEY SAY NO to the ask                                   │
 └─────────────────────────────────────────────────────────────┘
+      ↳ Skip to GRACEFUL EXIT
+
+╔══════════════════════════════════════════════════════════════╗
+║  🚪 GRACEFUL EXIT (if not interested)                        ║
+╚══════════════════════════════════════════════════════════════╝
+
 \"No problem at all. Would it be better if I checked back in a few months, or should I leave it there for now?\"
 
 \"Thanks for your time, {$name}. Have a great day.\"
@@ -6304,10 +7131,12 @@ No pressure at all, just a practical look at whether there is a fit. Would you b
 INSTRUCTIONS:
 1. Keep this EXACT structure with all the box formatting
 2. Replace [ADD 2 INDUSTRY-SPECIFIC PAIN POINTS] with real pain points for {$industry}
-3. Keep all the navigation arrows (↳ ⬇️ 🚪) so the caller knows where to go
-4. Everything in quotes is what to say out loud";
+3. Keep all the navigation arrows (↳ ⬇️) so the caller knows where to go. Do NOT put the 🚪 emoji anywhere except the GRACEFUL EXIT header itself — it must never appear in a Skip to GRACEFUL EXIT navigation line, only in the actual box title
+4. Everything in quotes is what to say out loud
+5. There is exactly ONE GRACEFUL EXIT box in the whole script, placed once at the very end. There are exactly THREE points in the script that jump to it — after the opening if they say not interested, after pain points if still nothing resonates, and after THE ASK if they decline the meeting. Do NOT write GRACEFUL EXIT text at any of those three points — only write the jump instruction there, and write the actual GRACEFUL EXIT box once, at the end
+6. Do not invent any additional branches, boxes, or exit points beyond the ones already in this template";
 
-    $res = callLLM($provider, $apiKey, $prompt);
+    $res = callLLM($provider, $apiKey, $prompt, $admin);
     
     if (!$res['success']) {
         return $res;
@@ -6328,4 +7157,126 @@ INSTRUCTIONS:
         'title' => $pitchTitles[$pitchType] ?? 'Call Script',
         'pitch' => $res['content']
     ];
+}
+
+// ============ AIRCALL API HELPER FUNCTIONS ============
+
+function aircallRequest($method, $path, $body = null) {
+    $admin = getAdmin();
+    $id = trim((string)($admin['aircall_api_id'] ?? ''));
+    $token = trim((string)($admin['aircall_api_token'] ?? ''));
+    if (!$id || !$token) return ['ok' => false, 'status' => 0, 'body' => null, 'error' => 'Aircall API keys not configured'];
+
+    $ch = curl_init('https://api.aircall.io/v1' . $path);
+    $opts = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_USERPWD => $id . ':' . $token,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_CUSTOMREQUEST => strtoupper($method),
+    ];
+    if ($body !== null) $opts[CURLOPT_POSTFIELDS] = json_encode($body);
+    curl_setopt_array($ch, $opts);
+    $response = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    if ($response === false) return ['ok' => false, 'status' => 0, 'body' => null, 'error' => 'Could not reach Aircall: ' . $curlErr];
+    $json = json_decode($response, true);
+    $ok = $status >= 200 && $status < 300;
+    $error = '';
+    if (!$ok) {
+        if ($status === 401 || $status === 403) $error = 'Aircall rejected the API keys. Check the API ID and Token.';
+        elseif (is_array($json) && !empty($json['message'])) $error = 'Aircall: ' . $json['message'];
+    }
+    return ['ok' => $ok, 'status' => $status, 'body' => $json, 'error' => $error];
+}
+
+function aircallFindUserByAircallId($aircallUserId) {
+    if (!$aircallUserId) return null;
+    foreach (getUsers() as $u) {
+        if ((string)($u['aircall_user_id'] ?? '') === (string)$aircallUserId) return $u;
+    }
+    return null;
+}
+
+function aircallNormalizePhone($phone) {
+    return preg_replace('/\D+/', '', (string)$phone);
+}
+
+// Phones match when normalized digits are equal, or one ends with the other's
+// last 8 digits (handles +61 4xx vs 04xx style prefix differences).
+function aircallPhonesMatch($a, $b) {
+    $a = aircallNormalizePhone($a);
+    $b = aircallNormalizePhone($b);
+    if (strlen($a) < 6 || strlen($b) < 6) return false;
+    if ($a === $b) return true;
+    $suffix = min(8, strlen($a), strlen($b));
+    return substr($a, -$suffix) === substr($b, -$suffix);
+}
+
+// Search all users' leads for a phone match. $preferUserId is checked first so
+// calls land on the dialing rep's copy of the lead when duplicates exist.
+function aircallFindLeadByPhone($phone, $preferUserId = null) {
+    if (strlen(aircallNormalizePhone($phone)) < 6) return null;
+    $users = getUsers();
+    if ($preferUserId) {
+        usort($users, fn($x, $y) => ($y['id'] === $preferUserId) <=> ($x['id'] === $preferUserId));
+    }
+    foreach ($users as $u) {
+        foreach (dbLoadLeadsByOwner($u['id']) as $lead) {
+            if (aircallPhonesMatch($lead['phone'] ?? '', $phone)) {
+                return ['owner_id' => $u['id'], 'lead_id' => $lead['id']];
+            }
+        }
+    }
+    return null;
+}
+
+// Aircall recording URLs expire ~10 minutes after call.ended fires, so download
+// the file immediately and serve our own copy. Falls back to the raw URL.
+function aircallStoreRecording($url, $callId) {
+    if (!$url) return '';
+    $dir = DATA_DIR . '/recordings';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$callId);
+    $file = $dir . '/aircall_' . $safeId . '.mp3';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT => 30,
+    ]);
+    $audio = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($audio !== false && $status === 200 && strlen($audio) > 0 && @file_put_contents($file, $audio) !== false) {
+        return 'data/recordings/aircall_' . $safeId . '.mp3';
+    }
+    return $url; // Download failed — keep the original (short-lived) URL
+}
+
+// Notify every admin whenever a rep's Aircall call finishes — answered or
+// missed — so they can jump straight to the recording from the bell.
+function notifyAdminsOfCall(array $lead, string $repName, string $callId, bool $missed, int $durationSeconds, string $recordingUrl): void {
+    $leadName = trim(($lead['first_name'] ?? '') . ' ' . ($lead['last_name'] ?? ''));
+    if ($leadName === '') $leadName = $lead['company'] ?? 'a lead';
+    $durLabel = $durationSeconds > 0 ? (intdiv($durationSeconds, 60) . 'm ' . ($durationSeconds % 60) . 's') : '';
+    foreach (getAllUsersIncludingInternal() as $u) {
+        if (empty($u['is_admin']) && empty($u['is_super_admin'])) continue;
+        pushChatNotification($u['id'], [
+            'id'            => 'notif_' . bin2hex(random_bytes(6)),
+            'notif_key'     => "aircall_call_{$callId}_{$u['id']}",
+            'type'          => $missed ? 'callback_overdue' : 'call_logged',
+            'title'         => $missed ? "Missed call — {$repName}" : "Call completed — {$repName}",
+            'body'          => $missed ? "{$repName} missed a call with {$leadName}" : "{$repName} called {$leadName}" . ($durLabel ? " ({$durLabel})" : ''),
+            'lead_id'       => $lead['id'] ?? '',
+            'recording_url' => $recordingUrl,
+            'created_at'    => date('c'),
+            'read'          => false,
+        ]);
+    }
 }

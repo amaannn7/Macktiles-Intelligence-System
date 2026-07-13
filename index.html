@@ -300,6 +300,8 @@
         .grade-b { background: var(--warning-bg); color: var(--warning); }
         .grade-c { background: var(--danger-bg); color: var(--danger); }
         .grade-d { background: var(--bg-main); color: var(--text-muted); }
+        .grade-disqualified { background: var(--danger-bg); color: var(--danger); }
+        .grade-unscored { background: var(--bg-main); color: var(--text-muted); }
 
         /* ========== TEMPERATURE BADGES ========== */
         .temp-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; border: 1px solid transparent; }
@@ -752,8 +754,42 @@
             .pipeline-stage-chip { min-width: 118px; }
             .table { min-width: 500px; }
         }
+        /* ===== Feedback & Support ===== */
+        .dsup-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .dsup-stat { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+        .dsup-stat:hover { border-color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+        .dsup-stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .dsup-stat-value { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .dsup-stat-value.dsup-stat-success { color: var(--success); }
+        .dsup-filter-tabs { display: flex; gap: 4px; flex-wrap: wrap; padding: 4px 0 10px; }
+        .dsup-filter-tab { border: none; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius-md); cursor: pointer; transition: background .15s, color .15s; }
+        .dsup-filter-tab:hover { background: var(--border-light); }
+        .dsup-filter-tab.active { background: var(--gold-muted); color: var(--gold-dark); }
+        .dsup-ticket-list { padding: 0 16px 16px; }
+        .dsup-ticket-card { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 10px; transition: box-shadow .15s; }
+        .dsup-ticket-card.dsup-highlight { animation: dsupFlash 1.8s ease; }
+        @keyframes dsupFlash { 0%, 100% { box-shadow: none; } 20% { box-shadow: 0 0 0 3px var(--gold-muted); } }
+        .dsup-ticket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .dsup-ticket-subject { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .dsup-ticket-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .dsup-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-left: 6px; white-space: nowrap; display: inline-block; }
+        .dsup-chip-feedback { background: var(--gold-muted); color: var(--gold-dark); }
+        .dsup-chip-support { background: var(--info-bg); color: var(--info); }
+        .dsup-chip-priority-high { background: var(--danger-bg); color: var(--danger); }
+        .dsup-status-pill { font-size: 11px; font-weight: 600; color: #fff; padding: 3px 10px; border-radius: 20px; white-space: nowrap; border: none; cursor: pointer; }
+        .dsup-ticket-message { margin-top: 10px; font-size: 13px; white-space: pre-wrap; color: var(--text-primary); line-height: 1.5; }
+        .dsup-thread { margin-top: 12px; border-top: 1px solid var(--border-light); padding-top: 10px; }
+        .dsup-thread-toggle { cursor: pointer; font-size: 12px; color: var(--gold-dark); font-weight: 600; display: flex; align-items: center; gap: 4px; user-select: none; }
+        .dsup-reply-row { padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+        .dsup-reply-row:last-child { border-bottom: none; }
+        .dsup-reply-author { font-weight: 600; font-size: 12px; }
+        .dsup-reply-author.staff { color: var(--gold-dark); }
+        .dsup-reply-staff-tag { font-weight: 500; color: var(--text-muted); }
+        .dsup-reply-msg { white-space: pre-wrap; margin-top: 2px; }
+        .dsup-reply-compose { display: flex; gap: 6px; margin-top: 10px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://js.pusher.com/8.4/pusher.min.js"></script>
 </head>
 <body>
     <div class="auth-screen" id="auth-screen">
@@ -790,6 +826,7 @@
                 <div class="nav-item manager-nav" data-page="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Pipeline</span></div>
                 <div class="nav-item manager-nav" data-page="dashboard" data-manager-label="Team Activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg><span>Team Activity</span></div>
                 <div class="nav-item manager-nav admin-only" data-page="users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Users</span></div>
+                <div class="nav-item manager-nav super-admin-only" data-page="dev-support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Feedback &amp; Support</span></div>
                 <div class="nav-item" data-page="chat" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Team Chat</span><span id="chat-unread-badge" style="display:none;position:absolute;top:8px;right:14px;background:var(--danger);color:white;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;">0</span></div>
                 <div class="nav-item manager-nav admin-only" data-page="admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></div>
             </nav>
@@ -867,7 +904,10 @@
                     <div class="proactive-card" id="focus-queue-card">
                         <div class="proactive-card-header">
                             <div class="proactive-card-title"><span class="label-dot gold"></span>Focus Queue</div>
-                            <span class="proactive-card-count" id="focus-queue-count">0</span>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <button type="button" id="focus-queue-scope-toggle" class="btn btn-xs btn-secondary" style="display:none;" onclick="toggleFocusQueueScope()">Show team</button>
+                                <span class="proactive-card-count" id="focus-queue-count">0</span>
+                            </div>
                         </div>
                         <div id="focus-queue-list"></div>
                         <div id="focus-queue-empty" class="quiet-empty" style="display:none;">
@@ -879,7 +919,10 @@
                     <div class="proactive-card" id="today-batches-card">
                         <div class="proactive-card-header">
                         <div class="proactive-card-title"><span class="label-dot info"></span>Queue Summary</div>
-                            <button class="btn btn-xs btn-secondary" onclick="showPage('leads')">Open Leads</button>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <button type="button" id="queue-summary-scope-toggle" class="btn btn-xs btn-secondary" style="display:none;" onclick="toggleFocusQueueScope()">Show team</button>
+                                <button class="btn btn-xs btn-secondary" onclick="showPage('leads')">Open Leads</button>
+                            </div>
                         </div>
                         <div class="workbench-batches" id="today-queue-batches"></div>
                     </div>
@@ -1058,6 +1101,12 @@
                 <div class="page-content">
                     <!-- Batch Categories -->
                     <div class="workbench-batches" id="workbench-batches">
+                        <div class="workbench-batch" data-batch="inbound_urgent" onclick="selectBatch('inbound_urgent')">
+                            <div class="workbench-batch-icon">I</div>
+                            <div class="workbench-batch-name">Inbound Urgent</div>
+                            <div class="workbench-batch-count" id="wb-inbound-count">0</div>
+                            <div class="workbench-batch-progress"><div class="workbench-batch-progress-fill" style="width:0%;"></div></div>
+                        </div>
                         <div class="workbench-batch active" data-batch="needs_research" onclick="selectBatch('needs_research')">
                             <div class="workbench-batch-icon">R</div>
                             <div class="workbench-batch-name">Needs Research</div>
@@ -1201,7 +1250,7 @@
             </section>
 
             <section class="page-section" id="page-leads">
-                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1 id="leads-page-title">All Leads</h1><p>Manage stages, source quality, and next actions</p></div><div class="btn-group"><button class="btn btn-sm btn-secondary" id="bulk-delete-btn" style="display:none;" onclick="bulkDelete()">Delete</button><button class="btn btn-sm btn-secondary" id="export-selected-btn" style="display:none;" onclick="exportSelected()">Export Selected</button><button class="btn btn-sm btn-secondary" onclick="exportAll()">Export All</button><button class="btn btn-sm btn-secondary" onclick="exportCSV()">CSV Export</button><button class="btn btn-sm btn-secondary" id="trash-toggle-btn" onclick="toggleTrash()">Trash</button><button class="btn btn-sm btn-primary" onclick="showPage('import')">Import</button></div></div></div>
+                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1 id="leads-page-title">All Leads</h1><p>Manage stages, source quality, and next actions</p></div><div class="btn-group"><button class="btn btn-sm btn-secondary" id="bulk-delete-btn" style="display:none;" onclick="bulkDelete()">Delete</button><button class="btn btn-sm btn-secondary" id="export-selected-btn" style="display:none;" onclick="exportSelected()">Export Selected</button><button class="btn btn-sm btn-secondary" onclick="exportAll()">Export All</button><button class="btn btn-sm btn-secondary" onclick="exportCSV()">CSV Export</button><button class="btn btn-sm btn-secondary" id="trash-toggle-btn" onclick="toggleTrash()">Trash</button><button class="btn btn-sm btn-secondary" onclick="showPage('import')">Import</button><button class="btn btn-sm btn-primary" onclick="showPage('add-lead')">+ Add Lead</button></div></div></div>
                 <div class="page-content">
                     <div class="pipeline-strip" id="pipeline-stage-strip"></div>
                     <div class="toolbar">
@@ -1455,12 +1504,14 @@ Phone: +1 234 567 890"></textarea></div>
                             <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>AI Provider</h3>
                             <div class="provider-grid">
                                 <div class="provider-card selected" data-provider="groq"><div class="provider-name">Groq</div><div class="provider-desc">Llama 3.3</div><span class="provider-badge">Fast</span></div>
+                                <div class="provider-card" data-provider="cerebras"><div class="provider-name">Cerebras</div><div class="provider-desc">Llama 3.3</div><span class="provider-badge">Fast</span></div>
                                 <div class="provider-card" data-provider="gemini"><div class="provider-name">Gemini</div><div class="provider-desc">Flash</div><span class="provider-badge">Free</span></div>
                                 <div class="provider-card" data-provider="anthropic"><div class="provider-name">Claude</div><div class="provider-desc">Sonnet</div></div>
                             </div>
                             <input type="hidden" id="admin-provider" value="groq">
                             <form id="admin-settings-form">
                                 <div class="form-group"><label class="form-label">Groq API Key</label><input type="password" class="form-input" id="admin-groq-key"></div>
+                                <div class="form-group"><label class="form-label">Cerebras API Key</label><input type="password" class="form-input" id="admin-cerebras-key"></div>
                                 <div class="form-group"><label class="form-label">Gemini API Key</label><input type="password" class="form-input" id="admin-gemini-key"></div>
                                 <div class="form-group"><label class="form-label">Anthropic API Key</label><input type="password" class="form-input" id="admin-anthropic-key"></div>
                                 <div class="btn-group"><button type="submit" class="btn btn-primary btn-sm">Save Keys</button><button type="button" class="btn btn-secondary btn-sm" onclick="testAPI()">Test</button></div>
@@ -1600,6 +1651,55 @@ Phone: +1 234 567 890"></textarea></div>
                                 </div>
                             </div>
                         </div>
+                        <div class="settings-card settings-card-full" id="aircall-settings-card" hidden>
+                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Aircall Integration</h3>
+                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Connect Aircall so every call is dialed from the lead page, then recorded and logged back automatically.</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">API ID</label>
+                                    <input type="password" class="form-input" id="aircall-api-id" placeholder="Aircall Dashboard → Integrations → API Keys">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">API Token</label>
+                                    <input type="password" class="form-input" id="aircall-api-token" placeholder="Aircall Dashboard → Integrations → API Keys">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Webhook Token (recommended)</label>
+                                <input type="password" class="form-input" id="aircall-webhook-token" placeholder="Shown on the webhook after you create it in Aircall">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL — paste this in Aircall Dashboard → Integrations → Webhooks</label>
+                                <input type="text" class="form-input" id="aircall-webhook-url" readonly onclick="this.select();document.execCommand('copy');toast('Webhook URL copied','success')" style="cursor:pointer;background:var(--bg-main);">
+                                <p class="form-hint">Subscribe the webhook to: call.created, call.answered, call.hungup, call.ended, call.commented, call.tagged</p>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="saveAircallSettings()">Save Aircall Settings</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="testAircall()">Test Connection</button>
+                            </div>
+                            <p class="form-hint" style="margin-top:10px;">Each rep also needs their Aircall User ID and Number ID linked on the <strong>Users</strong> page before click-to-dial works for them.</p>
+                        </div>
+                        <div class="settings-card super-admin-only">
+                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Levata Hub Sync</h3>
+                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Super admin only. Connects Feedback &amp; Support tickets filed here to the central Levata system — tickets forward to the hub, and staff replies push back automatically.</p>
+                            <form id="dsup-sync-form">
+                                <div class="form-group"><label class="form-label">Hub URL</label><input type="url" class="form-input" id="dsup-hub-url" placeholder="https://levataos.com/api.php?action=ingest-ticket"></div>
+                                <div class="form-group"><label class="form-label">Hub Secret</label><input type="password" class="form-input" id="dsup-hub-secret" placeholder="shared secret"></div>
+                                <div class="form-group"><label class="form-label">This Client's Name</label><input type="text" class="form-input" id="dsup-client-name" placeholder="Macktiles"></div>
+                                <button type="submit" class="btn btn-secondary btn-sm">Save Sync Settings</button>
+                            </form>
+                        </div>
+                        <div class="settings-card super-admin-only">
+                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Real-Time (Pusher)</h3>
+                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Super admin only. Powers instant chat, notifications, and Feedback &amp; Support replies for everyone — no page refresh needed. Falls back to normal polling if left unconfigured.</p>
+                            <form id="realtime-settings-form">
+                                <div class="form-group"><label class="form-label">App ID</label><input type="text" class="form-input" id="realtime-app-id" placeholder="1234567"></div>
+                                <div class="form-group"><label class="form-label">Key</label><input type="text" class="form-input" id="realtime-key" placeholder="public key"></div>
+                                <div class="form-group"><label class="form-label">Secret</label><input type="password" class="form-input" id="realtime-secret" placeholder="secret key"></div>
+                                <div class="form-group"><label class="form-label">Cluster</label><input type="text" class="form-input" id="realtime-cluster" placeholder="e.g. ap2, mt1, us2"></div>
+                                <button type="submit" class="btn btn-secondary btn-sm">Save Real-Time Settings</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1630,6 +1730,24 @@ Phone: +1 234 567 890"></textarea></div>
                             <tfoot id="report-kpi-foot"></tfoot>
                         </table></div>
                     </div>
+                    <div class="card" style="margin-bottom:16px;" id="reports-calls-card" hidden>
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 4px 12px;">
+                            <div class="cc-progress-title" style="padding:0;">Calls</div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <select class="form-select" id="calls-rep-filter" style="width:auto;padding:6px 8px;" onchange="loadCallsReport()"><option value="">All Reps</option></select>
+                                <select class="form-select" id="calls-outcome-filter" style="width:auto;padding:6px 8px;" onchange="loadCallsReport()">
+                                    <option value="">All Outcomes</option>
+                                    <option value="answered">Answered</option>
+                                    <option value="missed">Missed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="calls-summary" style="display:flex;gap:16px;flex-wrap:wrap;padding:0 4px 12px;font-size:12px;color:var(--text-secondary);"></div>
+                        <div class="table-wrap"><table class="table">
+                            <thead><tr><th>Rep</th><th>Lead</th><th>When</th><th>Outcome</th><th>Duration</th><th>Recording</th><th>Notes</th></tr></thead>
+                            <tbody id="calls-report-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody>
+                        </table></div>
+                    </div>
                     <div class="card">
                         <div class="cc-progress-title" style="padding:4px 4px 12px;">Activity Timeline</div>
                         <div id="report-feed" style="max-height:480px;overflow-y:auto;"></div>
@@ -1640,7 +1758,7 @@ Phone: +1 234 567 890"></textarea></div>
             <section class="page-section" id="page-users">
                 <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Users</h1><p>Manage accounts</p></div><button class="btn btn-primary btn-sm" onclick="openModal('create-user-modal')">+ User</button></div></div>
                 <div class="page-content">
-                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
+                    <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th id="users-aircall-th" hidden>Aircall</th><th>Actions</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
                     <div class="card" style="margin-top:20px;">
                         <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
                             <h3 class="card-title">Session Activity</h3>
@@ -1650,6 +1768,33 @@ Phone: +1 234 567 890"></textarea></div>
                             </div>
                         </div>
                         <div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Last Seen</th><th>Last Page</th><th>Active Today</th><th>Sessions</th><th></th></tr></thead><tbody id="sessions-table-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody></table></div>
+                    </div>
+                </div>
+            </section>
+            <section class="page-section" id="page-dev-support">
+                <div class="top-bar"><div class="top-bar-content"><div class="page-title"><h1>Feedback &amp; Support</h1><p>Raise a support request or send feedback. Track its status and replies here.</p></div><button type="button" class="btn btn-primary btn-sm" onclick="dsupOpenTicketModal()">+ New Ticket</button></div></div>
+                <div class="page-content">
+                    <div class="dsup-stat-row">
+                        <div class="dsup-stat" data-filter="open"><div class="dsup-stat-label">Open</div><div class="dsup-stat-value" id="dsup-open-count">0</div></div>
+                        <div class="dsup-stat" data-filter="in_progress"><div class="dsup-stat-label">In progress</div><div class="dsup-stat-value" id="dsup-progress-count">0</div></div>
+                        <div class="dsup-stat" data-filter="resolved"><div class="dsup-stat-label">Resolved</div><div class="dsup-stat-value dsup-stat-success" id="dsup-resolved-count">0</div></div>
+                        <div class="dsup-stat" data-filter=""><div class="dsup-stat-label">Total</div><div class="dsup-stat-value" id="dsup-total-count">0</div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body" style="padding-bottom:4px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <div class="dsup-filter-tabs" id="dsup-filter-tabs">
+                                    <button type="button" class="dsup-filter-tab active" data-filter="" onclick="dsupSetFilter('')">All</button>
+                                    <button type="button" class="dsup-filter-tab" data-filter="open" onclick="dsupSetFilter('open')">Open</button>
+                                    <button type="button" class="dsup-filter-tab" data-filter="in_progress" onclick="dsupSetFilter('in_progress')">In progress</button>
+                                    <button type="button" class="dsup-filter-tab" data-filter="resolved" onclick="dsupSetFilter('resolved')">Resolved</button>
+                                    <button type="button" class="dsup-filter-tab" data-filter="closed" onclick="dsupSetFilter('closed')">Closed</button>
+                                </div>
+                                <span id="dsup-live-indicator" style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>Live</span>
+                            </div>
+                        </div>
+                        <div id="dsup-ticket-list" class="dsup-ticket-list"><div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div></div>
                     </div>
                 </div>
             </section>
@@ -1711,10 +1856,26 @@ Phone: +1 234 567 890"></textarea></div>
     <div class="modal-overlay" id="onboarding-modal"><div class="modal" style="max-width:520px;"><div class="modal-header" style="background:var(--navy);color:white;"><h3 class="modal-title" style="color:white;">Welcome to Macktiles Sales Intelligence</h3></div><div class="modal-body" id="onboarding-body"></div></div></div>
     <div class="modal-overlay" id="confirm-modal"><div class="modal" style="max-width:420px;"><div class="modal-header"><h3 class="modal-title" id="confirm-title">Confirm</h3><button class="modal-close" onclick="resolveConfirm(false)">&times;</button></div><div class="modal-body"><p id="confirm-message" style="margin-bottom:12px;"></p><div id="confirm-input-wrap" style="display:none;"><input type="text" class="form-input" id="confirm-input" placeholder=""></div><div id="confirm-select-wrap" style="display:none;"><select class="form-select" id="confirm-select"></select></div></div><div style="display:flex;gap:8px;justify-content:flex-end;padding:0 20px 20px;"><button class="btn btn-secondary" onclick="resolveConfirm(false)">Cancel</button><button class="btn btn-primary" id="confirm-ok-btn" onclick="resolveConfirm(true)">Confirm</button></div></div></div>
     <div class="modal-overlay" id="override-modal"><div class="modal modal-sm"><div class="modal-header"><h3 class="modal-title">Grade Override</h3><button class="modal-close" onclick="closeModal('override-modal')">&times;</button></div><div class="modal-body" id="override-modal-body"></div></div></div>
+    <div class="modal-overlay" id="dsup-ticket-modal"><div class="modal modal-sm"><div class="modal-header"><h3 class="modal-title">New Ticket to Levata</h3><button class="modal-close" onclick="closeModal('dsup-ticket-modal')">&times;</button></div><div class="modal-body">
+        <form id="dsup-ticket-form">
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="dsup-ticket-type"><option value="support">Support request</option><option value="feedback">Feedback</option></select></div>
+                <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="dsup-ticket-category"></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="dsup-ticket-priority"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High</option></select></div>
+            <div class="form-group"><label class="form-label">Subject</label><input type="text" class="form-input" id="dsup-ticket-subject" required placeholder="Short summary" maxlength="120"></div>
+            <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" id="dsup-ticket-message" rows="5" required placeholder="Describe your request or feedback in detail"></textarea></div>
+            <button type="submit" class="btn btn-primary" id="dsup-ticket-save-btn" style="width:100%;">Submit ticket</button>
+        </form>
+    </div></div></div>
     <div class="toast-container" id="toast-container"></div>
 
     <script>
 let user=null,leads=[],currentLead=null,importData=[],reqConfig=[],userSettings={},ecAttachments=[];
+// Feature-disabled: matches AIRCALL_ENABLED in api.php. Flip both back to
+// true together to re-enable click-to-dial, call history, and the Aircall
+// admin settings/Users-page link UI.
+const AIRCALL_ENABLED=false;
 const API_BASE='api.php';
 const MACKTILES_STAGES=[
     ['new_lead','New Lead'],
@@ -1867,13 +2028,15 @@ async function requestPasswordReset(){
 function logout(){localStorage.removeItem('token');user=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex'}
 async function checkAuth(){if(!localStorage.token)return;const r=await api('me');if(r.success){user=r.user;showApp()}}
 function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
-    setInterval(pollNotifications, 3000);
+    // Fallback poll — only runs while real-time isn't connected (see initRealtime).
+    _notifPollTimer = setInterval(()=>{ if(!rtConnected) pollNotifications(); }, 3000);
     setInterval(() => api('generate-notifications', 'POST'), 8000);
     _sendActivityPing();
     updateChatUnreadBadge();
     setInterval(()=>{ if(chatState.thread===null||document.getElementById('page-chat')?.classList.contains('active')===false) updateChatUnreadBadge(); }, 15000);
     // Check onboarding
     if(user.onboarding_completed===false) showOnboarding();
+    initRealtime();
 }
 let currentPage=1;let showingTrash=false;let paginationData=null;
 async function loadLeads(page){
@@ -1937,7 +2100,7 @@ document.getElementById('leads-table-body').innerHTML=filtered.map(l=>`<tr>
 <td><div class="lead-info"><div class="lead-avatar">${(l.first_name||'?')[0]}</div><div><div class="lead-name">${l.first_name||''} ${l.last_name||''}</div><div class="lead-title">${l.email||''}</div></div></div></td>
 <td>${l.company||'-'}</td>
 <td>${l.phone||'-'}</td>
-<td style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</td>
+<td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</div></td>
 <td>${nextActionCell(l)}</td>
 <td>${showingTrash?`<div style="display:flex;gap:6px;"><button class="btn btn-xs btn-success" onclick="restoreLead('${l.id}')">Restore</button><button class="btn btn-xs btn-danger" onclick="permanentDelete('${l.id}')">Delete Forever</button></div>`:`<button class="action-btn" onclick="openLead('${l.id}')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn danger" onclick="deleteLead('${l.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td>
 </tr>`).join('');
@@ -2072,7 +2235,7 @@ function filterByTemperature(temp) {
 <td><div class="lead-info"><div class="lead-avatar">${(l.first_name||'?')[0]}</div><div><div class="lead-name">${l.first_name||''} ${l.last_name||''}</div><div class="lead-title">${l.email||''}</div></div></div></td>
 <td>${l.company||'-'}</td>
 <td>${l.phone||'-'}</td>
-<td style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}${getTempBadge(l.temperature)}</td>
+<td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}${getTempBadge(l.temperature)}</div></td>
 <td><button class="action-btn" onclick="openLead('${l.id}')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn danger" onclick="deleteLead('${l.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
 </tr>`).join('');
             toast(`Showing ${filtered.length} ${temp.replace('_', ' ')} leads`, 'info');
@@ -2195,9 +2358,11 @@ function getExactTime(ts) {
     return isToday ? time : d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + time;
 }
 
+let focusQueueScope = 'mine'; // 'mine' | 'team' — admins only
 async function loadProactiveDashboard() {
     try {
-        const r = await api('dashboard-briefing');
+        const qs = focusQueueScope === 'team' ? 'dashboard-briefing&scope=team' : 'dashboard-briefing';
+        const r = await api(qs);
         if (!r.success) return;
 
         // Update temperature group counts
@@ -2209,17 +2374,29 @@ async function loadProactiveDashboard() {
         // Render AI briefing
         renderAIBriefing(r.summary);
 
-        // Render focus queue
-        renderFocusQueue(r.focus_queue || []);
+        // Admin-only toggle to switch between "just me" and the whole team's queue
+        const scopeToggle = document.getElementById('focus-queue-scope-toggle');
+        if (scopeToggle) {
+            scopeToggle.style.display = r.can_view_team ? 'inline-flex' : 'none';
+            scopeToggle.textContent = focusQueueScope === 'team' ? 'Show mine' : 'Show team';
+        }
+
+        // Render focus queue (team_scope tells the renderer whether to show rep names)
+        renderFocusQueue(r.focus_queue || [], r.focus_queue_total, r.team_scope);
 
         // Render attention needed
-        renderAttentionNeeded(r.attention_needed || []);
+        renderAttentionNeeded(r.attention_needed || [], r.team_scope);
 
         // Load and render notifications
         loadNotifications();
     } catch (e) {
         console.error('Error loading proactive dashboard:', e);
     }
+}
+function toggleFocusQueueScope() {
+    focusQueueScope = focusQueueScope === 'team' ? 'mine' : 'team';
+    loadProactiveDashboard();
+    loadTodayQueues();
 }
 
 async function loadTodayOperations() {
@@ -2266,7 +2443,8 @@ async function loadTodayProgress() {
 }
 
 async function loadTodayQueues() {
-    const r = await api('lead-batches');
+    const qs = focusQueueScope === 'team' ? 'lead-batches&scope=team' : 'lead-batches';
+    const r = await api(qs);
     const el = document.getElementById('today-queue-batches');
     if (!el || !r.success) return;
     const batches = r.batches || {};
@@ -2279,6 +2457,13 @@ async function loadTodayQueues() {
         ['overdue', 'Overdue', 'Handle Now', 'batchOverdue']
     ];
     batchData = Object.fromEntries(Object.entries(batches).map(([key, value]) => [key, value?.leads || []]));
+
+    const scopeToggle = document.getElementById('queue-summary-scope-toggle');
+    if (scopeToggle) {
+        scopeToggle.style.display = r.can_view_team ? 'inline-flex' : 'none';
+        scopeToggle.textContent = focusQueueScope === 'team' ? 'Show mine' : 'Show team';
+    }
+
     el.innerHTML = queueConfig.map(([key, label, action, fn]) => {
         const count = batches[key]?.count || 0;
         const activeClass = count ? 'active' : '';
@@ -2323,12 +2508,12 @@ function renderAIBriefing(summary) {
 }
 
 // Render focus queue
-function renderFocusQueue(queue) {
+function renderFocusQueue(queue, total, teamScope) {
     const listEl = document.getElementById('focus-queue-list');
     const emptyEl = document.getElementById('focus-queue-empty');
     const countEl = document.getElementById('focus-queue-count');
 
-    countEl.textContent = queue.length;
+    countEl.textContent = total ?? queue.length;
 
     if (queue.length === 0) {
         listEl.style.display = 'none';
@@ -2339,20 +2524,24 @@ function renderFocusQueue(queue) {
     listEl.style.display = 'block';
     emptyEl.style.display = 'none';
 
-    listEl.innerHTML = queue.slice(0, 5).map((item, i) => `
+    listEl.innerHTML = queue.slice(0, 5).map((item, i) => {
+        const repBadge = teamScope && item.owner_name ? `<span class="badge" style="background:var(--navy);color:#fff;font-size:9px;padding:2px 7px;border-radius:8px;margin-left:6px;">${esc(item.owner_name)}</span>` : '';
+        const ownerAttr = item.owner_id ? `'${item.owner_id}'` : 'null';
+        return `
         <div class="focus-queue-item urgency-${item.urgency}" onclick="openLead('${item.lead_id}')">
             <div class="focus-queue-priority">${i + 1}</div>
             <div class="focus-queue-info">
-                <div class="focus-queue-name">${item.name}</div>
+                <div class="focus-queue-name">${item.name}${repBadge}</div>
                 <div class="focus-queue-meta">${item.company || 'No company'} • ${stageLabel(item.stage)} ${item.source ? `• ${prettyLabel(item.source)}` : ''} ${item.fit_grade ? `• Grade ${item.fit_grade}` : ''}</div>
                 <div class="focus-queue-reason">${item.reason}</div>
             </div>
             <div class="focus-queue-action">
                 ${getActionButton(item.suggested_action, item.lead_id)}
-                <button class="focus-queue-skip" onclick="event.stopPropagation(); skipFocusItem('${item.lead_id}')">Skip</button>
+                <button class="focus-queue-skip" onclick="event.stopPropagation(); skipFocusItem('${item.lead_id}', ${ownerAttr})">Skip</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     if (queue.length > 5) {
         listEl.innerHTML += `<div style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px;">+${queue.length - 5} more in queue</div>`;
@@ -2360,7 +2549,7 @@ function renderFocusQueue(queue) {
 }
 
 // Render attention needed
-function renderAttentionNeeded(attention) {
+function renderAttentionNeeded(attention, teamScope) {
     const cardEl = document.getElementById('attention-needed-card');
     const listEl = document.getElementById('attention-needed-list');
     const countEl = document.getElementById('attention-needed-count');
@@ -2377,17 +2566,19 @@ function renderAttentionNeeded(attention) {
         const severity = item.issues.some(i => i.severity === 'critical') ? 'critical' : 'warning';
         const icon = severity === 'critical' ? '!' : '!';
         const issues = item.issues.map(i => i.message).join(' • ');
+        const repBadge = teamScope && item.owner_name ? `<span class="badge" style="background:var(--navy);color:#fff;font-size:9px;padding:2px 7px;border-radius:8px;margin-left:6px;">${esc(item.owner_name)}</span>` : '';
+        const ownerAttr = item.owner_id ? `'${item.owner_id}'` : 'null';
 
         return `
             <div class="attention-item severity-${severity}" onclick="openLead('${item.lead_id}')" style="cursor:pointer;">
                 <div class="attention-icon">${icon}</div>
                 <div class="attention-info">
-                    <div class="attention-name">${item.name} (${item.company})</div>
+                    <div class="attention-name">${item.name} (${item.company})${repBadge}</div>
                     <div class="attention-issue">${issues}</div>
                 </div>
                 <div class="attention-actions">
                     <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openLead('${item.lead_id}')">View</button>
-                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dropLead('${item.lead_id}')">Drop</button>
+                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dropLead('${item.lead_id}', ${ownerAttr})">Drop</button>
                 </div>
             </div>
         `;
@@ -2395,12 +2586,12 @@ function renderAttentionNeeded(attention) {
 }
 
 // Skip a focus queue item (snooze)
-async function skipFocusItem(leadId) {
+async function skipFocusItem(leadId, ownerId) {
     const duration = await promptSkipDuration();
     if (!duration) return;
 
     try {
-        const r = await api('skip-focus-item', 'POST', { lead_id: leadId, duration });
+        const r = await api('skip-focus-item', 'POST', { lead_id: leadId, duration, owner_id: ownerId || undefined });
         if (r.success) {
             toast('Lead snoozed', 'success');
             loadProactiveDashboard();
@@ -2423,15 +2614,16 @@ function promptSkipDuration() {
 }
 
 // Drop a lead (disqualify)
-async function dropLead(leadId) {
+async function dropLead(leadId, ownerId) {
     if (!confirm('Disqualify this lead?')) return;
     const reason = prompt('Reason for disqualifying (optional):') || 'Dropped from dashboard';
 
     try {
-        const r = await api('drop-lead', 'POST', { lead_id: leadId, reason });
+        const r = await api('drop-lead', 'POST', { lead_id: leadId, reason, owner_id: ownerId || undefined });
         if (r.success) {
             toast('Lead disqualified', 'success');
             loadLeads();
+            loadStats();
             loadProactiveDashboard();
         }
     } catch (e) {
@@ -2472,6 +2664,16 @@ async function loadCommandCenter() {
         renderConversionFunnel(r.funnel || []);
         renderManagementMetrics(r.management || {});
 
+        // Live Aircall on-call state (who is on a call right now)
+        let onCallByUser = {}, onCallByName = {};
+        try {
+            const ar = AIRCALL_ENABLED ? await api('aircall-status') : {success:false};
+            if (ar.success) (ar.on_call || []).forEach(c => {
+                if (c.user_id) onCallByUser[c.user_id] = c;
+                if (c.user_name) onCallByName[c.user_name] = c;
+            });
+        } catch (e) {}
+
         // Session activity widget
         const sessionsEl = document.getElementById('cc-user-sessions');
         if (sessionsEl) {
@@ -2479,8 +2681,9 @@ async function loadCommandCenter() {
             if (sr.success && sr.sessions.length) {
                 const localToday = new Date().toLocaleDateString('en-CA');
                 const onlineCount = sr.sessions.filter(s => s.last_seen && (Date.now() - new Date(s.last_seen)) < 3 * 60 * 1000).length;
+                const onCallCount = Object.keys(onCallByUser).length || Object.keys(onCallByName).length;
                 const onlineEl = document.getElementById('cc-sessions-online');
-                if (onlineEl) onlineEl.textContent = onlineCount > 0 ? `● ${onlineCount} online now` : '';
+                if (onlineEl) onlineEl.textContent = [onlineCount > 0 ? `● ${onlineCount} online now` : '', onCallCount > 0 ? `☎ ${onCallCount} on a call` : ''].filter(Boolean).join('  ·  ');
 
                 sessionsEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead><tr style="border-bottom:1px solid var(--border);">
@@ -2492,15 +2695,17 @@ async function loadCommandCenter() {
                     </tr></thead>
                     <tbody>${sr.sessions.map(s => {
                         const isOnline = s.last_seen && (Date.now() - new Date(s.last_seen)) < 3 * 60 * 1000;
+                        const onCall = onCallByUser[s.user_id] || onCallByName[s.user_name];
                         const todayMins = (s.sessions || [])
                             .filter(x => (x.start || '').slice(0, 10) === localToday)
                             .reduce((sum, x) => sum + (x.duration_mins || 0), 0);
                         return `<tr style="border-bottom:1px solid var(--border-light);">
                             <td style="padding:8px 8px;">
-                                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isOnline ? 'var(--success)' : 'var(--border)'};margin-right:6px;vertical-align:middle;"></span>
+                                <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${onCall ? 'var(--gold)' : isOnline ? 'var(--success)' : 'var(--border)'};margin-right:6px;vertical-align:middle;"></span>
                                 <span style="font-weight:500;">${esc(s.user_name)}</span>
+                                ${onCall ? '<span class="badge" style="background:var(--gold);color:#fff;font-size:9px;padding:2px 7px;border-radius:8px;margin-left:6px;">☎ On a call</span>' : ''}
                             </td>
-                            <td style="padding:8px;color:${isOnline ? 'var(--success)' : 'var(--text-muted)'};">${isOnline ? 'Online now' : (s.last_seen ? getTimeAgo(s.last_seen) : '—')}</td>
+                            <td style="padding:8px;color:${onCall ? 'var(--gold)' : isOnline ? 'var(--success)' : 'var(--text-muted)'};">${onCall ? 'On a call now' : isOnline ? 'Online now' : (s.last_seen ? getTimeAgo(s.last_seen) : '—')}</td>
                             <td style="padding:8px;font-weight:600;color:var(--navy);">${todayMins > 0 ? _fmtMins(todayMins) : '—'}</td>
                             <td style="padding:8px;color:var(--text-secondary);">${s.sessions_this_period || 0}</td>
                             <td style="padding:8px;color:var(--text-muted);font-size:12px;">${esc(s.last_page || '—')}</td>
@@ -2522,6 +2727,19 @@ async function loadCommandCenter() {
     } catch (e) {
         console.error('Error loading command center:', e);
     }
+}
+
+// Poll the command centre every 30s while it's open so "on a call" stays live
+let ccLivePollTimer = null;
+function startCcLivePoll() {
+    stopCcLivePoll();
+    ccLivePollTimer = setInterval(() => {
+        if (document.getElementById('page-command-center')?.classList.contains('active')) loadCommandCenter();
+        else stopCcLivePoll();
+    }, 30000);
+}
+function stopCcLivePoll() {
+    if (ccLivePollTimer) { clearInterval(ccLivePollTimer); ccLivePollTimer = null; }
 }
 
 // Render progress item
@@ -2626,7 +2844,7 @@ function filterByGrade(grade) {
 <td><div class="lead-info"><div class="lead-avatar">${(l.first_name?.[0] || 'U').toUpperCase()}</div><div><div class="lead-name">${l.first_name || ''} ${l.last_name || ''}</div><div class="lead-title">${l.title || ''}</div></div></div></td>
 <td>${l.company || '-'}</td>
 <td>${l.phone || '-'}</td>
-<td style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</td>
+<td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</div></td>
 <td>${nextActionCell(l)}</td>
 <td><button class="action-btn" onclick="openLead('${l.id}')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></td>
 </tr>`).join('');
@@ -2642,7 +2860,8 @@ let batchData = {};
 // Load Workbench data
 async function loadWorkbench() {
     try {
-        const r = await api('lead-batches');
+        const qs = focusQueueScope === 'team' ? 'lead-batches&scope=team' : 'lead-batches';
+        const r = await api(qs);
         if (!r.success) return;
 
         // Transform batches data for easier access
@@ -2658,10 +2877,6 @@ async function loadWorkbench() {
         };
 
         // Update batch counts
-        if (!document.getElementById('wb-inbound-count')) {
-            const firstBatch = document.querySelector('.workbench-batch');
-            firstBatch?.insertAdjacentHTML('beforebegin', `<div class="workbench-batch" data-batch="inbound_urgent" onclick="selectBatch('inbound_urgent')"><div class="workbench-batch-icon">I</div><div class="workbench-batch-name">Inbound Urgent</div><div class="workbench-batch-count" id="wb-inbound-count">0</div><div class="workbench-batch-progress"><div class="workbench-batch-progress-fill" style="width:0%;"></div></div></div>`);
-        }
         document.getElementById('wb-inbound-count').textContent = batches.inbound_urgent?.count || 0;
         document.getElementById('wb-research-count').textContent = batches.needs_research?.count || 0;
         document.getElementById('wb-outreach-count').textContent = batches.needs_outreach?.count || 0;
@@ -2723,11 +2938,12 @@ function renderBatch(batch) {
     listEl.innerHTML = batchLeads.slice(0, 20).map(lead => {
         const itemAction = getWorkbenchAction(batch, lead.id);
         const leadName = lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown';
+        const repBadge = lead.owner_name ? `<span class="badge" style="background:var(--navy);color:#fff;font-size:9px;padding:2px 7px;border-radius:8px;margin-left:6px;">${esc(lead.owner_name)}</span>` : '';
         return `
             <div class="workbench-item" onclick="openLead('${lead.id}')">
                 <input type="checkbox" class="workbench-item-checkbox" onclick="event.stopPropagation();" data-id="${lead.id}">
                 <div class="workbench-item-info">
-                    <div class="workbench-item-name">${leadName}</div>
+                    <div class="workbench-item-name">${leadName}${repBadge}</div>
                     <div class="workbench-item-company">${lead.company || '-'} ${lead.fit_grade ? `• Grade ${lead.fit_grade}` : ''}</div>
                 </div>
                 <span class="workbench-item-status ${lead.status || 'new'}">${stageLabel(lead.stage || LEGACY_STAGE_MAP[lead.status] || lead.status)}</span>
@@ -2756,28 +2972,16 @@ function getWorkbenchAction(batch, leadId) {
 }
 
 // Batch actions
-async function batchResearch() {
+function batchResearch() {
     const batchLeads = batchData['needs_research'] || [];
     if (batchLeads.length === 0) {
         toast('No leads need research', 'info');
         return;
     }
-    if (!confirm(`Research ${Math.min(5, batchLeads.length)} leads? This may take a few minutes.`)) return;
-
-    toast('Starting batch research...', 'info');
-    for (let i = 0; i < Math.min(5, batchLeads.length); i++) {
-        const lead = batchLeads[i];
-        try {
-            const r = await api('enrich-lead', 'POST', { lead });
-            if (r.success) toast(`Researched ${lead.first_name} ${lead.last_name}`, 'success');
-            else toast(`Failed: ${lead.first_name} — ${r.error || 'error'}`, 'error');
-        } catch (e) {
-            toast(`Failed: ${lead.first_name}`, 'error');
-        }
-    }
-    loadWorkbench();
-    loadLeads();
-    loadStats();
+    // Open the next lead needing research and auto-trigger it, same as
+    // clicking a Focus Queue item — simple, one at a time, no silent
+    // background batch loop.
+    startResearch(batchLeads[0].id);
 }
 
 function batchEmail() {
@@ -3114,6 +3318,8 @@ const NOTIF_ICONS = {
     mention:          '💬',
     chat_dm:          '✉️',
     chat_message:     '💬',
+    // Feedback & Support
+    ticket_reply:     '🛟',
 };
 
 async function loadNotifications() {
@@ -3194,25 +3400,33 @@ function renderNotificationList() {
         const body  = n.body  || n.message || '';
         const time  = getExactTime(n.created_at);
         const timeAgo = getTimeAgo(n.created_at);
-        return `<div class="notification-item ${n.read ? '' : 'unread'}" onclick="handleNotificationClick('${n.id}','${n.lead_id||''}','${n.thread_id||''}')">
+        const recording = n.recording_url ? `<audio controls preload="none" src="${n.recording_url}" style="height:28px;width:100%;margin-top:6px;" onclick="event.stopPropagation()"></audio>` : '';
+        return `<div class="notification-item ${n.read ? '' : 'unread'}" onclick="handleNotificationClick('${n.id}','${n.lead_id||''}','${n.thread_id||''}','${n.ticket_id||''}')">
             <div class="notification-icon">${icon}</div>
             <div class="notification-content">
                 <div class="notification-message" style="font-weight:${n.read?'400':'600'};">${title}</div>
                 ${body && body !== title ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${body}</div>` : ''}
                 <div class="notification-time">${timeAgo} · ${time}</div>
+                ${recording}
             </div>
             ${!n.read ? `<div style="width:8px;height:8px;border-radius:50%;background:var(--info);flex-shrink:0;margin-top:4px;"></div>` : ''}
         </div>`;
     }).join('');
 }
 
-async function handleNotificationClick(notifId, leadId, threadId) {
+async function handleNotificationClick(notifId, leadId, threadId, ticketId) {
     await api('notifications', 'POST', {action: 'mark_read', notification_id: notifId});
     const notif = notifications.find(n => n.id === notifId);
     if (notif) notif.read = true;
     renderNotificationBadge();
     document.getElementById('notification-dropdown').classList.remove('show');
 
+    if (ticketId) {
+        showPage('dev-support');
+        await loadDevSupport();
+        dsupOpenThread(ticketId);
+        return;
+    }
     if (threadId) {
         const isDm = threadId.startsWith('dm_');
         // Set thread before showPage so loadChat() won't override with general
@@ -3226,7 +3440,9 @@ async function handleNotificationClick(notifId, leadId, threadId) {
         if (ch) { name = ch.name; desc = ch.description || ''; }
         else if (dm) { name = dm.user_name; }
         else { name = isDm ? 'Direct Message' : threadId; }
-        openChatThread(threadId, name, isDm, desc);
+        // Auto-opened from the bell — show the conversation but don't mark it read yet;
+        // the unread badge should only clear when the user clicks the chat/channel row themselves.
+        openChatThread(threadId, name, isDm, desc, false);
         return;
     }
     if (leadId) {
@@ -3328,12 +3544,40 @@ function formatRelativeTime(dateStr) {
 async function loadSettings(){const r=await api('settings');if(r.success&&r.settings){userSettings=r.settings;document.getElementById('my-sender-name').value=r.settings.sender_name||'';document.getElementById('my-sender-title').value=r.settings.sender_title||'';document.getElementById('my-sender-company').value=r.settings.sender_company||'';document.getElementById('my-company-desc').value=r.settings.company_description||'';document.getElementById('my-value-prop').value=r.settings.value_proposition||'';document.getElementById('my-social-proof').value=r.settings.social_proof||'';document.getElementById('my-calendar-link').value=r.settings.calendar_link||'';document.getElementById('my-email-tone').value=r.settings.email_tone||'professional';document.getElementById('my-signature').value=r.settings.signature||''}}
 async function openLead(id){let lead=leads.find(l=>l.id===id);
 // If not in the currently loaded list (e.g. opened from a notification), fetch it
-if(!lead){const r=await api(`lead&id=${id}`);if(r.success&&r.lead){lead=r.lead;}else{toast('Lead not found','error');return;}}
+if(!lead){
+    const r=await api(`lead&id=${id}`);
+    if(!r.success||!r.lead){toast('Lead not found','error');return;}
+    if(r.owner_id){
+        // Belongs to another rep — the shared modal writes to the current user's
+        // own lead list, so editing here would silently go nowhere. Show a
+        // read-only summary instead of the full editable modal.
+        openForeignLeadSummary(r.lead,r.owner_name||'another rep');
+        return;
+    }
+    lead=r.lead;
+}
 currentLead=lead;
 // Update modal header with name and temperature/velocity badges
 document.getElementById('modal-lead-name').innerHTML=`${lead.first_name||''} ${lead.last_name||''} ${getTempBadge(lead.temperature)} ${getVelocityBadge(lead.velocity)}`;
 renderLeadModal();
 openModal('lead-modal');
+}
+
+function openForeignLeadSummary(lead,ownerName){
+    document.getElementById('modal-lead-name').innerHTML=`${lead.first_name||''} ${lead.last_name||''} <span class="badge" style="background:var(--text-muted);color:#fff;font-size:10px;margin-left:8px;">Read-only · owned by ${esc(ownerName)}</span>`;
+    document.getElementById('modal-body').innerHTML=`
+        <div class="detail-grid"><div class="detail-section"><div class="detail-section-title">Contact</div>
+        <div class="detail-row"><div class="detail-label">Full Name</div><div class="detail-value">${lead.first_name||''} ${lead.last_name||''}</div></div>
+        <div class="detail-row"><div class="detail-label">Email</div><div class="detail-value">${lead.email||'-'}</div></div>
+        <div class="detail-row"><div class="detail-label">Phone</div><div class="detail-value">${lead.phone||'-'}</div></div>
+        </div><div class="detail-section"><div class="detail-section-title">Company</div>
+        <div class="detail-row"><div class="detail-label">Company</div><div class="detail-value">${lead.company||'-'}</div></div>
+        <div class="detail-row"><div class="detail-label">Owner</div><div class="detail-value">${esc(ownerName)}</div></div>
+        </div></div>
+        ${renderCallHistory(lead)||'<p style="color:var(--text-muted);font-size:13px;margin-top:12px;">No calls logged yet for this lead.</p>'}
+        <p class="form-hint" style="margin-top:12px;">This lead belongs to ${esc(ownerName)} — viewing only. Ask them to make changes.</p>
+    `;
+    openModal('lead-modal');
 }
 
 function toggleLeadRecommendation() {
@@ -3480,12 +3724,15 @@ let emailHistoryHtml='';
 if(l.email_history&&l.email_history.length){
     emailHistoryHtml=`<div style="margin-bottom:16px;"><div style="font-weight:600;font-size:13px;margin-bottom:8px;">Email History</div>${l.email_history.map((eh,idx)=>{
         const outcomeColors={replied:'var(--success)',no_response:'var(--warning)',bounced:'var(--danger)',meeting_booked:'var(--info)'};
-        const outcomeBadge=eh.outcome?`<span class="badge" style="background:${outcomeColors[eh.outcome]||'var(--text-muted)'};color:#fff;font-size:10px;">${eh.outcome.replace(/_/g,' ')}</span>`:`<span style="font-size:11px;">
+        const outcomeButtons=`<span style="font-size:11px;">
             <button class="btn btn-xs btn-secondary" onclick="logEmailOutcome('${l.id}',${idx},'replied')">Replied</button>
             <button class="btn btn-xs btn-secondary" onclick="logEmailOutcome('${l.id}',${idx},'no_response')">No Response</button>
             <button class="btn btn-xs btn-secondary" onclick="logEmailOutcome('${l.id}',${idx},'meeting_booked')">Meeting Booked</button>
             <button class="btn btn-xs btn-secondary" onclick="logEmailOutcome('${l.id}',${idx},'bounced')">Bounced</button>
         </span>`;
+        const outcomeBadge=eh.outcome
+            ? `<span class="badge" style="background:${outcomeColors[eh.outcome]||'var(--text-muted)'};color:#fff;font-size:10px;cursor:pointer;" title="Click to change" onclick="editEmailOutcome(this,'${l.id}',${idx})">${eh.outcome.replace(/_/g,' ')} ✎</span>`
+            : outcomeButtons;
         return `<div style="padding:6px 0;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:12px;font-weight:500;">${eh.type}</span>
             <span style="font-size:11px;color:var(--text-muted);">${new Date(eh.sent_at).toLocaleDateString()}</span>
@@ -3506,14 +3753,20 @@ emailTabContent=`${emailHistoryHtml}<div class="email-type-tabs"><button class="
 let callPitchContent=``;
 if(callPitchTabLocked){
 const gatingMsg = 'Send or skip email first before preparing call pitch';
-callPitchContent=`<div class="gating-notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${gatingMsg}</div>`;
+callPitchContent=`<div class="gating-notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${gatingMsg}</div>${AIRCALL_ENABLED?renderCallHistory(l):''}`;
 }else{
 const lastEmailRef=prevEmail?`<div style="background:var(--bg-main);padding:10px;border-radius:var(--radius-md);margin-bottom:12px;font-size:12px;color:var(--text-secondary);"><strong>Reference:</strong> Your last email mentioned: "${prevEmail.substring(0,100)}..."</div>`:'';
-callPitchContent=`${lastEmailRef}
-<div class="form-group"><label class="form-label">Pitch Type</label><select class="form-select" id="lead-pitch-type"><option value="email_sent">Cold Call (Email Already Sent)</option><option value="no_email">Cold Call (No Email Sent)</option><option value="callback">Call Back (They Asked to Call Back)</option></select></div>
+// A previously generated pitch is saved on the lead — show it immediately so
+// it's still there if you close and reopen the lead, same as research/enrichment.
+const savedPitch=l.call_pitch;
+const savedPitchVisible=savedPitch?'block':'none';
+const savedPitchTitle=savedPitch?esc(savedPitch.title||'Call Pitch'):'';
+const savedPitchBody=savedPitch?formatCallPitch(savedPitch.pitch||''):'';
+callPitchContent=`${AIRCALL_ENABLED?renderAircallBlock(l)+renderCallHistory(l):''}${lastEmailRef}
+<div class="form-group"><label class="form-label">Pitch Type</label><select class="form-select" id="lead-pitch-type"><option value="email_sent" ${savedPitch?.pitch_type==='email_sent'?'selected':''}>Cold Call (Email Already Sent)</option><option value="no_email" ${savedPitch?.pitch_type==='no_email'?'selected':''}>Cold Call (No Email Sent)</option><option value="callback" ${savedPitch?.pitch_type==='callback'?'selected':''}>Call Back (They Asked to Call Back)</option></select></div>
 <div class="form-group"><label class="form-label">Custom Instructions</label><textarea class="form-textarea" id="lead-pitch-instructions" rows="2" placeholder="Add specific talking points or context..."></textarea></div>
 <button class="btn btn-gold" onclick="generateLeadCallPitch()" id="lead-pitch-btn">Generate Script</button>
-<div class="generated-email" id="lead-pitch-result" style="display:none;"><div class="email-subject-line" id="lead-pitch-title"></div><div class="email-body-content" id="lead-pitch-body"></div><div class="email-actions"><button class="btn btn-gold btn-sm" onclick="startCall()">Start Call</button><button class="btn btn-success btn-sm" onclick="copyLeadPitch()">Copy</button><button class="btn btn-secondary btn-sm" onclick="generateLeadCallPitch()">Regenerate</button></div></div>`;
+<div class="generated-email" id="lead-pitch-result" style="display:${savedPitchVisible};"><div class="email-subject-line" id="lead-pitch-title">${savedPitchTitle}</div><div class="email-body-content" id="lead-pitch-body">${savedPitchBody}</div><div class="email-actions"><button class="btn btn-gold btn-sm" onclick="startCall()">Start Call</button><button class="btn btn-success btn-sm" onclick="copyLeadPitch()">Copy</button><button class="btn btn-secondary btn-sm" onclick="generateLeadCallPitch()">Regenerate</button></div></div>`;
 }
 
 // Call Outcome tab
@@ -3581,7 +3834,7 @@ ${stageOptions(getStage(l))}
 <button class="tab-btn active" onclick="switchTab(this,'tab-profile')">Profile</button>
 <button class="tab-btn" onclick="switchTab(this,'tab-research')">Research</button>
 <button class="tab-btn ${emailTabClass}" onclick="${!emailTabLocked?"switchTab(this,'tab-email')":"toast('Complete Research first','warning')"}">Email</button>
-<button class="tab-btn ${callPitchTabClass}" onclick="${!callPitchTabLocked?"switchTab(this,'tab-call')":"toast('Send email first','warning')"}">Call</button>
+<button class="tab-btn ${callPitchTabClass}" onclick="${!callPitchTabLocked?"switchTab(this,'tab-call')":"toast('Send email first','warning')"}">Call${AIRCALL_ENABLED&&(l.call_history||[]).length?` (${l.call_history.length})`:''}</button>
 <button class="tab-btn" onclick="switchTab(this,'tab-outcome')">Outcome</button>
 </div>
 <div class="tab-content active" id="tab-profile">${profileHtml}<button class="btn btn-secondary btn-sm copy-summary-btn" onclick="copySummary()" style="margin-top:16px;">Copy Summary</button></div>
@@ -3765,6 +4018,19 @@ async function logEmailOutcome(leadId,emailIndex,outcome){
     }else toast(r.error||'Failed','error');
 }
 
+function editEmailOutcome(el,leadId,emailIndex){
+    const wrap=document.createElement('span');
+    wrap.style.fontSize='11px';
+    [['replied','Replied'],['no_response','No Response'],['meeting_booked','Meeting Booked'],['bounced','Bounced']].forEach(([value,label])=>{
+        const btn=document.createElement('button');
+        btn.className='btn btn-xs btn-secondary';
+        btn.textContent=label;
+        btn.onclick=()=>logEmailOutcome(leadId,emailIndex,value);
+        wrap.appendChild(btn);
+    });
+    el.replaceWith(wrap);
+}
+
 function showSkipEmail(){document.getElementById('skip-email-reason').style.display='block'}
 async function confirmSkipEmail(){
     const reason=document.getElementById('skip-email-select').value;
@@ -3776,8 +4042,59 @@ async function confirmSkipEmail(){
     renderLeadModal();
 }
 
+function clickLeadTab(tabId){
+    const btn=[...document.querySelectorAll('#modal-body .tab-btn')].find(b=>b.getAttribute('onclick')?.includes(`'${tabId}'`));
+    if(btn)btn.click();
+}
 function openCallOutcome(){
-    document.querySelector('.tab-btn:nth-child(5)').click(); // Switch to Call Outcome tab
+    clickLeadTab('tab-outcome');
+}
+
+// ===== Aircall click-to-dial + call history =====
+function renderAircallBlock(l){
+    const phone=l.phone||'';
+    const dial=phone
+        ?`<button class="btn btn-success" id="aircall-dial-btn" onclick="aircallDial()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call ${phone} via Aircall</button>`
+        :`<span style="font-size:12px;color:var(--text-muted);">No phone number on this lead — add one to enable click-to-dial.</span>`;
+    return `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--bg-main);padding:12px 14px;border-radius:var(--radius-md);margin-bottom:14px;">${dial}<span style="font-size:11px;color:var(--text-muted);flex:1;min-width:180px;">Rings your Aircall app first, then dials the lead. The call is recorded and logged here automatically.</span></div>`;
+}
+function renderCallHistory(l){
+    const h=l.call_history||[];
+    if(!h.length)return '';
+    const rows=h.slice().reverse().map(c=>{
+        const when=c.started_at?new Date(c.started_at).toLocaleString():'';
+        const dur=c.duration_seconds?`${Math.floor(c.duration_seconds/60)}m ${c.duration_seconds%60}s`:(c.status==='pending'?'in progress':'—');
+        const label=c.via==='aircall'?(c.outcome==='missed'?'missed':'answered'):(c.status==='pending'?'in progress':(c.outcome_label||c.outcome||c.status||'logged'));
+        const stColor=c.via==='aircall'?(c.outcome==='missed'?'var(--danger)':'var(--success)'):(c.status==='pending'?'var(--text-muted)':'var(--success)');
+        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:30px;max-width:230px;"></audio>`:'';
+        const via=c.via==='aircall'?'<span class="badge" style="background:var(--navy);color:#fff;font-size:9px;padding:2px 6px;border-radius:6px;">Aircall</span>':'';
+        const notes=c.notes?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${c.notes}</div>`:'';
+        const tags=(c.tags&&c.tags.length)?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${c.tags.join(' · ')}</div>`:'';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);flex-wrap:wrap;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${stColor};flex-shrink:0;"></span>
+            <div style="flex:1;min-width:150px;"><div style="font-size:12px;font-weight:500;">${c.rep_name||''} · <span style="color:${stColor};">${label}</span> · ${dur} ${via}</div><div style="font-size:11px;color:var(--text-muted);">${when}</div>${notes}${tags}</div>
+            ${rec}
+        </div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Call History (${h.length})</div>${rows}</div>`;
+}
+async function aircallDial(){
+    const name=`${currentLead.first_name||''} ${currentLead.last_name||''}`.trim()||'this lead';
+    const ok=await customConfirm(`Call ${name} at ${currentLead.phone}? Your Aircall app will ring first — the lead is only dialed once you answer it.`,'Confirm Call',{confirmText:'Call'});
+    if(!ok)return;
+    const btn=document.getElementById('aircall-dial-btn');
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner spinner-light"></span> Dialing...';}
+    const r=await api('aircall-dial','POST',{lead_id:currentLead.id});
+    if(r.success){
+        currentLead=r.lead;
+        toast(r.message||'Dialing — answer the call in your Aircall app','success');
+        loadLeads();
+        renderLeadModal();
+        clickLeadTab('tab-call');
+    }else{
+        toast(r.error||'Failed to start call','error');
+        if(btn){btn.disabled=false;btn.textContent='Call via Aircall';}
+    }
 }
 
 async function startCall(){
@@ -3787,8 +4104,8 @@ async function startCall(){
         currentLead = r.lead;
         toast('Call started! Log outcome when done.','info');
         loadLeads();
-        // Switch to Call Outcome tab
-        document.querySelector('.tab-btn:nth-child(5)').click();
+        loadStats();
+        clickLeadTab('tab-outcome');
     } else {
         toast(r.error||'Failed to start call','error');
     }
@@ -3952,6 +4269,11 @@ async function generateLeadCallPitch(){
         document.getElementById('lead-pitch-title').textContent=r.title||'Call Pitch';
         document.getElementById('lead-pitch-body').innerHTML=formatCallPitch(r.pitch);
         document.getElementById('lead-pitch-result').style.display='block';
+        // Persisted on the lead server-side — keep local state in sync (both
+        // currentLead and the shared leads[] array) so it's still there if the
+        // modal is closed/reopened without a full page reload.
+        if(r.lead)currentLead=r.lead;
+        loadLeads(currentPage);
         toast('Generated!','success');
     }else toast(r.error||'Failed','error');
     btn.disabled=false;btn.textContent='Generate Script';
@@ -3974,7 +4296,13 @@ function formatCallPitch(text) {
     for (const raw of lines) {
         const line = raw.trim();
         if (!line) { if (current) current.lines.push(''); continue; }
-        const emoji = sectionEmojis.find(e => line.includes(e));
+        // A real section header has its emoji near the START of the line
+        // (it's the first thing after the box border, e.g. "🚪 GRACEFUL
+        // EXIT"). Navigation lines like "↳ ... Skip to GRACEFUL EXIT 🚪"
+        // also contain a section emoji but only at the END — matching on
+        // mere presence mistook those for a second header and fragmented
+        // the script out of order.
+        const emoji = sectionEmojis.find(e => { const i = line.indexOf(e); return i !== -1 && i <= 3; });
         if (emoji && line.length < 60) {
             if (current) sections.push(current);
             current = { emoji, lines: [] };
@@ -4076,9 +4404,11 @@ document.querySelectorAll('#req-form .req-option').forEach(opt=>{
 });
 document.getElementById('req-form').addEventListener('submit',async e=>{e.preventDefault();const data={};document.querySelectorAll('#req-form .req-options').forEach(g=>{const f=g.dataset.field,t=g.dataset.type;if(t==='multi'){data[f]=[...g.querySelectorAll('input:checked')].map(i=>i.value)}else{const c=g.querySelector('input:checked');data[f]=c?c.value:''}});document.querySelectorAll('#req-form .req-text-input[data-field]').forEach(input=>{data[input.dataset.field]=input.value.trim()});data.other_notes=document.getElementById('req-other-notes').value;const r=await api('save-requisitions','POST',{lead_id:currentLead.id,requisitions:data});if(r.success){currentLead.requisitions=data;renderLeadModal();closeModal('req-modal');toast('Saved!','success')}});openModal('req-modal')}
 async function loadAdminSettings(){
+    if(user?.is_super_admin){dsupLoadSyncSettings();loadRealtimeSettings();}
     const r=await api('admin-settings');
     if(r.success){
         document.getElementById('admin-groq-key').value=r.settings.groq_key||'';
+        document.getElementById('admin-cerebras-key').value=r.settings.cerebras_key||'';
         document.getElementById('admin-gemini-key').value=r.settings.gemini_key||'';
         document.getElementById('admin-anthropic-key').value=r.settings.anthropic_key||'';
         document.getElementById('admin-provider').value=r.settings.default_provider||'groq';
@@ -4088,6 +4418,15 @@ async function loadAdminSettings(){
         document.getElementById('zoho-client-id').value=r.settings.zoho_client_id||'';
         document.getElementById('zoho-client-secret').value=r.settings.zoho_client_secret||'';
         document.getElementById('zoho-datacenter').value=r.settings.zoho_datacenter||'com';
+
+        // Load Aircall settings (card stays hidden while AIRCALL_ENABLED is false)
+        if(AIRCALL_ENABLED){
+            document.getElementById('aircall-settings-card').hidden=false;
+            document.getElementById('aircall-api-id').value=r.settings.aircall_api_id||'';
+            document.getElementById('aircall-api-token').value=r.settings.aircall_api_token||'';
+            document.getElementById('aircall-webhook-token').value=r.settings.aircall_webhook_token||'';
+            document.getElementById('aircall-webhook-url').value=location.origin+location.pathname.replace(/[^\/]*$/,'')+'api.php?action=aircall-webhook';
+        }
     }
     // Load ICP config
     const icpR = await api('get-icp-config');
@@ -4471,16 +4810,21 @@ function fmtAgo(iso){if(!iso)return'<span style="color:var(--text-muted)">Never<
 function fmtDuration(startIso,lastActiveIso){if(!startIso||!lastActiveIso)return'<span style="color:var(--text-muted)">—</span>';const s=Math.floor((new Date(lastActiveIso)-new Date(startIso))/1000);if(s<60)return'<1m';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
 function setReportRange(range){document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.range===range));loadActivityReport(range);}
 async function loadActivityReport(mode){
-    let qs;
+    let qs,callsQs;
     if(mode==='custom'){
         const from=document.getElementById('report-from').value;
         const to=document.getElementById('report-to').value;
         if(!from||!to){toast('Pick both dates','error');return;}
         document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.remove('active'));
         qs=`activity-report&from=${from}&to=${to}`;
+        callsQs=`calls-report&from=${from}&to=${to}`;
     } else {
         qs=`activity-report&range=${mode||'week'}`;
+        callsQs=`calls-report&range=${mode||'week'}`;
     }
+    const callsCard=document.getElementById('reports-calls-card');
+    if(callsCard)callsCard.hidden=!AIRCALL_ENABLED;
+    if(AIRCALL_ENABLED)loadCallsReport(callsQs);
     const body=document.getElementById('report-kpi-body');
     body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:20px;">Loading…</td></tr>';
     const r=await api(qs);
@@ -4519,11 +4863,74 @@ async function loadActivityReport(mode){
         </div>`;
     }).join(''):'<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">No activity in this range.</div>';
 }
-async function loadUsers(){const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td><td style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`}).join('');}
+let _lastCallsReportQs='calls-report&range=week';
+async function loadCallsReport(baseQs){
+    if(baseQs)_lastCallsReportQs=baseQs;
+    const repFilter=document.getElementById('calls-rep-filter')?.value||'';
+    const outcomeFilter=document.getElementById('calls-outcome-filter')?.value||'';
+    let qs=_lastCallsReportQs;
+    if(repFilter)qs+=`&rep_id=${encodeURIComponent(repFilter)}`;
+    if(outcomeFilter)qs+=`&outcome=${encodeURIComponent(outcomeFilter)}`;
+    const body=document.getElementById('calls-report-body');
+    body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">Loading…</td></tr>';
+    const r=await api(qs);
+    if(!r.success){body.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:20px;">${r.error||'Failed to load'}</td></tr>`;return;}
+    // Populate rep filter once (preserve current selection)
+    const repSelect=document.getElementById('calls-rep-filter');
+    if(repSelect&&repSelect.options.length<=1){
+        repSelect.innerHTML='<option value="">All Reps</option>'+r.reps.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+        repSelect.value=repFilter;
+    }
+    const s=r.summary;
+    document.getElementById('calls-summary').innerHTML=`<span><strong>${s.total}</strong> total</span><span style="color:var(--success);"><strong>${s.answered}</strong> answered</span><span style="color:var(--danger);"><strong>${s.missed}</strong> missed</span><span><strong>${s.manual}</strong> manually logged</span><span><strong>${s.with_recording}</strong> with recording</span>`;
+    if(!r.calls.length){
+        body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No calls in this range</td></tr>';
+        return;
+    }
+    body.innerHTML=r.calls.map(c=>{
+        const when=new Date(c.timestamp).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        const dur=c.duration_seconds?`${Math.floor(c.duration_seconds/60)}m ${c.duration_seconds%60}s`:'—';
+        const outcomeColor=c.via==='aircall'?(c.outcome==='missed'?'var(--danger)':'var(--success)'):'var(--text-muted)';
+        const outcomeLabel=c.outcome_label||(c.via==='aircall'?c.outcome:'Logged');
+        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:28px;max-width:200px;"></audio>`:'<span style="color:var(--text-muted);">—</span>';
+        return `<tr>
+            <td>${esc(c.rep_name)}</td>
+            <td><a href="javascript:void(0)" onclick="openLead('${c.lead_id}')" style="color:var(--info);">${esc(c.lead_name)}</a>${c.company?`<div style="font-size:11px;color:var(--text-muted);">${esc(c.company)}</div>`:''}</td>
+            <td>${when}</td>
+            <td><span style="color:${outcomeColor};font-weight:500;">${esc(outcomeLabel)}</span></td>
+            <td>${dur}</td>
+            <td>${rec}</td>
+            <td style="font-size:12px;color:var(--text-secondary);max-width:200px;">${esc(c.notes||'')}</td>
+        </tr>`;
+    }).join('');
+}
+async function loadUsers(){const aircallTh=document.getElementById('users-aircall-th');if(aircallTh)aircallTh.hidden=!AIRCALL_ENABLED;const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';const aircallLinked=u.aircall_user_id&&u.aircall_number_id;const aircallCell=aircallLinked?`<span style="color:var(--success);font-size:12px;cursor:pointer;font-weight:500;" title="Aircall User ${u.aircall_user_id} · Number ${u.aircall_number_id} — click to edit" onclick="linkAircallUser('${u.id}','${u.name}','${u.aircall_user_id}','${u.aircall_number_id}')">&#10003; Linked</span>`:`<button class="btn btn-xs btn-secondary" onclick="linkAircallUser('${u.id}','${u.name}','','')">Link</button>`;return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td>${AIRCALL_ENABLED?`<td>${aircallCell}</td>`:''}<td><div style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td></tr>`}).join('');}
+async function linkAircallUser(id,name,curUid,curNid){
+    const uid=prompt(`Aircall User ID for ${name}\n(Aircall Dashboard → Users → open the user — the ID is in the URL):`,curUid||'');
+    if(uid===null)return;
+    const nid=prompt(`Aircall Number ID for ${name}\n(Aircall Dashboard → Numbers → open their number — the ID is in the URL):`,curNid||'');
+    if(nid===null)return;
+    const r=await api('update-user','POST',{id,aircall_user_id:uid.trim(),aircall_number_id:nid.trim()});
+    if(r.success){toast('Aircall link updated','success');loadUsers();}else toast(r.error||'Failed','error');
+}
 async function deleteUser(id){const ok=await customConfirm('Delete this user? This cannot be undone.','Delete User',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-user','POST',{id});loadUsers();toast('Deleted','success')}
 async function impersonateUser(id,name){const ok=await customConfirm(`Log in as ${name}? Your current session will be replaced.`,'Impersonate User',{confirmText:'Impersonate'});if(!ok)return;const r=await api('impersonate','POST',{user_id:id});if(!r.success)return toast(r.error||'Failed','error');const prevToken=localStorage.token;localStorage.setItem('impersonate_return_token',prevToken);localStorage.token=r.token;user=r.user;showApp();toast(`Now viewing as ${name} — refresh to return to your account`,'success')}
 async function resetUserData(id,name){const ok=await customConfirm(`Delete ALL leads for ${name}? This cannot be undone.`,'Reset User Data',{danger:true,confirmText:'Reset'});if(!ok)return;const r=await api('reset-user-data','POST',{user_id:id});if(r.success)toast(`${name}'s data reset`,'success');else toast(r.error||'Failed','error')}
 async function testAPI(){const p=document.getElementById('admin-provider').value;const r=await api('test-api','POST',{provider:p});toast(r.success?'Connected!':r.error||'Failed',r.success?'success':'error')}
+
+// Aircall admin functions
+async function saveAircallSettings(){
+    const r=await api('admin-settings','POST',{
+        aircall_api_id:document.getElementById('aircall-api-id').value,
+        aircall_api_token:document.getElementById('aircall-api-token').value,
+        aircall_webhook_token:document.getElementById('aircall-webhook-token').value
+    });
+    toast(r.success?'Aircall settings saved':'Failed to save',r.success?'success':'error');
+}
+async function testAircall(){
+    const r=await api('test-aircall');
+    toast(r.success?'Aircall connected!':(r.error||'Connection failed'),r.success?'success':'error');
+}
 
 // Email Creator functions
 function populateLeadSelects(){
@@ -4637,7 +5044,7 @@ document.getElementById('confirm-import').addEventListener('click',confirmImport
 document.getElementById('confirm-mapping').addEventListener('click',applyMapping);
 document.getElementById('add-lead-form').addEventListener('submit',async e=>{e.preventDefault();const r=await api('lead','POST',{first_name:document.getElementById('new-first-name').value,last_name:document.getElementById('new-last-name').value,email:document.getElementById('new-email').value,phone:document.getElementById('new-phone').value,company:document.getElementById('new-company').value,title:document.getElementById('new-title').value,industry:document.getElementById('new-industry').value,country:document.getElementById('new-country').value,website:document.getElementById('new-website').value,linkedin:document.getElementById('new-linkedin').value,company_size:document.getElementById('new-company-size').value,source:document.getElementById('new-source').value,stage:document.getElementById('new-stage').value,source_detail:document.getElementById('new-source-detail').value,notes:document.getElementById('new-notes').value});if(r.success){toast('Added!','success');e.target.reset();loadLeads();loadStats();showPage('leads')}else toast(r.error||'Failed','error')});
 document.getElementById('my-settings-form').addEventListener('submit',async e=>{e.preventDefault();await api('settings','POST',{sender_name:document.getElementById('my-sender-name').value,sender_title:document.getElementById('my-sender-title').value,sender_company:document.getElementById('my-sender-company').value,company_description:document.getElementById('my-company-desc').value,value_proposition:document.getElementById('my-value-prop').value,social_proof:document.getElementById('my-social-proof').value,calendar_link:document.getElementById('my-calendar-link').value,email_tone:document.getElementById('my-email-tone').value,signature:document.getElementById('my-signature').value});toast('Saved!','success')});
-document.getElementById('admin-settings-form').addEventListener('submit',async e=>{e.preventDefault();await api('admin-settings','POST',{default_provider:document.getElementById('admin-provider').value,groq_key:document.getElementById('admin-groq-key').value,gemini_key:document.getElementById('admin-gemini-key').value,anthropic_key:document.getElementById('admin-anthropic-key').value});toast('Saved!','success')});
+document.getElementById('admin-settings-form').addEventListener('submit',async e=>{e.preventDefault();await api('admin-settings','POST',{default_provider:document.getElementById('admin-provider').value,groq_key:document.getElementById('admin-groq-key').value,cerebras_key:document.getElementById('admin-cerebras-key').value,gemini_key:document.getElementById('admin-gemini-key').value,anthropic_key:document.getElementById('admin-anthropic-key').value});toast('Saved!','success')});
 document.querySelectorAll('.provider-card').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.provider-card').forEach(x=>x.classList.remove('selected'));c.classList.add('selected');document.getElementById('admin-provider').value=c.dataset.provider}));
 document.getElementById('add-req-form').addEventListener('submit',async e=>{e.preventDefault();const idx=document.getElementById('edit-req-id').value;const type=document.getElementById('req-type-input').value;const options=type==='text'?[]:document.getElementById('req-options-input').value.split('\n').map(o=>o.trim()).filter(o=>o);if(type!=='text'&&!options.length){toast('Add at least one option','warning');return;}const newReq={id:idx!==''?reqConfig[idx].id:'req_'+Date.now(),title:document.getElementById('req-title-input').value,subtitle:document.getElementById('req-subtitle-input').value,type,options,enabled:true};if(idx!=='')reqConfig[idx]=newReq;else reqConfig.push(newReq);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();closeModal('add-req-modal');toast('Saved!','success')});
 document.getElementById('create-user-form').addEventListener('submit',async e=>{e.preventDefault();const r=await api('create-user','POST',{name:document.getElementById('new-user-name').value,email:document.getElementById('new-user-email').value,is_admin:document.getElementById('new-user-admin').checked});if(r.success){document.getElementById('new-user-password').innerHTML=`<div class="password-display"><strong>Password:</strong> <code>${r.password}</code></div>`;document.getElementById('new-user-password').style.display='block';e.target.reset();loadUsers();toast('Created!','success')}else toast(r.error||'Failed','error')});
@@ -4855,13 +5262,15 @@ function showPage(p){
     const nav=[...document.querySelectorAll(`.nav-item[data-page="${p}"]`)].find(x=>!x.hidden);
     nav?.classList.add('active');
     if(p==='dashboard')loadTodayOperations();
-    if(p==='command-center')loadCommandCenter();
+    if(p==='leads')loadStats();
+    if(p==='command-center'){loadCommandCenter();startCcLivePoll();}else{stopCcLivePoll();}
     if(p==='reports')loadActivityReport('week');
     if(p==='workbench')loadWorkbench();
     if(p==='commitments')loadCommitments();
     if(p==='users'){loadUsers();loadUserSessions();}
+    if(p==='dev-support')loadDevSupport();else dsupStopPolling();
     if(p==='chat')loadChat();
-    else if(chatState.pollTimer){clearInterval(chatState.pollTimer);chatState.pollTimer=null;}
+    else {if(chatState.pollTimer){clearInterval(chatState.pollTimer);chatState.pollTimer=null;}rtUnsubscribeThread();}
     _activityPage=p;
 }
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('active')}
@@ -4920,6 +5329,7 @@ let chatDmData = [];
 let chatUsers = [];
 async function loadChat() {
     await Promise.all([loadChatChannels(), loadChatDms()]);
+    refreshChatUnreadBadges();
     // Only open general if no thread is already open (e.g. opened from notification)
     if (!chatState.thread) {
         openChatThread('channel_general', 'general', false, '');
@@ -4967,14 +5377,20 @@ async function loadChatDms() {
 }
 
 async function refreshChatUnreadBadges() {
+    const requestedFor = chatState.thread;
+    const requestedPeek = !!chatState.peeking;
     const r = await api('chat-unread');
     if (!r.success) return;
+    // Discard stale responses: if the open thread changed (or got marked read)
+    // while this request was in flight, don't let old counts re-add a badge
+    // the user already cleared by opening/reading that thread.
+    const staleFor = (requestedFor === chatState.thread && !requestedPeek) ? requestedFor : null;
     const counts = r.counts || {};
     // Update channel badges in-place
     document.querySelectorAll('#chat-channel-list .chat-nav-item').forEach(el => {
         const tid = el.dataset.threadId;
         if (!tid) return;
-        const count = counts[tid] || 0;
+        const count = tid === staleFor ? 0 : (counts[tid] || 0);
         let badge = el.querySelector('.chat-unread-badge');
         if (count > 0) {
             if (!badge) { badge = document.createElement('span'); badge.className = 'chat-unread-badge'; badge.style.cssText = 'background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;'; el.appendChild(badge); }
@@ -4985,7 +5401,7 @@ async function refreshChatUnreadBadges() {
     document.querySelectorAll('#chat-dm-list .chat-nav-item').forEach(el => {
         const tid = el.dataset.threadId;
         if (!tid) return;
-        const count = counts[tid] || 0;
+        const count = tid === staleFor ? 0 : (counts[tid] || 0);
         let badge = el.querySelector('.chat-unread-badge');
         if (count > 0) {
             if (!badge) { badge = document.createElement('span'); badge.className = 'chat-unread-badge'; badge.style.cssText = 'background:var(--danger);color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;'; el.appendChild(badge); }
@@ -4994,7 +5410,7 @@ async function refreshChatUnreadBadges() {
     });
 }
 
-async function openChatThread(threadId, name, isDm, desc) {
+async function openChatThread(threadId, name, isDm, desc, markRead = true) {
     // Stop any existing poll immediately
     if (chatState.pollTimer) { clearInterval(chatState.pollTimer); chatState.pollTimer = null; }
 
@@ -5002,9 +5418,12 @@ async function openChatThread(threadId, name, isDm, desc) {
     chatState.threadName = name;
     chatState.isDm = isDm;
     chatState.allMessages = [];
+    chatState.peeking = !markRead;
 
-    // Clear unread badge instantly for this thread
-    document.querySelectorAll(`[data-thread-id="${threadId}"] .chat-unread-badge`).forEach(b => b.remove());
+    if (markRead) {
+        // Clear unread badge instantly for this thread
+        document.querySelectorAll(`[data-thread-id="${threadId}"] .chat-unread-badge`).forEach(b => b.remove());
+    }
 
     // Update header instantly — UI switches right away
     document.getElementById('chat-thread-icon').textContent = isDm ? '👤' : '#';
@@ -5014,26 +5433,31 @@ async function openChatThread(threadId, name, isDm, desc) {
     document.getElementById('chat-messages').innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">Loading...</div>';
     document.getElementById('chat-wrapper')?.classList.add('show-conversation');
 
-    // Highlight active item and clear its unread badge instantly
+    // Highlight active item; only clear its unread badge if this is a real (non-peek) open
     document.querySelectorAll('.chat-nav-item').forEach(el => {
         el.classList.toggle('active', el.dataset.threadId === threadId);
-        if (el.dataset.threadId === threadId) {
+        if (markRead && el.dataset.threadId === threadId) {
             el.querySelector('span[style*="var(--danger)"]')?.remove();
         }
     });
 
-    // Load messages then start poll
+    // Load messages, then subscribe for instant live updates (Pusher) — falling
+    // back to polling only if real-time isn't connected.
     await fetchChatMessages(true);
     loadPinnedBar();
-    chatState.pollTimer = setInterval(async () => {
-        await fetchChatMessages(false);
-        refreshChatUnreadBadges();
-    }, 2000);
+    rtSubscribeThread(threadId);
+    if (!rtConnected) {
+        chatState.pollTimer = setInterval(async () => {
+            await fetchChatMessages(false);
+            refreshChatUnreadBadges();
+        }, 2000);
+    }
 }
 
 function chatShowSidebar() {
     document.getElementById('chat-wrapper')?.classList.remove('show-conversation');
     if (chatState.pollTimer) clearInterval(chatState.pollTimer);
+    rtUnsubscribeThread();
 }
 
 function buildMessageEl(m, grouped) {
@@ -5176,7 +5600,8 @@ function jumpToMessage(msgId) {
 
 async function fetchChatMessages(scrollToBottom) {
     const threadAtCall = chatState.thread;
-    const r = await api(`chat-messages&thread=${threadAtCall}`);
+    const peekParam = chatState.peeking ? '&peek=1' : '';
+    const r = await api(`chat-messages&thread=${threadAtCall}${peekParam}`);
     if (!r.success) return;
     if (chatState.thread !== threadAtCall) return;
 
@@ -5518,7 +5943,7 @@ async function openEditChannel(channelId) {
     const ch = chatChannelData.find(c => c.id === channelId);
     if (!ch) return;
     _channelEditId = channelId;
-    const isSuperAdmin = (!!user.is_super_admin);
+    const isAdminUser = (!!user.is_admin || !!user.is_super_admin);
     document.getElementById('channel-modal-title').textContent = `Edit #${ch.name}`;
     document.getElementById('channel-modal-btn').textContent = 'Save Changes';
     document.getElementById('new-channel-name').value = ch.name;
@@ -5526,7 +5951,7 @@ async function openEditChannel(channelId) {
     document.getElementById('new-channel-desc').value = ch.description || '';
     if (!chatUsers?.length) { const r = await api('users'); if (r.success) chatUsers = r.users || []; }
     _populateChannelMembersList(ch.members || []);
-    // Show/hide delete button for super_admin only
+    // Show/hide delete button for admins (any admin, not just super admin)
     let delBtn = document.getElementById('channel-delete-btn');
     if (!delBtn) {
         delBtn = document.createElement('button');
@@ -5539,7 +5964,7 @@ async function openEditChannel(channelId) {
     } else {
         delBtn.onclick = () => deleteChannel(channelId, ch.name);
     }
-    delBtn.style.display = isSuperAdmin ? '' : 'none';
+    delBtn.style.display = isAdminUser ? '' : 'none';
     openModal('create-channel-modal');
 }
 
@@ -5641,6 +6066,278 @@ function resolveConfirm(result){
         _confirmResolver=null;
     }
 }
+// ===================== Real-time (Pusher) =====================
+// Powers instant chat messages, the notification bell, and Feedback & Support
+// replies. If unconfigured or unreachable, every feature above falls back to
+// its original polling — rtConnected simply stays false and nothing breaks.
+let rtPusher=null;
+let rtConnected=false;
+let rtUserChannel=null;
+let rtThreadChannel=null;
+let _notifPollTimer=null;
+
+async function initRealtime(){
+    if(typeof Pusher==='undefined')return; // CDN blocked/offline — polling still works
+    const r=await api('realtime-config');
+    if(!r.success || !r.enabled)return; // not configured — polling still works
+
+    rtPusher=new Pusher(r.key,{
+        cluster:r.cluster,
+        authEndpoint:`${API_BASE}?action=pusher-auth`,
+        auth:{headers: localStorage.token?{'X-User-Token':localStorage.token}:{}},
+    });
+    rtPusher.connection.bind('connected',()=>{rtConnected=true;});
+    rtPusher.connection.bind('disconnected',()=>{rtConnected=false;});
+    rtPusher.connection.bind('failed',()=>{rtConnected=false;});
+
+    rtUserChannel=rtPusher.subscribe('private-user-'+user.id);
+    rtUserChannel.bind('new-notification',(notif)=>{
+        // A push just arrived — resync from the server (idempotent, de-duped by id).
+        pollNotifications();
+        // If it's a Feedback & Support reply and that page is open, refresh it too.
+        if(notif && notif.type==='ticket_reply' && document.getElementById('page-dev-support')?.classList.contains('active')){
+            dsupRefresh();
+        }
+    });
+}
+
+function rtSubscribeThread(threadId){
+    if(!rtPusher)return;
+    rtUnsubscribeThread();
+    const safe=threadId.replace(/[^a-zA-Z0-9_]/g,'');
+    rtThreadChannel=rtPusher.subscribe('private-thread-'+safe);
+    rtThreadChannel.bind('new-message',()=>{ fetchChatMessages(false); refreshChatUnreadBadges(); });
+    rtThreadChannel.bind('thread-updated',()=>{ fetchChatMessages(false); loadPinnedBar(); });
+}
+function rtUnsubscribeThread(){
+    if(rtPusher && rtThreadChannel){ rtPusher.unsubscribe(rtThreadChannel.name); rtThreadChannel=null; }
+}
+
+async function loadRealtimeSettings(){
+    const r=await api('realtime-settings');
+    if(!r.success)return;
+    document.getElementById('realtime-app-id').value=r.settings.pusher_app_id||'';
+    document.getElementById('realtime-key').value=r.settings.pusher_key||'';
+    document.getElementById('realtime-secret').value=r.settings.pusher_secret||'';
+    document.getElementById('realtime-cluster').value=r.settings.pusher_cluster||'';
+}
+document.getElementById('realtime-settings-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const payload={
+        pusher_app_id:document.getElementById('realtime-app-id').value,
+        pusher_key:document.getElementById('realtime-key').value,
+        pusher_cluster:document.getElementById('realtime-cluster').value,
+    };
+    const secret=document.getElementById('realtime-secret').value;
+    if(secret && !secret.includes('****'))payload.pusher_secret=secret;
+    const r=await api('realtime-settings','POST',payload);
+    if(r.success){toast('Real-time settings saved — reload the page to connect','success');loadRealtimeSettings();}
+    else toast(r.error||'Save failed','error');
+});
+
+// ===================== Feedback & Support =====================
+// Currently gated to super admins only (testing phase) via requireSuperAdmin()
+// on every backend endpoint + the .super-admin-only nav class. When this goes
+// live for everyone, loosen those two gates — no other rework needed.
+let _dsupTickets=[];
+let _dsupFilter='';
+let _dsupOpenThreads=new Set();   // ticket ids whose conversation panel is expanded
+let _dsupPollTimer=null;
+const DSUP_STATUS={open:{label:'Open',color:'#e3705a'},in_progress:{label:'In Progress',color:'#2563eb'},resolved:{label:'Resolved',color:'#10b981'},closed:{label:'Closed',color:'#9ca3af'}};
+const DSUP_CATS={
+    support:[['bug','Bug / something broken'],['how_to','How do I…? / question'],['account','Account / login'],['performance','Slow / not loading'],['other','Other']],
+    feedback:[['feature','Feature request'],['improvement','Improvement / suggestion'],['complaint','Complaint'],['praise','Praise / what works well'],['other','Other']],
+};
+const DSUP_CAT=Object.fromEntries([...DSUP_CATS.support,...DSUP_CATS.feedback]);
+window.loadDevSupport=async function(){
+    if(!user?.is_super_admin)return;
+    const list=document.getElementById('dsup-ticket-list');
+    list.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div>';
+    await dsupRefresh();
+    if(_dsupPollTimer)clearInterval(_dsupPollTimer);
+    // Fallback poll — only runs while real-time isn't connected; otherwise a
+    // ticket reply arrives instantly via the notification push (see initRealtime).
+    _dsupPollTimer=setInterval(()=>{ if(!rtConnected) dsupRefresh(); },5000);
+};
+function dsupStopPolling(){
+    if(_dsupPollTimer){clearInterval(_dsupPollTimer);_dsupPollTimer=null;}
+}
+// Quiet refetch used both for the initial load and the 5s live poll — no
+// loading spinner, and never clobbers a reply the user is mid-typing.
+async function dsupRefresh(){
+    const r=await api('tickets');
+    if(!r.success)return;
+    _dsupTickets=r.tickets||[];
+    dsupRenderSummary(r.summary||{});
+    dsupRenderList();
+}
+function dsupRenderSummary(s){
+    document.getElementById('dsup-open-count').textContent=s.open||0;
+    document.getElementById('dsup-progress-count').textContent=s.in_progress||0;
+    document.getElementById('dsup-resolved-count').textContent=s.resolved||0;
+    document.getElementById('dsup-total-count').textContent=s.total||0;
+}
+window.dsupSetFilter=function(f){
+    _dsupFilter=f;
+    document.querySelectorAll('.dsup-filter-tab').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+    dsupRenderList();
+};
+function dsupRenderList(){
+    const list=document.getElementById('dsup-ticket-list');
+    // Preserve in-progress reply drafts across a live-poll re-render.
+    const drafts={};
+    list.querySelectorAll('[id^="dsup-reply-"]').forEach(inp=>{ if(inp.value)drafts[inp.id]=inp.value; });
+    const activeEl=document.activeElement;
+    const activeId=activeEl && activeEl.id && activeEl.id.startsWith('dsup-reply-')?activeEl.id:null;
+    const selStart=activeEl?activeEl.selectionStart:null, selEnd=activeEl?activeEl.selectionEnd:null;
+
+    const tickets=_dsupFilter?_dsupTickets.filter(t=>t.status===_dsupFilter):_dsupTickets;
+    if(!tickets.length){
+        list.innerHTML=_dsupTickets.length
+            ?'<div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:13px;">No tickets in this view.</div>'
+            :'<div style="text-align:center;padding:40px 16px;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:10px;">💬</div><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:6px;">No tickets yet</div><p style="max-width:520px;margin:0 auto;line-height:1.6;font-size:13px;">Click <strong>+ New Ticket</strong> to raise a support request or send feedback to Levata.</p></div>';
+        return;
+    }
+    list.innerHTML=tickets.map(dsupTicketCard).join('');
+
+    Object.entries(drafts).forEach(([id,val])=>{ const el=document.getElementById(id); if(el)el.value=val; });
+    if(activeId){
+        const el=document.getElementById(activeId);
+        if(el){ el.focus(); if(selStart!=null)el.setSelectionRange(selStart,selEnd); }
+    }
+}
+function dsupTicketCard(t){
+    const typeBadge=t.type==='feedback'
+        ?'<span class="dsup-chip dsup-chip-feedback">Feedback</span>'
+        :'<span class="dsup-chip dsup-chip-support">Support</span>';
+    const priorityChip=t.priority==='high'?'<span class="dsup-chip dsup-chip-priority-high">High priority</span>':'';
+    const meta=[t.ticket_no||'',DSUP_CAT[t.category]||t.category].filter(Boolean).join(' · ');
+    const replyCount=(t.replies||[]).length;
+    const isOpen=_dsupOpenThreads.has(t.id);
+    const replies=(t.replies||[]).map(dsupReplyRow).join('')||'<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">No replies yet.</div>';
+    const statusOptions=Object.keys(DSUP_STATUS).map(k=>`<option value="${k}" ${t.status===k?'selected':''}>${DSUP_STATUS[k].label}</option>`).join('');
+    const st=DSUP_STATUS[t.status]||DSUP_STATUS.open;
+    return `<div class="dsup-ticket-card" id="dsup-card-${t.id}">
+        <div class="dsup-ticket-top">
+            <div style="flex:1 1 220px;min-width:200px;">
+                <span class="dsup-ticket-subject">${esc(t.subject||'(no subject)')}</span>${typeBadge}${priorityChip}
+                <div class="dsup-ticket-meta">${esc(meta)}</div>
+            </div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;">
+                <select class="dsup-status-pill" style="background:${st.color};" onchange="dsupSetStatus('${t.id}',this.value)">${statusOptions}</select>
+                <button type="button" class="btn btn-danger btn-sm" onclick="dsupDeleteTicket('${t.id}')">Delete</button>
+            </div>
+        </div>
+        <div class="dsup-ticket-message">${esc(t.message||'')}</div>
+        <div class="dsup-thread">
+            <div class="dsup-thread-toggle" onclick="dsupToggleThread('${t.id}')"><span>${isOpen?'▾':'▸'}</span> Conversation (${replyCount})</div>
+            <div style="${isOpen?'':'display:none;'}margin-top:8px;" id="dsup-thread-body-${t.id}">
+                ${replies}
+                <div class="dsup-reply-compose">
+                    <input type="text" class="form-input" id="dsup-reply-${t.id}" placeholder="Write a reply..." style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();dsupSendReply('${t.id}');}">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="dsupSendReply('${t.id}')">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+function dsupReplyRow(rep){
+    const staff=rep.is_staff;
+    return `<div class="dsup-reply-row">
+        <div class="dsup-reply-author${staff?' staff':''}">${esc(rep.author_name||'')}${staff?' <span class="dsup-reply-staff-tag">· Levata staff</span>':''}</div>
+        <div class="dsup-reply-msg">${esc(rep.message||'')}</div>
+    </div>`;
+}
+window.dsupToggleThread=function(id){
+    if(_dsupOpenThreads.has(id))_dsupOpenThreads.delete(id);
+    else _dsupOpenThreads.add(id);
+    const body=document.getElementById('dsup-thread-body-'+id);
+    const toggle=body?.previousElementSibling;
+    if(body)body.style.display=_dsupOpenThreads.has(id)?'':'none';
+    if(toggle)toggle.querySelector('span').textContent=_dsupOpenThreads.has(id)?'▾':'▸';
+};
+// Jump here from a bell notification: switch to the right status filter if
+// needed, expand the ticket's thread, and scroll it into view with a flash.
+window.dsupOpenThread=function(ticketId){
+    _dsupOpenThreads.add(ticketId);
+    _dsupFilter='';
+    document.querySelectorAll('.dsup-filter-tab').forEach(b=>b.classList.toggle('active',b.dataset.filter===''));
+    dsupRenderList();
+    const card=document.getElementById('dsup-card-'+ticketId);
+    if(card){
+        card.scrollIntoView({behavior:'smooth',block:'center'});
+        card.classList.add('dsup-highlight');
+        setTimeout(()=>card.classList.remove('dsup-highlight'),1800);
+    }
+};
+window.dsupOpenTicketModal=function(){
+    document.getElementById('dsup-ticket-form').reset();
+    document.getElementById('dsup-ticket-type').value='support';
+    document.getElementById('dsup-ticket-priority').value='normal';
+    dsupSyncCategories();
+    openModal('dsup-ticket-modal');
+};
+function dsupSyncCategories(keep){
+    const type=document.getElementById('dsup-ticket-type').value;
+    const sel=document.getElementById('dsup-ticket-category');
+    const want=keep!=null?keep:sel.value;
+    const opts=DSUP_CATS[type]||DSUP_CATS.support;
+    sel.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+    if(opts.some(([v])=>v===want))sel.value=want;
+}
+document.getElementById('dsup-ticket-type').addEventListener('change',()=>dsupSyncCategories());
+document.getElementById('dsup-ticket-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const btn=document.getElementById('dsup-ticket-save-btn');btn.disabled=true;
+    const payload={
+        type:document.getElementById('dsup-ticket-type').value,
+        category:document.getElementById('dsup-ticket-category').value,
+        priority:document.getElementById('dsup-ticket-priority').value,
+        subject:document.getElementById('dsup-ticket-subject').value,
+        message:document.getElementById('dsup-ticket-message').value,
+    };
+    const r=await api('save-ticket','POST',payload);
+    btn.disabled=false;
+    if(r.success){closeModal('dsup-ticket-modal');toast('Ticket submitted','success');dsupRefresh();}
+    else toast(r.error||'Submit failed','error');
+});
+window.dsupSendReply=async function(ticketId){
+    const inp=document.getElementById('dsup-reply-'+ticketId);
+    const message=(inp?.value||'').trim();
+    if(!message)return;
+    inp.disabled=true;
+    const r=await api('ticket-reply','POST',{ticket_id:ticketId,message});
+    inp.disabled=false;
+    if(r.success){_dsupOpenThreads.add(ticketId);dsupRefresh();}else toast(r.error||'Reply failed','error');
+};
+window.dsupSetStatus=async function(id,status){
+    const r=await api('update-ticket-status','POST',{id,status});
+    if(r.success){toast('Status updated','success');dsupRefresh();}else toast(r.error||'Update failed','error');
+};
+window.dsupDeleteTicket=async function(id){
+    if(!await customConfirm('Delete this ticket? This cannot be undone.','Delete Ticket',{danger:true,confirmText:'Delete'}))return;
+    const r=await api('delete-ticket','POST',{id});
+    if(r.success){toast('Ticket deleted','success');dsupRefresh();}else toast(r.error||'Delete failed','error');
+};
+async function dsupLoadSyncSettings(){
+    const r=await api('ticket-sync-settings');
+    if(!r.success)return;
+    document.getElementById('dsup-hub-url').value=r.settings.ticket_hub_url||'';
+    document.getElementById('dsup-hub-secret').value=r.settings.ticket_hub_secret||'';
+    document.getElementById('dsup-client-name').value=r.settings.ticket_client_name||'';
+}
+document.getElementById('dsup-sync-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const payload={
+        ticket_hub_url:document.getElementById('dsup-hub-url').value,
+        ticket_client_name:document.getElementById('dsup-client-name').value,
+    };
+    const secret=document.getElementById('dsup-hub-secret').value;
+    if(secret && !secret.includes('****'))payload.ticket_hub_secret=secret;
+    const r=await api('ticket-sync-settings','POST',payload);
+    if(r.success){toast('Sync settings saved','success');dsupLoadSyncSettings();}else toast(r.error||'Save failed','error');
+});
+
 checkAuth();setupEvents();
     </script>
 </body>

@@ -4,6 +4,10 @@ deployment:
     - export DEPLOYPATH=/home/stagdctc/macktiles.levatahq.com/
     - /bin/cp index.html $DEPLOYPATH
     - /bin/cp api.php $DEPLOYPATH
+    - /bin/cp support.php $DEPLOYPATH
     - /bin/cp logo.png $DEPLOYPATH
     - /bin/cp logo-inverse.png $DEPLOYPATH
-    - /bin/cp -R data $DEPLOYPATH
+    # data/ is intentionally NOT deployed here — it holds live runtime state
+    # (admin.json API keys, users.json, user_*.json leads, uploads, recordings).
+    # It doesn't exist in the git checkout (gitignored) and must never be
+    # overwritten by deploy. It's created/managed directly on the server.
