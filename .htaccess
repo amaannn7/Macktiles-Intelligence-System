@@ -1,8 +1,11 @@
 # Deny access to the data directory EXCEPT uploaded files (chat images/attachments)
+# and Aircall call recordings (both need direct browser playback/download).
 <IfModule mod_rewrite.c>
     RewriteEngine On
     # Allow uploaded files to be served
     RewriteRule ^data/uploads/ - [L]
+    # Allow Aircall call recordings to be played back
+    RewriteRule ^data/recordings/ - [L]
     # Block everything else under data/
     RewriteRule ^data/ - [F,L]
 </IfModule>

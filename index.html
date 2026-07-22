@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Macktiles Sales Intelligence</title>
+    <link rel="icon" type="image/png" href="si-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,15 +26,15 @@
         .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top left, rgba(227,112,90,0.22), transparent 30%), linear-gradient(135deg, var(--brand-slate-dark) 0%, var(--navy-dark) 78%, #101719 100%); padding: 16px; }
         .auth-card { background: var(--bg-white); border-radius: var(--radius-xl); padding: 32px 24px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
         .auth-logo { text-align: center; margin-bottom: 24px; }
-        .auth-logo img { height: 58px; max-width: 260px; object-fit: contain; }
+        .auth-logo img { height: 84px; max-width: 320px; object-fit: contain; }
         .auth-title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
         .auth-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 28px; font-size: 14px; }
 
         .app-layout { display: flex; min-height: 100vh; }
         .sidebar { width: 260px; background: linear-gradient(180deg, var(--brand-slate-dark) 0%, var(--navy-dark) 100%); display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s ease; }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
-        .logo img { height: 40px; max-width: 190px; object-fit: contain; }
-        .sidebar-close { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 4px; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; display: flex; align-items: center; justify-content: center; }
+        .logo img { height: 68px; max-width: 220px; object-fit: contain; }
+        .sidebar-close { display: none; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 4px; }
         .sidebar-nav { padding: 16px 10px; flex: 1; overflow-y: auto; }
         .nav-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.4); padding: 0 12px; margin-bottom: 8px; margin-top: 16px; }
         .nav-section-title:first-child { margin-top: 0; }
@@ -71,6 +72,8 @@
         .btn-gold { background: var(--gold); color: white; }
         .btn-gold:hover { background: var(--gold-dark); }
         .btn-secondary { background: var(--bg-white); color: var(--text-primary); border: 1px solid var(--border); }
+        .report-range-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+        .report-range-btn.active:hover { background: var(--gold-dark); color: #fff; border-color: var(--gold-dark); }
         .btn-secondary:hover { background: var(--bg-main); }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
@@ -573,6 +576,16 @@
         .next-action-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
         .next-action-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
         .next-action-cell.overdue .next-action-label, .next-action-cell.urgent .next-action-label { color: var(--danger); }
+        .cell-actionable { cursor: pointer; border-radius: var(--radius-md); transition: background 0.15s; }
+        .cell-actionable:hover { background: var(--info-bg); }
+        .cell-menu-overlay { position: fixed; inset: 0; z-index: 1200; }
+        .cell-menu { position: fixed; z-index: 1201; min-width: 200px; max-width: 280px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 8px 28px rgba(0,0,0,0.16); padding: 6px; }
+        .cell-menu-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 6px 10px 4px; }
+        .cell-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 10px; border-radius: var(--radius-sm, 6px); background: none; border: none; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+        .cell-menu-item:hover { background: var(--info-bg); }
+        .cell-menu-item.danger { color: var(--danger); }
+        .cell-menu-item.active { font-weight: 700; color: var(--gold-dark, var(--gold)); }
+        .cell-menu-divider { height: 1px; background: var(--border-light); margin: 4px 2px; }
         .detail-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         .detail-section { margin-bottom: 16px; }
         .detail-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
@@ -1256,6 +1269,7 @@
                     <div class="toolbar">
                         <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" class="form-input" placeholder="Search..." id="search-input"></div>
                         <select class="form-select" id="status-filter" style="width:190px;"><option value="all">All Stages</option><option value="new_lead">New Lead</option><option value="research">Research</option><option value="email_sent">Email Sent</option><option value="call_attempted">Call Attempted</option><option value="engaged">Engaged</option><option value="consultation_booked">Consultation Booked</option><option value="nurture_parked">Nurture / Parked</option><option value="won">Won</option><option value="lost">Lost</option></select>
+                        <select class="form-select" id="pipeline-rep-filter" style="width:190px;display:none;" onchange="currentPage=1;loadLeads()"><option value="">My Leads</option></select>
                     </div>
                     <div class="card">
                         <div class="table-wrap" id="leads-container"><table class="table"><thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" id="select-all"></th><th>Contact</th><th>Company</th><th>Phone</th><th>Stage / Source</th><th>Next Action</th><th>Actions</th></tr></thead><tbody id="leads-table-body"></tbody></table></div>
@@ -1421,7 +1435,7 @@
                             <div style="display:flex;gap:20px;align-items:center;padding:12px 0;margin-bottom:12px;border-bottom:1px solid var(--border-light);flex-wrap:wrap;">
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     <input type="checkbox" class="checkbox" id="import-skip-duplicates" checked>
-                                    <label for="import-skip-duplicates" style="font-size:13px;">Skip duplicates (by email/Zoho ID)</label>
+                                    <label for="import-skip-duplicates" style="font-size:13px;">Skip duplicates (by email)</label>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     <label style="font-size:13px;color:var(--text-secondary);">Source:</label>
@@ -1429,12 +1443,10 @@
                                         <option value="firmable">Firmable Database</option>
                                         <option value="inbound">Inbound Campaign / Booking</option>
                                         <option value="manual">Manual / Offline</option>
-                                        <option value="zoho">Zoho CRM</option>
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
                             </div>
-                            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Tip: Include a "zoho_id" or "Record Id" column to enable automatic duplicate detection for Zoho imports.</p>
                         </div>
                         <div style="margin:0 16px 12px;padding:10px 14px;background:var(--blue-bg);border-left:3px solid var(--blue);border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -1456,7 +1468,7 @@
                             <div class="form-row"><div class="form-group"><label class="form-label">Industry</label><input type="text" class="form-input" id="new-industry"></div><div class="form-group"><label class="form-label">Country</label><input type="text" class="form-input" id="new-country" value="Australia"></div></div>
                             <div class="form-row"><div class="form-group"><label class="form-label">Website</label><input type="url" class="form-input" id="new-website" placeholder="https://"></div><div class="form-group"><label class="form-label">LinkedIn</label><input type="url" class="form-input" id="new-linkedin" placeholder="https://linkedin.com/in/"></div></div>
                             <div class="form-row"><div class="form-group"><label class="form-label">Company Size</label><select class="form-select" id="new-company-size"><option value="">Select...</option><option value="1-10">1-10</option><option value="11-25">11-25</option><option value="26-50">26-50</option><option value="51-100">51-100</option><option value="100+">100+</option></select></div><div class="form-group"></div></div>
-                            <div class="form-row"><div class="form-group"><label class="form-label">Lead Source</label><select class="form-select" id="new-source"><option value="manual">Manual / Offline</option><option value="firmable">Firmable Database</option><option value="inbound">Inbound Campaign / Booking</option><option value="zoho">Zoho CRM</option><option value="other">Other</option></select></div><div class="form-group"><label class="form-label">Initial Stage</label><select class="form-select" id="new-stage"><option value="">Use source default</option><option value="research">Research</option><option value="call_attempted">Call Attempted</option><option value="engaged">Engaged</option></select></div></div>
+                            <div class="form-row"><div class="form-group"><label class="form-label">Lead Source</label><select class="form-select" id="new-source"><option value="manual">Manual / Offline</option><option value="firmable">Firmable Database</option><option value="inbound">Inbound Campaign / Booking</option><option value="other">Other</option></select></div><div class="form-group"><label class="form-label">Initial Stage</label><select class="form-select" id="new-stage"><option value="">Use source default</option><option value="research">Research</option><option value="call_attempted">Call Attempted</option><option value="engaged">Engaged</option></select></div></div>
                             <div class="form-group"><label class="form-label">Source Detail</label><input type="text" class="form-input" id="new-source-detail" placeholder="e.g., Trade Show, April 2026"></div>
                             <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="new-notes" rows="2"></textarea></div>
                             <button type="submit" class="btn btn-primary">Add Lead</button>
@@ -1579,79 +1591,38 @@ Phone: +1 234 567 890"></textarea></div>
                             <button class="btn btn-danger btn-sm" onclick="migrateLeads()">Reset All Leads to Stage 1</button>
                             <p style="font-size:11px;color:var(--danger);margin-top:8px;">Warning: This will clear all existing enrichment data and reset leads to Stage 1.</p>
                         </div>
-                        <div class="settings-card settings-card-full">
-                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Zoho CRM Integration</h3>
-                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Connect to Zoho CRM for bi-directional lead synchronization.</p>
-
-                            <div id="zoho-connection-status" style="margin-bottom:16px;">
-                                <div class="zoho-status-loading">Loading connection status...</div>
-                            </div>
-
-                            <div id="zoho-setup-section">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">Client ID</label>
-                                        <input type="password" class="form-input" id="zoho-client-id" placeholder="From api-console.zoho.com">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Client Secret</label>
-                                        <input type="password" class="form-input" id="zoho-client-secret" placeholder="From api-console.zoho.com">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Data Center</label>
-                                    <select class="form-select" id="zoho-datacenter">
-                                        <option value="com">zoho.com (US)</option>
-                                        <option value="eu">zoho.eu (Europe)</option>
-                                        <option value="in">zoho.in (India)</option>
-                                        <option value="com.au">zoho.com.au (Australia)</option>
-                                        <option value="com.cn">zoho.com.cn (China)</option>
-                                    </select>
-                                </div>
-                                <div class="btn-group" style="margin-bottom:16px;">
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="saveZohoSettings()">Save Settings</button>
-                                    <button type="button" class="btn btn-gold btn-sm" id="zoho-connect-btn" onclick="connectZoho()">Connect to Zoho</button>
-                                </div>
-                            </div>
-
-                            <div id="zoho-connected-section" style="display:none;">
-                                <div class="form-group">
-                                    <label class="form-label">Modules to Sync</label>
-                                    <div class="checkbox-group" style="display:flex;gap:16px;flex-wrap:wrap;">
-                                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" class="checkbox zoho-module-cb" value="Leads" checked> Leads</label>
-                                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" class="checkbox zoho-module-cb" value="Contacts" checked> Contacts</label>
-                                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" class="checkbox zoho-module-cb" value="Accounts" checked> Accounts</label>
-                                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" class="checkbox zoho-module-cb" value="Deals" checked> Deals</label>
-                                    </div>
-                                </div>
-
-                                <div class="btn-group" style="margin-bottom:16px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openFieldMappingModal()">Configure Field Mapping</button>
-                                </div>
-
-                                <div class="sync-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                                    <button type="button" class="btn btn-gold btn-sm" onclick="syncFromZoho()">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        Pull from Zoho
-                                    </button>
-                                    <button type="button" class="btn btn-gold btn-sm" onclick="syncToZoho()">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                        Push to Zoho
-                                    </button>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="fullZohoSync()">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                                        Full Sync
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="disconnectZoho()">Disconnect</button>
-                                </div>
-
-                                <div id="zoho-sync-history" style="margin-top:16px;">
-                                    <h4 style="font-size:13px;font-weight:600;margin-bottom:8px;">Recent Sync History</h4>
-                                    <div id="zoho-history-list" style="font-size:12px;color:var(--text-secondary);"></div>
-                                </div>
-                            </div>
+                        <div class="settings-card super-admin-only">
+                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>UAT Reset</h3>
+                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Wipe all leads, chat, tickets, and activity data back to empty for a fresh test cycle. User accounts and their settings are kept — testers can log straight back in.</p>
+                            <button class="btn btn-danger btn-sm" onclick="resetAllData()">Wipe All Test Data</button>
+                            <p style="font-size:11px;color:var(--danger);margin-top:8px;">This cannot be undone. Only use this on a test/UAT environment, never once real customer data exists.</p>
                         </div>
-                        <div class="settings-card settings-card-full" id="aircall-settings-card" hidden>
+                        <div class="settings-card">
+                            <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>Team Daily Targets</h3>
+                            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Default daily activity goals shown on the Admin Dashboard's Team Activity widget. Each rep can still override their own target from Today's Commitments.</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Calls Target</label>
+                                    <input type="number" class="form-input" id="team-target-calls" min="0" max="200" value="40">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Emails Target</label>
+                                    <input type="number" class="form-input" id="team-target-emails" min="0" max="200" value="40">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Research Target</label>
+                                    <input type="number" class="form-input" id="team-target-research" min="0" max="200" value="25">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Outcomes Target</label>
+                                    <input type="number" class="form-input" id="team-target-outcomes" min="0" max="200" value="40">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveTeamTargets()">Save Team Targets</button>
+                        </div>
+                        <div class="settings-card settings-card-full super-admin-only" id="aircall-settings-card" hidden>
                             <h3 class="settings-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Aircall Integration</h3>
                             <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Connect Aircall so every call is dialed from the lead page, then recorded and logged back automatically.</p>
                             <div class="form-row">
@@ -1711,8 +1682,8 @@ Phone: +1 234 567 890"></textarea></div>
                         <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding:4px;">
                             <div style="display:flex;gap:6px;">
                                 <button class="btn btn-secondary btn-sm report-range-btn" data-range="today" onclick="setReportRange('today')">Today</button>
-                                <button class="btn btn-secondary btn-sm report-range-btn active" data-range="week" onclick="setReportRange('week')">This Week</button>
-                                <button class="btn btn-secondary btn-sm report-range-btn" data-range="month" onclick="setReportRange('month')">This Month</button>
+                                <button class="btn btn-secondary btn-sm report-range-btn" data-range="week" onclick="setReportRange('week')">This Week</button>
+                                <button class="btn btn-secondary btn-sm report-range-btn active" data-range="month" onclick="setReportRange('month')">This Month</button>
                             </div>
                             <div style="display:flex;align-items:flex-end;gap:8px;">
                                 <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px;">From</label><input type="date" class="form-input" id="report-from" style="padding:6px 8px;"></div>
@@ -1743,9 +1714,9 @@ Phone: +1 234 567 890"></textarea></div>
                             </div>
                         </div>
                         <div id="calls-summary" style="display:flex;gap:16px;flex-wrap:wrap;padding:0 4px 12px;font-size:12px;color:var(--text-secondary);"></div>
-                        <div class="table-wrap"><table class="table">
-                            <thead><tr><th>Rep</th><th>Lead</th><th>When</th><th>Outcome</th><th>Duration</th><th>Recording</th><th>Notes</th></tr></thead>
-                            <tbody id="calls-report-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody>
+                        <div class="table-wrap" style="max-height:520px;overflow-y:auto;"><table class="table">
+                            <thead style="position:sticky;top:0;background:var(--bg-white);z-index:1;"><tr><th>Rep</th><th>Lead</th><th>When</th><th>Outcome</th><th>Duration</th><th>Recording</th><th>Notes</th><th></th></tr></thead>
+                            <tbody id="calls-report-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr></tbody>
                         </table></div>
                     </div>
                     <div class="card">
@@ -1845,7 +1816,7 @@ Phone: +1 234 567 890"></textarea></div>
     <div class="modal-overlay" id="lead-modal"><div class="modal modal-lg"><div class="modal-header"><h3 class="modal-title" id="modal-lead-name">Lead</h3><button class="modal-close" onclick="closeModal('lead-modal')">&times;</button></div><div class="modal-body" id="modal-body"></div></div></div>
     <div class="modal-overlay" id="req-modal"><div class="modal"><div class="modal-header"><h3 class="modal-title">Client Requisitions</h3><button class="modal-close" onclick="closeModal('req-modal')">&times;</button></div><div class="modal-body" id="req-modal-body"></div></div></div>
     <div class="modal-overlay" id="add-req-modal"><div class="modal"><div class="modal-header"><h3 class="modal-title" id="add-req-title">Add Question</h3><button class="modal-close" onclick="closeModal('add-req-modal')">&times;</button></div><div class="modal-body"><form id="add-req-form"><input type="hidden" id="edit-req-id"><div class="form-group"><label class="form-label">Question Title</label><input type="text" class="form-input" id="req-title-input" required placeholder="e.g., Next Step Agreed"></div><div class="form-group"><label class="form-label">Subtitle/Description</label><input type="text" class="form-input" id="req-subtitle-input" placeholder="e.g., What did they agree to after the call?"></div><div class="form-group"><label class="form-label">Type</label><select class="form-select" id="req-type-input"><option value="single">Single Select</option><option value="multi">Multi Select</option><option value="text">Free Text</option></select></div><div class="form-group"><label class="form-label">Options (one per line)</label><textarea class="form-textarea" id="req-options-input" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea><p class="form-hint">Leave blank for free-text questions.</p></div><button type="submit" class="btn btn-primary">Save</button></form></div></div></div>
-    <div class="modal-overlay" id="create-user-modal"><div class="modal"><div class="modal-header"><h3 class="modal-title">Create User</h3><button class="modal-close" onclick="closeModal('create-user-modal')">&times;</button></div><div class="modal-body"><form id="create-user-form"><div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="new-user-name" required></div><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="new-user-email" required></div><div class="form-group" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="new-user-admin" class="checkbox"><label for="new-user-admin" style="font-size:13px;">Administrator</label></div><button type="submit" class="btn btn-primary">Create</button><div id="new-user-password" style="display:none;"></div></form></div></div></div>
+    <div class="modal-overlay" id="create-user-modal"><div class="modal"><div class="modal-header"><h3 class="modal-title">Create User</h3><button class="modal-close" onclick="closeModal('create-user-modal')">&times;</button></div><div class="modal-body"><form id="create-user-form"><div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="new-user-name" required></div><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="new-user-email" required></div><div class="form-group"><label class="form-label">Password <span style="color:var(--text-muted);font-weight:400;">(optional — leave blank to auto-generate)</span></label><input type="text" class="form-input" id="new-user-password-input" minlength="8" placeholder="At least 8 characters"><p class="form-hint">Leave blank and a random password will be generated for you.</p></div><div class="form-group" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="new-user-admin" class="checkbox"><label for="new-user-admin" style="font-size:13px;">Administrator</label></div><button type="submit" class="btn btn-primary">Create</button><div id="new-user-password" style="display:none;"></div></form></div></div></div>
     <div class="modal-overlay" id="sources-modal"><div class="modal modal-sm"><div class="modal-header"><h3 class="modal-title">Research Sources</h3><button class="modal-close" onclick="closeModal('sources-modal')">&times;</button></div><div class="modal-body" id="sources-modal-body"></div></div></div>
     <div class="modal-overlay" id="create-channel-modal"><div class="modal"><div class="modal-header"><h3 class="modal-title" id="channel-modal-title">Create Channel</h3><button class="modal-close" onclick="closeModal('create-channel-modal')">&times;</button></div><div class="modal-body">
         <div class="form-group"><label class="form-label">Channel name</label><input type="text" class="form-input" id="new-channel-name" placeholder="e.g. product-updates" maxlength="40"></div>
@@ -1872,10 +1843,20 @@ Phone: +1 234 567 890"></textarea></div>
 
     <script>
 let user=null,leads=[],currentLead=null,importData=[],reqConfig=[],userSettings={},ecAttachments=[];
+// Set only when an admin has opened a lead they don't personally own — save
+// actions include this so the backend writes to the true owner's account
+// instead of the caller's own.
+let currentLeadOwnerId=null,currentLeadOwnerName=null;
+// The rep currently selected in the Pipeline page's "My Leads"/rep-filter
+// dropdown — every lead in the `leads` array while this is set belongs to
+// that rep, not the viewing admin, so openLead() must attribute ownership
+// from here instead of assuming an already-loaded lead is always the
+// caller's own.
+let pipelineViewAsId=null,pipelineViewAsName=null;
 // Feature-disabled: matches AIRCALL_ENABLED in api.php. Flip both back to
 // true together to re-enable click-to-dial, call history, and the Aircall
 // admin settings/Users-page link UI.
-const AIRCALL_ENABLED=false;
+const AIRCALL_ENABLED=true;
 const API_BASE='api.php';
 const MACKTILES_STAGES=[
     ['new_lead','New Lead'],
@@ -1900,7 +1881,7 @@ const PIPELINE_STAGE_HINTS={
     won:'Closed won',
     lost:'Closed lost'
 };
-const LEGACY_STAGE_MAP={new:'new_lead',researched:'research',email_sent:'email_sent',call_due:'call_attempted',outcome_logged:'call_attempted',qualified:'consultation_booked',disqualified:'nurture_parked',contacted:'engaged',replied:'engaged',meeting_booked:'consultation_booked',not_interested:'nurture_parked'};
+const LEGACY_STAGE_MAP={new:'new_lead',researched:'research',email_sent:'email_sent',call_due:'call_attempted',outcome_logged:'engaged',qualified:'consultation_booked',disqualified:'nurture_parked',contacted:'engaged',replied:'engaged',meeting_booked:'consultation_booked',not_interested:'nurture_parked',won:'won',lost:'lost'};
 const STAGE_LEGACY_MAP={new_lead:'new',research:'researched',email_sent:'email_sent',call_attempted:'call_due',engaged:'outcome_logged',consultation_booked:'qualified',nurture_parked:'disqualified',won:'qualified',lost:'disqualified'};
 function getStage(l){return LEGACY_STAGE_MAP[l?.stage]||LEGACY_STAGE_MAP[l?.status]||l?.stage||'new_lead'}
 function stageLabel(stage){return (MACKTILES_STAGES.find(s=>s[0]===stage)||[stage,(stage||'new_lead').replace(/_/g,' ')])[1]}
@@ -1918,9 +1899,9 @@ function formatShortDate(dateStr){
 }
 function leadNextAction(l){
     const stage=getStage(l);
-    const today=new Date().toISOString().split('T')[0];
+    const today=localDateOf(new Date());
     const isOverdue=l.followup_date&&l.followup_date<today&&!['consultation_booked','nurture_parked','won','lost'].includes(stage);
-    if((l.fit_grade||'').toLowerCase()==='disqualified'&&!['nurture_parked','lost'].includes(stage))return{label:'Park or reject',meta:'Fit grade is disqualified',state:'urgent'};
+    if((l.fit_grade||'').toLowerCase()==='disqualified'&&['new_lead','research'].includes(stage))return{label:'Park or reject',meta:'Fit grade is disqualified',state:'urgent'};
     if(l.source==='inbound'&&stage==='call_attempted')return{label:'Call within SLA',meta:'Inbound booking lead',state:'urgent'};
     if(isOverdue)return{label:'Follow-up overdue',meta:`Due ${formatShortDate(l.followup_date)}`,state:'overdue'};
     if(l.followup_date&&!['won','lost'].includes(stage))return{label:'Follow up',meta:`Due ${formatShortDate(l.followup_date)}`,state:'due'};
@@ -1940,6 +1921,104 @@ function leadNextAction(l){
 function nextActionCell(l){
     const action=leadNextAction(l);
     return `<div class="next-action-cell ${action.state}"><div class="next-action-label">${action.label}</div><div class="next-action-meta">${action.meta}</div></div>`;
+}
+
+// ===== Leads table: quick-action popup menus (Contact / Phone / Stage / Next Action cells) =====
+function closeCellMenu(){
+    document.getElementById('cell-menu-overlay')?.remove();
+    document.getElementById('cell-menu')?.remove();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCellMenu();});
+function openCellMenu(evt,kind,leadId){
+    evt.stopPropagation();
+    closeCellMenu();
+    if(showingTrash)return;
+    const l=leads.find(x=>x.id===leadId);
+    if(!l)return;
+    let title='',items=[];
+    if(kind==='contact'){
+        title=`${l.first_name||''} ${l.last_name||''}`.trim()||'Contact';
+        items=[
+            {label:'Open lead',action:()=>openLead(leadId)},
+            {label:'Copy email',action:()=>copyCellValue(l.email||'','Email'),disabled:!l.email},
+            {label:'Email this lead',action:()=>{openLead(leadId);setTimeout(()=>activateLeadTab('tab-email'),150);},disabled:!l.email}
+        ];
+    }else if(kind==='phone'){
+        title=l.phone||'No phone number';
+        items=[
+            {label:'Copy phone number',action:()=>copyCellValue(l.phone||'','Phone'),disabled:!l.phone},
+            {label:'Call this lead',action:()=>{openLead(leadId);setTimeout(()=>activateLeadTab('tab-call'),150);},disabled:!l.phone}
+        ];
+    }else if(kind==='stage'){
+        title='Change stage';
+        items=MACKTILES_STAGES.map(([id,label])=>({label,action:()=>quickSetStage(leadId,id),active:getStage(l)===id}));
+    }else if(kind==='action'){
+        const action=leadNextAction(l);
+        title=action.label;
+        // tab-call holds ONLY the call pitch/script generator + dial button —
+        // no outcome or booking UI at all. tab-outcome holds the actual outcome
+        // form, and "Consultation booked" is one of ITS options, not something
+        // that happens on the call tab. So both "Log call outcome"
+        // (call_attempted) and "Book consultation" (engaged) go to tab-outcome;
+        // only email_sent's "Prepare call" (which means generate/review the
+        // pitch before dialing) belongs on tab-call.
+        const stageToTab={new_lead:null,research:'tab-email',email_sent:'tab-call',call_attempted:'tab-outcome',engaged:'tab-outcome',consultation_booked:'tab-outcome'};
+        const suggestedTab=stageToTab[getStage(l)];
+        items=[
+            {label:`Go to: ${action.label}`,action:()=>{openLead(leadId);if(suggestedTab)setTimeout(()=>activateLeadTab(suggestedTab),150);}},
+            {label:'Open full lead',action:()=>openLead(leadId)}
+        ];
+    }
+    const overlay=document.createElement('div');
+    overlay.id='cell-menu-overlay';
+    overlay.className='cell-menu-overlay';
+    overlay.onclick=closeCellMenu;
+    document.body.appendChild(overlay);
+    const menu=document.createElement('div');
+    menu.id='cell-menu';
+    menu.className='cell-menu';
+    const menuTitle=document.createElement('div');
+    menuTitle.className='cell-menu-title';
+    menuTitle.textContent=title;
+    menu.appendChild(menuTitle);
+    // Built as real DOM nodes (not an onclick="..." string) so free-text lead
+    // data like email/phone can never break out of an HTML attribute.
+    items.forEach(it=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='cell-menu-item'+(it.active?' active':'');
+        btn.textContent=(it.active?'✓ ':'')+it.label;
+        if(it.disabled){
+            btn.disabled=true;
+            btn.style.opacity='0.4';
+            btn.style.cursor='default';
+        }else{
+            btn.addEventListener('click',()=>{
+                closeCellMenu();
+                it.action();
+            });
+        }
+        menu.appendChild(btn);
+    });
+    document.body.appendChild(menu);
+    const rect=evt.currentTarget.getBoundingClientRect();
+    const menuRect=menu.getBoundingClientRect();
+    let top=rect.bottom+4, left=rect.left;
+    if(left+menuRect.width>window.innerWidth-8)left=window.innerWidth-menuRect.width-8;
+    if(top+menuRect.height>window.innerHeight-8)top=rect.top-menuRect.height-4;
+    menu.style.top=`${Math.max(8,top)}px`;
+    menu.style.left=`${Math.max(8,left)}px`;
+}
+async function quickSetStage(leadId,stage){
+    const r=await api('update-lead','POST',{id:leadId,stage,owner_id:pipelineViewAsId||undefined});
+    if(r.success){
+        toast('Stage updated','success');
+        loadLeads();loadStats();refreshQueueWidgets();
+    }else toast(r.error||'Failed to update stage','error');
+}
+function copyCellValue(value,label){
+    if(!value)return;
+    navigator.clipboard?.writeText(value).then(()=>toast(`${label} copied`,'success')).catch(()=>toast('Copy failed','error'));
 }
 function renderPipelineStageStrip(stats={}){
     const strip=document.getElementById('pipeline-stage-strip');
@@ -1969,7 +2048,12 @@ function setStageFilter(stage){
 function actionInitial(action){return ({call:'C',email:'E',research:'R',followup:'F',other:'T'}[action]||'T')}
 function activateLeadTab(tabId){
     const btn=[...document.querySelectorAll('#lead-modal .tab-btn')].find(t=>t.getAttribute('onclick')?.includes(tabId));
-    if(btn && !btn.classList.contains('locked')) switchTab(btn, tabId);
+    if(!btn)return;
+    // A locked tab (e.g. Email before research exists) already carries its
+    // own explanatory toast in its onclick — click it for real instead of
+    // silently no-oping, so the rep sees why nothing happened.
+    if(btn.classList.contains('locked'))btn.click();
+    else switchTab(btn, tabId);
 }
 function renderLeadWorkflow(l, hasResearch, emailSent) {
     const stage=getStage(l);
@@ -2010,7 +2094,19 @@ function applyRoleNavigation(){
     document.querySelectorAll('.nav-item').forEach(item=>setNavLabel(item, isManager?'manager':'rep'));
 }
 function defaultLandingPage(){return user?.is_admin?'command-center':'dashboard'}
-async function api(endpoint,method='GET',data=null){const opts={method,headers:{'Content-Type':'application/json'}};if(localStorage.token)opts.headers['X-User-Token']=localStorage.token;if(data)opts.body=JSON.stringify(data);try{const r=await fetch(`${API_BASE}?action=${endpoint}`,opts);return await r.json()}catch(e){return{success:false,error:e.message}}}
+async function api(endpoint,method='GET',data=null){
+// Every "today"/date-range computation on the backend (Reports, daily
+// targets/streaks, Session Activity) needs to know the viewer's real
+// timezone to bucket dates correctly — reps aren't guaranteed to all be in
+// one place. getTimezoneOffset() returns minutes WEST of UTC (e.g. Sydney
+// in AEST is -600, since it's 10 hours AHEAD), which is what the backend
+// expects; sent on every request via the shared api() helper so no caller
+// needs to remember to pass it individually.
+// cache:'no-store' — without it the browser can serve a stale cached response
+// for a repeated identical GET URL (e.g. re-opening the same chat thread from
+// a notification), showing old messages until a hard refresh forces a real
+// network request.
+const opts={method,cache:'no-store',headers:{'Content-Type':'application/json','X-Timezone-Offset':String(new Date().getTimezoneOffset())}};if(localStorage.token)opts.headers['X-User-Token']=localStorage.token;if(data)opts.body=JSON.stringify(data);try{const r=await fetch(`${API_BASE}?action=${endpoint}`,opts);return await r.json()}catch(e){return{success:false,error:e.message}}}
 async function handleLogin(e){e.preventDefault();const btn=document.getElementById('login-btn');btn.disabled=true;btn.innerHTML='<span class="spinner spinner-light"></span>';const r=await api('login','POST',{email:document.getElementById('login-email').value,password:document.getElementById('login-password').value});if(r.success){localStorage.token=r.token;user=r.user;showApp()}else toast(r.error||'Login failed','error');btn.disabled=false;btn.textContent='Sign In'}
 function showResetPassword(e){e.preventDefault();document.getElementById('reset-password-form').style.display='block'}
 async function requestPasswordReset(){
@@ -2025,9 +2121,28 @@ async function requestPasswordReset(){
         }
     }else toast(r.error||'Failed','error');
 }
-function logout(){localStorage.removeItem('token');user=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex'}
+function logout(){
+    localStorage.removeItem('token');
+    // Full reload (not just clearing `user` + toggling screens) — this app
+    // accumulates a lot of module-level state (leads, chat, real-time
+    // connections, notification timers, focus queue scope, etc.) that a
+    // simple screen swap never resets. Without this, logging in as a
+    // different user in the same tab briefly rendered the PREVIOUS user's
+    // leads/stats/name until each dashboard fetch completed and overwrote
+    // it — a real cross-account data exposure on a shared/kiosk browser.
+    window.location.reload();
+}
 async function checkAuth(){if(!localStorage.token)return;const r=await api('me');if(r.success){user=r.user;showApp()}}
-function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();loadLeads();loadStats();loadSettings();loadProactiveDashboard();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
+async function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('user-name').textContent=user.name;document.getElementById('user-email').textContent=user.email;document.getElementById('user-avatar').textContent=(user.name||'U')[0].toUpperCase();document.getElementById('super-admin-badge').style.display=user.is_super_admin?'block':'none';document.body.classList.toggle('is-admin', !!user.is_admin);document.body.classList.toggle('is-super-admin', !!user.is_super_admin);applyRoleNavigation();
+    // dashboard-briefing recalculates and SAVES fresh temperature/fit_grade
+    // for every lead; the plain `leads` GET never recalculates, only returns
+    // whatever's already persisted. Awaiting it before loadLeads() ensures
+    // the Recent Leads table (and anything else reading the shared `leads`
+    // array) sees up-to-date scores on first load instead of racing two
+    // concurrent, unordered fetches and possibly showing stale values.
+    await loadProactiveDashboard();
+    if(user.is_admin||user.is_super_admin)await initPipelineRepFilter();
+    loadLeads();loadStats();loadSettings();loadActivityFeed();loadTodayOperations();showPage(defaultLandingPage());if(user.is_admin){loadAdminSettings();loadUsers()}
     // Fallback poll — only runs while real-time isn't connected (see initRealtime).
     _notifPollTimer = setInterval(()=>{ if(!rtConnected) pollNotifications(); }, 3000);
     setInterval(() => api('generate-notifications', 'POST'), 8000);
@@ -2039,18 +2154,32 @@ function showApp(){document.getElementById('auth-screen').style.display='none';d
     initRealtime();
 }
 let currentPage=1;let showingTrash=false;let paginationData=null;
+async function initPipelineRepFilter(){
+    const sel=document.getElementById('pipeline-rep-filter');
+    if(!sel||!(user?.is_admin||user?.is_super_admin))return;
+    if(!chatUsers?.length){const r=await api('users');if(r.success)chatUsers=r.users||[];}
+    sel.innerHTML='<option value="">My Leads</option>'+chatUsers.filter(u=>u.id!==user.id).map(u=>`<option value="${u.id}">${esc(u.name)}'s Leads</option>`).join('');
+    sel.style.display='';
+}
 async function loadLeads(page){
     if(page) currentPage=page;
     const status=document.getElementById('status-filter')?.value||'all';
+    const repSel=document.getElementById('pipeline-rep-filter');
+    const viewAs=repSel?.value||'';
+    pipelineViewAsId=viewAs||null;
+    pipelineViewAsName=viewAs?repSel.options[repSel.selectedIndex]?.textContent.replace(/'s Leads$/,''):null;
     let url=`leads&page=${currentPage}&per_page=50`;
     if(status!=='all') url+=`&status=${status}`;
     if(showingTrash) url+=`&trash=true`;
+    if(viewAs) url+=`&view_as=${encodeURIComponent(viewAs)}`;
     const r=await api(url);
     if(r.success){
         leads=r.leads||[];reqConfig=r.requisitions||[];paginationData=r.pagination;
         renderLeads();populateLeadSelects();renderReqList();
         renderPagination();
         updatePipelineStageActive();
+    }else if(r.error){
+        toast(r.error,'error');
     }
 }
 function renderPagination(){
@@ -2096,13 +2225,13 @@ function renderLeads(){
 const q=(document.getElementById('search-input')?.value||'').toLowerCase();
 const filtered=leads.filter(l=>{const s=`${l.first_name} ${l.last_name} ${l.company} ${l.email}`.toLowerCase();return s.includes(q)});
 document.getElementById('leads-table-body').innerHTML=filtered.map(l=>`<tr>
-<td><input type="checkbox" class="checkbox lead-cb" data-id="${l.id}" onchange="updateSelection()"></td>
-<td><div class="lead-info"><div class="lead-avatar">${(l.first_name||'?')[0]}</div><div><div class="lead-name">${l.first_name||''} ${l.last_name||''}</div><div class="lead-title">${l.email||''}</div></div></div></td>
+<td>${pipelineViewAsId?'':`<input type="checkbox" class="checkbox lead-cb" data-id="${l.id}" onchange="updateSelection()">`}</td>
+<td class="cell-actionable" onclick="openCellMenu(event,'contact','${l.id}')"><div class="lead-info"><div class="lead-avatar">${(l.first_name||'?')[0]}</div><div><div class="lead-name">${l.first_name||''} ${l.last_name||''}</div><div class="lead-title">${l.email||''}</div></div></div></td>
 <td>${l.company||'-'}</td>
-<td>${l.phone||'-'}</td>
-<td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</div></td>
-<td>${nextActionCell(l)}</td>
-<td>${showingTrash?`<div style="display:flex;gap:6px;"><button class="btn btn-xs btn-success" onclick="restoreLead('${l.id}')">Restore</button><button class="btn btn-xs btn-danger" onclick="permanentDelete('${l.id}')">Delete Forever</button></div>`:`<button class="action-btn" onclick="openLead('${l.id}')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn danger" onclick="deleteLead('${l.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td>
+<td class="cell-actionable" onclick="openCellMenu(event,'phone','${l.id}')">${l.phone||'-'}</td>
+<td class="cell-actionable" onclick="openCellMenu(event,'stage','${l.id}')"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${stageBadge(l)}${sourceBadge(l)}</div></td>
+<td class="cell-actionable" onclick="openCellMenu(event,'action','${l.id}')">${nextActionCell(l)}</td>
+<td>${showingTrash?`<div style="display:flex;gap:6px;"><button class="btn btn-xs btn-success" onclick="restoreLead('${l.id}')">Restore</button><button class="btn btn-xs btn-danger" onclick="permanentDelete('${l.id}')">Delete Forever</button></div>`:`<button class="action-btn" onclick="openLead('${l.id}')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>${pipelineViewAsId?'':`<button class="action-btn danger" onclick="deleteLead('${l.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}`}</td>
 </tr>`).join('');
 document.getElementById('leads-container').style.display=filtered.length?'block':'none';
 document.getElementById('leads-empty').style.display=filtered.length?'none':'block';
@@ -2115,49 +2244,57 @@ document.getElementById('dash-table-wrap').style.display=leads.length?'block':'n
 document.getElementById('dash-empty').style.display=leads.length?'none':'block'
 }
 function updateSelection(){const sel=document.querySelectorAll('.lead-cb:checked');document.getElementById('bulk-delete-btn').style.display=sel.length?'inline-flex':'none';document.getElementById('export-selected-btn').style.display=sel.length?'inline-flex':'none';if(!sel.length)document.getElementById('select-all').checked=false;}
-async function bulkDelete(){const count=document.querySelectorAll('.lead-cb:checked').length;const ok=await customConfirm(`Delete ${count} selected leads? This action can be undone from Trash.`,'Bulk Delete',{danger:true,confirmText:'Delete All'});if(!ok)return;const ids=[...document.querySelectorAll('.lead-cb:checked')].map(c=>c.dataset.id);await api('bulk-delete','POST',{ids});await loadLeads();loadStats();updateSelection();toast('Deleted','success')}
-async function deleteLead(id){const ok=await customConfirm('Delete this lead? You can restore it from Trash later.','Delete Lead',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-lead','POST',{id});loadLeads();loadStats();toast('Moved to trash','success')}
-async function restoreLead(id){const r=await api('restore-lead','POST',{id});if(r.success){toast('Lead restored','success');loadLeads();loadStats()}else toast(r.error||'Failed','error')}
-async function permanentDelete(id){const ok=await customConfirm('This will permanently delete the lead. This cannot be undone.','Delete Forever',{danger:true,confirmText:'Delete Forever'});if(!ok)return;const r=await api('permanent-delete','POST',{id});if(r.success){toast('Lead permanently deleted','success');loadLeads();loadStats()}else toast(r.error||'Failed','error')}
+async function bulkDelete(){const count=document.querySelectorAll('.lead-cb:checked').length;const ok=await customConfirm(`Delete ${count} selected leads? This action can be undone from Trash.`,'Bulk Delete',{danger:true,confirmText:'Delete All'});if(!ok)return;const ids=[...document.querySelectorAll('.lead-cb:checked')].map(c=>c.dataset.id);await api('bulk-delete','POST',{ids});await loadLeads();loadStats();refreshQueueWidgets();updateSelection();toast('Deleted','success')}
+async function deleteLead(id){const ok=await customConfirm('Delete this lead? You can restore it from Trash later.','Delete Lead',{danger:true,confirmText:'Delete'});if(!ok)return;await api('delete-lead','POST',{id});loadLeads();loadStats();refreshQueueWidgets();toast('Moved to trash','success')}
+async function restoreLead(id){const r=await api('restore-lead','POST',{id});if(r.success){toast('Lead restored','success');loadLeads();loadStats();refreshQueueWidgets()}else toast(r.error||'Failed','error')}
+async function permanentDelete(id){const ok=await customConfirm('This will permanently delete the lead. This cannot be undone.','Delete Forever',{danger:true,confirmText:'Delete Forever'});if(!ok)return;const r=await api('permanent-delete','POST',{id});if(r.success){toast('Lead permanently deleted','success');loadLeads();loadStats();refreshQueueWidgets()}else toast(r.error||'Failed','error')}
 async function loadStats(){
-const r=await api('stats');
+// Fetches its own full, unfiltered lead list rather than depending on the
+// shared `leads` array — that array is paginated/filtered by whatever the
+// Leads page's status filter is set to, and is reassigned by loadLeads()
+// which every caller here fires concurrently (not awaited) alongside this
+// function, so relying on it raced and showed stale action-item counts
+// until a manual refresh happened to reorder the two fetches correctly.
+const [r, leadsRes] = await Promise.all([api('stats'), api('leads&per_page=1000')]);
 if(r.success){
 const s=r.stats;
+const allLeads = leadsRes.success ? (leadsRes.leads||[]) : leads;
 renderPipelineStageStrip(s);
-// Calculate action items from leads
-const today = new Date();
-const todayStr = today.toISOString().split('T')[0];
-const yesterday = new Date(today.getTime() - 86400000);
-const yesterdayStr = yesterday.toISOString().split('T')[0];
+// Calculate action items from leads — local date throughout, not UTC
+// (toISOString() is always UTC and drifts a day off from the viewer's own
+// "today" for roughly 2/3 of the day depending on their timezone).
+const todayStr = localDateOf(new Date());
 
 // Emails to send = research-stage leads ready for outreach (Grade A/B or no grade)
-const emailsToSend = leads.filter(l => {
-    if (getStage(l) !== 'research') return false;
-    const grade = l.fit_grade || '';
-    const hasOverride = l.grade_override?.enabled;
-    return hasOverride || !grade || grade === 'A' || grade === 'B';
-});
+const emailsToSend = allLeads.filter(l => getStage(l) === 'research');
 
-// Today's calls = emails sent yesterday
-const todaysCalls = leads.filter(l => {
-    if (!['email_sent','call_attempted'].includes(getStage(l))) return false;
-    const lastEmail = l.email_history?.[l.email_history.length - 1];
-    if (!lastEmail) return false;
-    const sentDate = new Date(lastEmail.sent_at).toISOString().split('T')[0];
-    return sentDate === yesterdayStr;
+// Today's calls = calls actually completed today (real activity, not a prediction)
+const todaysCalls = allLeads.filter(l => {
+    const lastCall = l.call_history?.[l.call_history.length - 1];
+    if (!lastCall?.completed_at) return false;
+    return localDateOf(lastCall.completed_at) === todayStr;
 });
 
 // All calls due (not just yesterday's)
-const allCallsDue = leads.filter(l => ['email_sent','call_attempted'].includes(getStage(l))).length;
+const allCallsDue = allLeads.filter(l => ['email_sent','call_attempted'].includes(getStage(l))).length;
 
-const overdue = leads.filter(l => l.followup_date && l.followup_date < todayStr && !['consultation_booked','nurture_parked','won','lost'].includes(getStage(l))).length;
+const overdue = allLeads.filter(l => l.followup_date && l.followup_date < todayStr && !['consultation_booked','nurture_parked','won','lost'].includes(getStage(l))).length;
 
 // Emails sent today (for timeline)
-const emailsSentToday = leads.filter(l => {
+const emailsSentToday = allLeads.filter(l => {
     const lastEmail = l.email_history?.[l.email_history.length - 1];
     if (!lastEmail) return false;
-    const sentDate = new Date(lastEmail.sent_at).toISOString().split('T')[0];
-    return sentDate === todayStr;
+    return localDateOf(lastEmail.sent_at) === todayStr;
+}).length;
+
+// Calls tomorrow = same rule as "Today's Calls" (email_sent/call_attempted
+// stage + last email sent on the reference day) but for today's sends, since
+// those are the leads that will populate Today's Calls once tomorrow arrives.
+const callsTomorrow = allLeads.filter(l => {
+    if (!['email_sent','call_attempted'].includes(getStage(l))) return false;
+    const lastEmail = l.email_history?.[l.email_history.length - 1];
+    if (!lastEmail) return false;
+    return localDateOf(lastEmail.sent_at) === todayStr;
 }).length;
 
 document.getElementById('stats-grid').innerHTML=`
@@ -2180,7 +2317,7 @@ document.getElementById('stats-grid').innerHTML=`
 
 // Activity timeline
 document.getElementById('activity-timeline').innerHTML = emailsSentToday > 0
-    ? `<strong>${emailsSentToday}</strong> email${emailsSentToday !== 1 ? 's' : ''} sent today. <strong>${emailsSentToday}</strong> call${emailsSentToday !== 1 ? 's' : ''} tomorrow`
+    ? `<strong>${emailsSentToday}</strong> email${emailsSentToday !== 1 ? 's' : ''} sent today. <strong>${callsTomorrow}</strong> call${callsTomorrow !== 1 ? 's' : ''} tomorrow`
     : 'No emails sent yet today';
 
 // Today's calls list
@@ -2189,10 +2326,10 @@ document.getElementById('todays-calls-list').innerHTML = todaysCalls.length
     ? todaysCalls.slice(0, 5).map(l => `
         <div class="action-lead-item" style="padding:8px 0;border-bottom:1px solid var(--border-light);cursor:pointer;" onclick="openLead('${l.id}')">
             <div style="font-weight:500;font-size:13px;">${l.first_name||''} ${l.last_name||''}</div>
-            <div style="font-size:12px;color:var(--text-secondary);">${l.company||'No company'}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">${l.company||'No company'}${l.call_history[l.call_history.length-1].outcome_label ? ` • ${l.call_history[l.call_history.length-1].outcome_label}` : ''}</div>
         </div>
     `).join('') + (todaysCalls.length > 5 ? `<div style="padding:8px 0;font-size:12px;color:var(--text-muted);">+${todaysCalls.length - 5} more</div>` : '')
-    : emptyState('No calls scheduled', 'Today is clear for call follow-up.');
+    : emptyState('No calls yet today', 'Calls you complete today will appear here.');
 
 // Emails to send list
 document.getElementById('emails-to-send-count').textContent = emailsToSend.length;
@@ -2365,8 +2502,17 @@ async function loadProactiveDashboard() {
         const r = await api(qs);
         if (!r.success) return;
 
+        // Elements below only exist on the Today dashboard page. Bail out
+        // quietly (not an error) if called while some other page is active —
+        // e.g. from refreshQueueWidgets() after logging a call outcome from
+        // the lead modal. Without this guard, the first missing element threw
+        // and silently aborted the whole function (caught below), so nothing
+        // past this point — including the Focus Queue render — ever ran.
+        const onFireEl = document.getElementById('temp-on-fire-count');
+        if (!onFireEl) return;
+
         // Update temperature group counts
-        document.getElementById('temp-on-fire-count').textContent = r.summary.on_fire_count || 0;
+        onFireEl.textContent = r.summary.on_fire_count || 0;
         document.getElementById('temp-hot-count').textContent = r.summary.hot_count || 0;
         document.getElementById('temp-warm-count').textContent = r.summary.warm_count || 0;
         document.getElementById('temp-cold-count').textContent = r.summary.cold_count || 0;
@@ -2445,9 +2591,15 @@ async function loadTodayProgress() {
 async function loadTodayQueues() {
     const qs = focusQueueScope === 'team' ? 'lead-batches&scope=team' : 'lead-batches';
     const r = await api(qs);
-    const el = document.getElementById('today-queue-batches');
-    if (!el || !r.success) return;
+    if (!r.success) return;
     const batches = r.batches || {};
+    // Keep batchData fresh even when the Today dashboard isn't the active
+    // page — Workbench's auto-advance-to-next-research-lead logic and other
+    // code read this cache regardless of which page triggered the refresh.
+    batchData = Object.fromEntries(Object.entries(batches).map(([key, value]) => [key, value?.leads || []]));
+
+    const el = document.getElementById('today-queue-batches');
+    if (!el) return;
     const queueConfig = [
         ['inbound_urgent', 'Inbound Urgent', 'Call Now', 'batchInbound'],
         ['needs_calling', 'Calls Due', 'Start Calls', 'batchCall'],
@@ -2456,7 +2608,6 @@ async function loadTodayQueues() {
         ['needs_research', 'Research', 'Research Leads', 'batchResearch'],
         ['overdue', 'Overdue', 'Handle Now', 'batchOverdue']
     ];
-    batchData = Object.fromEntries(Object.entries(batches).map(([key, value]) => [key, value?.leads || []]));
 
     const scopeToggle = document.getElementById('queue-summary-scope-toggle');
     if (scopeToggle) {
@@ -2594,7 +2745,7 @@ async function skipFocusItem(leadId, ownerId) {
         const r = await api('skip-focus-item', 'POST', { lead_id: leadId, duration, owner_id: ownerId || undefined });
         if (r.success) {
             toast('Lead snoozed', 'success');
-            loadProactiveDashboard();
+            refreshQueueWidgets();
         }
     } catch (e) {
         toast('Failed to skip lead', 'danger');
@@ -2624,7 +2775,7 @@ async function dropLead(leadId, ownerId) {
             toast('Lead disqualified', 'success');
             loadLeads();
             loadStats();
-            loadProactiveDashboard();
+            refreshQueueWidgets();
         }
     } catch (e) {
         toast('Failed to drop lead', 'danger');
@@ -2633,11 +2784,13 @@ async function dropLead(leadId, ownerId) {
 
 // Start research for a lead
 async function startResearch(leadId) {
-    openLead(leadId);
-    // Auto-click research button after modal opens
-    setTimeout(() => {
-        document.querySelector('#research-btn')?.click();
-    }, 200);
+    // Just open the lead — the rep clicks Research themselves when ready,
+    // this no longer auto-triggers it. Re-arm the queue flag after opening,
+    // since openLead() itself always clears it (any other lead-open should
+    // not trigger auto-advance).
+    const queueActive = researchQueueActive;
+    await openLead(leadId);
+    researchQueueActive = queueActive;
 }
 
 // ========== COMMAND CENTER ==========
@@ -2697,7 +2850,7 @@ async function loadCommandCenter() {
                         const isOnline = s.last_seen && (Date.now() - new Date(s.last_seen)) < 3 * 60 * 1000;
                         const onCall = onCallByUser[s.user_id] || onCallByName[s.user_name];
                         const todayMins = (s.sessions || [])
-                            .filter(x => (x.start || '').slice(0, 10) === localToday)
+                            .filter(x => localDateOf(x.start) === localToday)
                             .reduce((sum, x) => sum + (x.duration_mins || 0), 0);
                         return `<tr style="border-bottom:1px solid var(--border-light);">
                             <td style="padding:8px 8px;">
@@ -2856,6 +3009,10 @@ function filterByGrade(grade) {
 
 let currentBatch = 'needs_research';
 let batchData = {};
+// Set true only when a lead was opened via "Research Leads" in Queue Summary /
+// Workbench, so researchLead() knows to auto-advance to the next lead in the
+// Needs Research batch once research finishes. Cleared on any other lead open.
+let researchQueueActive = false;
 
 // Load Workbench data
 async function loadWorkbench() {
@@ -2875,6 +3032,11 @@ async function loadWorkbench() {
             hot_focus: batches.hot_focus?.leads || [],
             overdue: batches.overdue?.leads || []
         };
+
+        // These elements only exist on the Workbench page — bail out quietly
+        // if called while some other page is active (e.g. refreshQueueWidgets()
+        // firing after a call outcome logged from the Leads page).
+        if (!document.getElementById('wb-inbound-count')) return;
 
         // Update batch counts
         document.getElementById('wb-inbound-count').textContent = batches.inbound_urgent?.count || 0;
@@ -2978,9 +3140,10 @@ function batchResearch() {
         toast('No leads need research', 'info');
         return;
     }
-    // Open the next lead needing research and auto-trigger it, same as
-    // clicking a Focus Queue item — simple, one at a time, no silent
-    // background batch loop.
+    // Open the next lead needing research. The rep clicks Research
+    // themselves; once it completes, researchLead() auto-advances to the
+    // next lead in this same batch (researchQueueActive flag below).
+    researchQueueActive = true;
     startResearch(batchLeads[0].id);
 }
 
@@ -3309,6 +3472,10 @@ const NOTIF_ICONS = {
     stage_change:     '🔄',
     email_sent:       '📧',
     call_logged:      '📞',
+    call_started:     '📞',
+    call_completed:   '📞',
+    call_missed:      '📵',
+    log_call_outcome: '📝',
     researched:       '🔍',
     created:          '➕',
     deleted:          '🗑️',
@@ -3447,6 +3614,11 @@ async function handleNotificationClick(notifId, leadId, threadId, ticketId) {
     }
     if (leadId) {
         openLead(leadId);
+        // Prompt from an Aircall call ending — jump straight to the Outcome
+        // tab since that's the whole point of the notification.
+        if (notif?.type === 'log_call_outcome') {
+            setTimeout(() => activateLeadTab('tab-outcome'), 100);
+        }
     }
 }
 
@@ -3459,7 +3631,7 @@ async function markAllNotificationsRead() {
 
 function renderDashboardLeads(){
 // Sort leads by action priority: overdue > calls due > emails due > new
-const today=new Date().toISOString().split('T')[0];
+const today=localDateOf(new Date());
 const sorted=[...leads].sort((a,b)=>{
 const aOverdue=a.followup_date&&a.followup_date<today?1:0;
 const bOverdue=b.followup_date&&b.followup_date<today?1:0;
@@ -3474,7 +3646,7 @@ if(recent.length){
 document.getElementById('dash-table-wrap').style.display='block';
 document.getElementById('dash-empty').style.display='none';
 document.getElementById('dash-leads').innerHTML=recent.map(l=>{
-const today=new Date().toISOString().split('T')[0];
+const today=localDateOf(new Date());
 const isOverdue=l.followup_date&&l.followup_date<today;
 const actionClass=isOverdue? 'action-required' : (['call_attempted','email_sent'].includes(getStage(l)) ? 'action-required' : '');
 return`<tr class="${actionClass}" style="cursor:pointer;" onclick="openLead('${l.id}')">
@@ -3542,23 +3714,39 @@ function formatRelativeTime(dateStr) {
 }
 
 async function loadSettings(){const r=await api('settings');if(r.success&&r.settings){userSettings=r.settings;document.getElementById('my-sender-name').value=r.settings.sender_name||'';document.getElementById('my-sender-title').value=r.settings.sender_title||'';document.getElementById('my-sender-company').value=r.settings.sender_company||'';document.getElementById('my-company-desc').value=r.settings.company_description||'';document.getElementById('my-value-prop').value=r.settings.value_proposition||'';document.getElementById('my-social-proof').value=r.settings.social_proof||'';document.getElementById('my-calendar-link').value=r.settings.calendar_link||'';document.getElementById('my-email-tone').value=r.settings.email_tone||'professional';document.getElementById('my-signature').value=r.settings.signature||''}}
-async function openLead(id){let lead=leads.find(l=>l.id===id);
+async function openLead(id){researchQueueActive=false;let lead=leads.find(l=>l.id===id);
+// If the Pipeline page's rep filter is set, everything currently in `leads`
+// belongs to that rep, not the viewing admin — attribute ownership from the
+// dropdown rather than the caller's own account.
+currentLeadOwnerId=lead&&pipelineViewAsId?pipelineViewAsId:null;
+currentLeadOwnerName=lead&&pipelineViewAsId?pipelineViewAsName:null;
 // If not in the currently loaded list (e.g. opened from a notification), fetch it
 if(!lead){
     const r=await api(`lead&id=${id}`);
     if(!r.success||!r.lead){toast('Lead not found','error');return;}
     if(r.owner_id){
-        // Belongs to another rep — the shared modal writes to the current user's
-        // own lead list, so editing here would silently go nowhere. Show a
-        // read-only summary instead of the full editable modal.
-        openForeignLeadSummary(r.lead,r.owner_name||'another rep');
-        return;
+        if(user?.is_admin||user?.is_super_admin){
+            // Admins get the full editable modal for any lead, not just their
+            // own — currentLeadOwnerId/Name track that this lead belongs to
+            // someone else so save actions can route to the right account.
+            currentLeadOwnerId=r.owner_id;
+            currentLeadOwnerName=r.owner_name||'another rep';
+        }else{
+            // A rep opening another rep's lead still only ever gets a
+            // read-only summary — the shared modal writes to the current
+            // user's own lead list, so editing here would silently go
+            // nowhere for a non-admin.
+            openForeignLeadSummary(r.lead,r.owner_name||'another rep');
+            return;
+        }
     }
     lead=r.lead;
 }
 currentLead=lead;
-// Update modal header with name and temperature/velocity badges
-document.getElementById('modal-lead-name').innerHTML=`${lead.first_name||''} ${lead.last_name||''} ${getTempBadge(lead.temperature)} ${getVelocityBadge(lead.velocity)}`;
+// Update modal header with name and temperature/velocity badges, plus an
+// owner badge when viewing another rep's lead as an admin.
+const ownerBadge=currentLeadOwnerId?`<span class="badge" style="background:var(--text-muted);color:#fff;font-size:10px;margin-left:8px;">${esc(currentLeadOwnerName)}'s lead</span>`:'';
+document.getElementById('modal-lead-name').innerHTML=`${lead.first_name||''} ${lead.last_name||''} ${getTempBadge(lead.temperature)} ${getVelocityBadge(lead.velocity)}${ownerBadge}`;
 renderLeadModal();
 openModal('lead-modal');
 }
@@ -3829,7 +4017,7 @@ ${workflowHtml}
 <div class="form-group" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><label class="form-label" style="margin-bottom:0;">Stage</label>
 <select class="form-select" id="lead-status" onchange="updateLeadStatus()" style="flex:1;max-width:200px;">
 ${stageOptions(getStage(l))}
-</select>${sourceBadge(l)}${urgencyBadge(l)}${gradeBadge}</div>
+</select>${sourceBadge(l)}${urgencyBadge(l)}${gradeBadge}${closeOutButtonsHtml(getStage(l))}${(user?.is_admin||user?.is_super_admin)?`<button class="btn btn-secondary btn-sm" onclick="openReassignLead()">Reassign</button>`:''}</div>
 <div class="tab-buttons">
 <button class="tab-btn active" onclick="switchTab(this,'tab-profile')">Profile</button>
 <button class="tab-btn" onclick="switchTab(this,'tab-research')">Research</button>
@@ -3845,7 +4033,7 @@ ${stageOptions(getStage(l))}
 
 // Setup event listeners
 document.querySelectorAll('#modal-body .email-type-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('#modal-body .email-type-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active')}));
-document.querySelectorAll('.outcome-option').forEach(opt=>{opt.addEventListener('click',function(){const parent=this.parentElement;const isMulti=parent.dataset.type==='multi';if(!isMulti)parent.querySelectorAll('.outcome-option').forEach(o=>o.classList.remove('selected'));this.classList.toggle('selected');if(this.dataset.value==='followup_date')document.getElementById('followup-date-picker').style.display=this.classList.contains('selected')?'block':'none'})});
+document.querySelectorAll('.outcome-option').forEach(opt=>{opt.addEventListener('click',function(){const parent=this.parentElement;const isMulti=parent.dataset.type==='multi';if(!isMulti)parent.querySelectorAll('.outcome-option').forEach(o=>o.classList.remove('selected'));this.classList.toggle('selected');if(parent.id==='next-action-options'){const showPicker=parent.querySelector('.outcome-option[data-value="followup_date"]')?.classList.contains('selected');const picker=document.getElementById('followup-date-picker');picker.style.display=showPicker?'block':'none';if(!showPicker)document.getElementById('followup-date').value=''}})});
 }
 
 function renderResearchCollapsible(data,callAnchor){
@@ -3952,8 +4140,59 @@ function showSources(){
 }
 
 function switchTab(btn,id){btn.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');btn.closest('.modal-body').querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active')}
-async function updateLeadStatus(){const r=await api('update-lead','POST',{id:currentLead.id,stage:document.getElementById('lead-status').value});if(r.success){currentLead=r.lead;loadLeads();loadStats();toast('Updated','success')}}
-async function researchLead(){const btn=document.getElementById('research-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Researching...';const r=await api('enrich-lead','POST',{lead:currentLead});if(r.success){currentLead=r.lead;renderLeadModal();loadLeads();loadStats();toast('Research complete!','success')}else toast(r.error||'Failed','error');btn.disabled=false;btn.textContent='Research Lead'}
+async function updateLeadStatus(){const r=await api('update-lead','POST',{id:currentLead.id,stage:document.getElementById('lead-status').value,owner_id:currentLeadOwnerId||undefined});if(r.success){currentLead=r.lead;if(!currentLeadOwnerId){loadLeads();}loadStats();refreshQueueWidgets();toast('Updated','success')}}
+// Won/Lost have no automatic trigger anywhere in the app (unlike Consultation
+// Booked / Nurture Parked, which call outcomes and email outcomes can set on
+// their own) — this is the only way to close a deal out. Shown once a lead
+// has reached the point where closing makes sense, and while already closed
+// (so it can still be corrected).
+function closeOutButtonsHtml(stage){
+    if(!['consultation_booked','won','lost'].includes(stage))return'';
+    return `<span style="display:flex;gap:6px;">
+        <button class="btn btn-sm btn-success" onclick="markLeadWon()" ${stage==='won'?'disabled':''}>${stage==='won'?'✓ Won':'Mark as Won'}</button>
+        <button class="btn btn-sm btn-danger" onclick="markLeadLost()" ${stage==='lost'?'disabled':''}>${stage==='lost'?'✓ Lost':'Mark as Lost'}</button>
+    </span>`;
+}
+async function markLeadWon(){
+    const ok=await customConfirm(`Mark this lead as Won?`,'Mark as Won',{confirmText:'Mark Won'});
+    if(!ok)return;
+    const r=await api('update-lead','POST',{id:currentLead.id,stage:'won'});
+    if(r.success){currentLead=r.lead;document.getElementById('lead-status').value='won';renderLeadModal();loadLeads();loadStats();refreshQueueWidgets();toast('Marked as Won','success')}
+    else toast(r.error||'Failed','error');
+}
+async function markLeadLost(){
+    const reason=await customConfirm('Why was this lead lost? (optional)','Mark as Lost',{input:true,placeholder:'e.g. went with a competitor, budget, timing',confirmText:'Mark Lost',danger:true});
+    if(reason===false)return;
+    const body={id:currentLead.id,stage:'lost'};
+    if(reason)body.rejection_reason=reason;
+    const r=await api('update-lead','POST',body);
+    if(r.success){currentLead=r.lead;document.getElementById('lead-status').value='lost';renderLeadModal();loadLeads();loadStats();refreshQueueWidgets();toast('Marked as Lost','success')}
+    else toast(r.error||'Failed','error');
+}
+async function researchLead(){
+    const btn=document.getElementById('research-btn');
+    const wasQueueActive=researchQueueActive;
+    const researchedLeadId=currentLead.id;
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Researching...';
+    const r=await api('enrich-lead','POST',{lead:currentLead});
+    if(r.success){
+        currentLead=r.lead;renderLeadModal();loadLeads();loadStats();toast('Research complete!','success');
+        refreshQueueWidgets();
+        if(wasQueueActive){
+            researchQueueActive=false;
+            const remaining=(batchData['needs_research']||[]).filter(l=>l.id!==researchedLeadId);
+            if(remaining.length>0){
+                researchQueueActive=true;
+                startResearch(remaining[0].id);
+            }else{
+                closeModal('lead-modal');
+                toast('Needs Research queue is clear','success');
+            }
+            return;
+        }
+    }else toast(r.error||'Failed','error');
+    btn.disabled=false;btn.textContent='Research Lead';
+}
 
 async function recalculateGrade(){
     const btn=document.getElementById('regrade-btn');
@@ -3964,6 +4203,7 @@ async function recalculateGrade(){
         renderLeadModal();
         loadLeads();
         loadStats();
+        refreshQueueWidgets();
         toast(`ICP Grade: ${r.grade} (${r.score}%)`,'success');
     }else{
         toast(r.error||'Failed to calculate grade','error');
@@ -4003,6 +4243,7 @@ async function markEmailSent(){
         currentLead=r.lead;
         document.getElementById('lead-status').value=getStage(currentLead);
         loadLeads();loadStats();
+        refreshQueueWidgets();
         toast('Email marked as sent! Call is now due.','success');
         renderLeadModal(); // Refresh to unlock Call Pitch
     }else toast(r.error||'Failed','error');
@@ -4015,7 +4256,18 @@ async function logEmailOutcome(leadId,emailIndex,outcome){
         toast(`Marked as ${outcome.replace(/_/g,' ')}`,'success');
         renderLeadModal();
         loadLeads();loadStats();
+        refreshQueueWidgets();
     }else toast(r.error||'Failed','error');
+}
+
+// Refreshes Focus Queue, Queue Summary, and Workbench counts immediately after
+// an action that can move a lead between queue buckets (research, email sent,
+// call outcome, etc.) — each loader is self-contained and safe to call
+// regardless of which page is currently active.
+function refreshQueueWidgets(){
+    loadProactiveDashboard();
+    loadTodayQueues();
+    loadWorkbench();
 }
 
 function editEmailOutcome(el,leadId,emailIndex){
@@ -4035,9 +4287,10 @@ function showSkipEmail(){document.getElementById('skip-email-reason').style.disp
 async function confirmSkipEmail(){
     const reason=document.getElementById('skip-email-select').value;
     if(!reason){toast('Select a reason','warning');return}
-    await api('update-lead','POST',{id:currentLead.id,stage:'call_attempted',email_skipped:reason});
-    currentLead.stage='call_attempted';
-    loadLeads();loadStats();
+    const r=await api('update-lead','POST',{id:currentLead.id,stage:'call_attempted',email_skipped:reason});
+    if(!r.success){toast(r.error||'Failed','error');return}
+    currentLead=r.lead;
+    loadLeads();loadStats();refreshQueueWidgets();
     toast('Email skipped. Call is now due.','success');
     renderLeadModal();
 }
@@ -4066,7 +4319,7 @@ function renderCallHistory(l){
         const dur=c.duration_seconds?`${Math.floor(c.duration_seconds/60)}m ${c.duration_seconds%60}s`:(c.status==='pending'?'in progress':'—');
         const label=c.via==='aircall'?(c.outcome==='missed'?'missed':'answered'):(c.status==='pending'?'in progress':(c.outcome_label||c.outcome||c.status||'logged'));
         const stColor=c.via==='aircall'?(c.outcome==='missed'?'var(--danger)':'var(--success)'):(c.status==='pending'?'var(--text-muted)':'var(--success)');
-        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:30px;max-width:230px;"></audio>`:'';
+        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:32px;width:100%;min-width:280px;flex:1 1 100%;"></audio>`:'';
         const via=c.via==='aircall'?'<span class="badge" style="background:var(--navy);color:#fff;font-size:9px;padding:2px 6px;border-radius:6px;">Aircall</span>':'';
         const notes=c.notes?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${c.notes}</div>`:'';
         const tags=(c.tags&&c.tags.length)?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${c.tags.join(' · ')}</div>`:'';
@@ -4078,6 +4331,25 @@ function renderCallHistory(l){
     }).join('');
     return `<div style="margin-bottom:16px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">Call History (${h.length})</div>${rows}</div>`;
 }
+async function openReassignLead(){
+    // currentLeadOwnerId is set when an admin opened another rep's lead —
+    // exclude whichever account currently owns it (self or that rep) from
+    // the reassign target list.
+    if(!chatUsers?.length){const r=await api('users');if(r.success)chatUsers=r.users||[];}
+    const excludeId=currentLeadOwnerId||user.id;
+    const options=chatUsers.filter(u=>u.id!==excludeId).map(u=>({value:u.id,label:u.name}));
+    if(!options.length){toast('No other users to reassign to','warning');return;}
+    const newOwnerId=await customConfirm('Reassign this lead to:','Reassign Lead',{options,confirmText:'Reassign'});
+    if(!newOwnerId)return;
+    const r=await api('reassign-lead','POST',{lead_id:currentLead.id,new_owner_id:newOwnerId});
+    if(r.success){
+        toast('Lead reassigned','success');
+        closeModal('lead-modal');
+        loadLeads();
+        loadStats();
+        refreshQueueWidgets();
+    }else toast(r.error||'Failed to reassign','error');
+}
 async function aircallDial(){
     const name=`${currentLead.first_name||''} ${currentLead.last_name||''}`.trim()||'this lead';
     const ok=await customConfirm(`Call ${name} at ${currentLead.phone}? Your Aircall app will ring first — the lead is only dialed once you answer it.`,'Confirm Call',{confirmText:'Call'});
@@ -4088,7 +4360,12 @@ async function aircallDial(){
     if(r.success){
         currentLead=r.lead;
         toast(r.message||'Dialing — answer the call in your Aircall app','success');
+        // Aircall's click-to-dial API rings whichever client (desktop/web/
+        // mobile) the rep is currently signed into — no need to open or
+        // focus anything here, the call rings in the background on its own.
         loadLeads();
+        loadStats();
+        refreshQueueWidgets();
         renderLeadModal();
         clickLeadTab('tab-call');
     }else{
@@ -4105,6 +4382,7 @@ async function startCall(){
         toast('Call started! Log outcome when done.','info');
         loadLeads();
         loadStats();
+        refreshQueueWidgets();
         clickLeadTab('tab-outcome');
     } else {
         toast(r.error||'Failed to start call','error');
@@ -4220,36 +4498,24 @@ async function saveCallOutcome(){
     const followupDate=nextAction==='followup_date'?document.getElementById('followup-date').value:null;
     if(nextAction==='followup_date'&&!followupDate){toast('Select follow-up date','warning');return}
     
-    // Determine new canonical stage
-    let newStage='engaged';
-    if(['no_answer_retry','left_voicemail','gatekeeper','callback_requested'].includes(outcome))newStage='call_attempted';
-    if(outcome==='consultation_booked'||nextAction==='consultation_booked')newStage='consultation_booked';
-    if(['not_interested','wrong_number','not_right_time_park_90'].includes(outcome)||nextAction==='nurture_parked')newStage='nurture_parked';
-    
-    // Save
+    // Save — the backend (macktilesCallOutcomeConfig + next_action override)
+    // is the sole authority on the resulting stage; we don't compute or send
+    // one from here, so this can never drift from the server's real logic.
     const r=await api('save-call-outcome','POST',{
         lead_id:currentLead.id,
         outcome:outcome,
         requisitions:requisitions,
         notes:notes,
         next_action:nextAction,
-        followup_date:followupDate,
-        stage:newStage
+        followup_date:followupDate
     });
-    
+
     if(r.success){
-        currentLead=r.lead||currentLead;
-        currentLead.stage=newStage;
-        currentLead.requisitions=requisitions;
+        currentLead=r.lead;
+        const newStage=getStage(currentLead);
         loadLeads();loadStats();
-        toast(newStage==='consultation_booked'?'Consultation booked! Ready for Zoho sync.':'Outcome saved!','success');
-        if(newStage==='consultation_booked'){
-            // Show Zoho sync prompt
-            if(confirm('Consultation booked. Sync to Zoho CRM now?')){
-                // Trigger Zoho sync via extension
-                toast('Open the Zoho Sync extension to push this lead','info');
-            }
-        }
+        refreshQueueWidgets();
+        toast(newStage==='consultation_booked'?'Consultation booked!':'Outcome saved!','success');
         closeModal('lead-modal');
     }else toast(r.error||'Failed','error');
 }
@@ -4414,10 +4680,12 @@ async function loadAdminSettings(){
         document.getElementById('admin-provider').value=r.settings.default_provider||'groq';
         document.querySelectorAll('.provider-card').forEach(c=>c.classList.toggle('selected',c.dataset.provider===r.settings.default_provider));
 
-        // Load Zoho settings
-        document.getElementById('zoho-client-id').value=r.settings.zoho_client_id||'';
-        document.getElementById('zoho-client-secret').value=r.settings.zoho_client_secret||'';
-        document.getElementById('zoho-datacenter').value=r.settings.zoho_datacenter||'com';
+        // Load team daily targets
+        const teamTargets = r.settings.daily_targets || {};
+        document.getElementById('team-target-calls').value = teamTargets.calls ?? 40;
+        document.getElementById('team-target-emails').value = teamTargets.emails ?? 40;
+        document.getElementById('team-target-research').value = teamTargets.research ?? 25;
+        document.getElementById('team-target-outcomes').value = teamTargets.outcomes ?? 40;
 
         // Load Aircall settings (card stays hidden while AIRCALL_ENABLED is false)
         if(AIRCALL_ENABLED){
@@ -4442,315 +4710,21 @@ async function loadAdminSettings(){
         document.getElementById('grade-b-threshold').value = rules.grade_b_threshold || 60;
         document.getElementById('grade-c-threshold').value = rules.grade_c_threshold || 40;
     }
-
-    // Load Zoho connection status
-    loadZohoStatus();
 }
 
-// ============ ZOHO CRM INTEGRATION FUNCTIONS ============
-
-async function loadZohoStatus() {
-    const statusDiv = document.getElementById('zoho-connection-status');
-    const setupSection = document.getElementById('zoho-setup-section');
-    const connectedSection = document.getElementById('zoho-connected-section');
-
-    try {
-        const r = await api('zoho-status');
-        if (r.success && r.connected) {
-            let tokenStatus = '';
-            if (r.token_expired) {
-                tokenStatus = `<span class="badge badge-danger" style="font-size:10px;">Token Expired</span>
-                    <button class="btn btn-gold btn-xs" onclick="refreshZohoToken()" style="margin-left:6px;">Refresh Token</button>`;
-            } else if (r.token_expires_in_seconds < 600) {
-                tokenStatus = `<span class="badge badge-warning" style="font-size:10px;">Token Expiring Soon</span>
-                    <button class="btn btn-gold btn-xs" onclick="refreshZohoToken()" style="margin-left:6px;">Refresh Token</button>`;
-            } else {
-                tokenStatus = `<span class="badge badge-success" style="font-size:10px;">Token Valid</span>`;
-            }
-            statusDiv.innerHTML = `
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <span class="badge badge-success">Connected</span>
-                    ${tokenStatus}
-                    <span style="font-size:12px;color:var(--text-secondary);">Connected ${r.connected_at ? 'on ' + new Date(r.connected_at).toLocaleDateString() : ''}</span>
-                </div>
-                ${r.last_sync ? `<div style="font-size:11px;color:var(--text-muted);">Last sync: ${new Date(r.last_sync).toLocaleString()}</div>` : ''}
-            `;
-            setupSection.style.display = 'none';
-            connectedSection.style.display = 'block';
-
-            // Show sync history
-            if (r.sync_history && r.sync_history.length > 0) {
-                document.getElementById('zoho-history-list').innerHTML = r.sync_history.slice(0, 5).map(h => `
-                    <div style="padding:6px 0;border-bottom:1px solid var(--border-light);">
-                        <strong>${h.direction === 'pull' ? 'Pull' : 'Push'}</strong> ${h.module}
-                        <span style="color:var(--success);">+${h.created}</span>
-                        <span style="color:var(--info);">~${h.updated}</span>
-                        <span style="color:var(--text-muted);">-${h.skipped}</span>
-                        <span style="float:right;">${new Date(h.timestamp).toLocaleString()}</span>
-                    </div>
-                `).join('');
-            } else {
-                document.getElementById('zoho-history-list').innerHTML = '<em>No sync history yet</em>';
-            }
-        } else {
-            statusDiv.innerHTML = `<span class="badge badge-secondary">Not Connected</span>`;
-            setupSection.style.display = 'block';
-            connectedSection.style.display = 'none';
-        }
-    } catch (e) {
-        statusDiv.innerHTML = `<span class="badge badge-danger">Error loading status</span>`;
-    }
-
-    // Check for URL parameters (OAuth callback result)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('zoho_connected')) {
-        toast('Successfully connected to Zoho CRM!', 'success');
-        window.history.replaceState({}, document.title, window.location.pathname);
-        loadZohoStatus();
-    } else if (urlParams.has('zoho_error')) {
-        toast('Zoho connection failed: ' + urlParams.get('zoho_error'), 'error');
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
-async function saveZohoSettings() {
-    const clientId = document.getElementById('zoho-client-id').value;
-    const clientSecret = document.getElementById('zoho-client-secret').value;
-    const datacenter = document.getElementById('zoho-datacenter').value;
-
-    const r = await api('admin-settings', 'POST', {
-        zoho_client_id: clientId,
-        zoho_client_secret: clientSecret,
-        zoho_datacenter: datacenter
-    });
-
+async function saveTeamTargets() {
+    const targets = {
+        calls: parseInt(document.getElementById('team-target-calls').value) || 40,
+        emails: parseInt(document.getElementById('team-target-emails').value) || 40,
+        research: parseInt(document.getElementById('team-target-research').value) || 25,
+        outcomes: parseInt(document.getElementById('team-target-outcomes').value) || 40
+    };
+    const r = await api('admin-settings', 'POST', { daily_targets: targets });
     if (r.success) {
-        toast('Zoho settings saved!', 'success');
+        toast('Team targets saved!', 'success');
+        if (document.getElementById('page-command-center')?.classList.contains('active')) loadCommandCenter();
     } else {
-        toast(r.error || 'Failed to save settings', 'error');
-    }
-}
-
-async function connectZoho() {
-    const clientId = document.getElementById('zoho-client-id').value;
-    if (!clientId || clientId.includes('****')) {
-        toast('Please enter your Zoho Client ID first', 'error');
-        return;
-    }
-
-    // Save settings first
-    await saveZohoSettings();
-
-    // Get OAuth URL and redirect
-    const r = await api('zoho-auth-url');
-    if (r.success && r.auth_url) {
-        window.location.href = r.auth_url;
-    } else {
-        toast(r.error || 'Failed to generate auth URL', 'error');
-    }
-}
-
-async function disconnectZoho() {
-    const ok=await customConfirm('Disconnect from Zoho CRM? This will not delete any leads.','Disconnect Zoho',{danger:true,confirmText:'Disconnect'});if(!ok)return;
-
-    const r = await api('zoho-disconnect', 'POST');
-    if (r.success) {
-        toast('Disconnected from Zoho CRM', 'success');
-        loadZohoStatus();
-    } else {
-        toast(r.error || 'Failed to disconnect', 'error');
-    }
-}
-
-async function refreshZohoToken() {
-    const r = await api('zoho-refresh-token', 'POST');
-    if (r.success) {
-        toast('Zoho token refreshed successfully', 'success');
-        loadZohoStatus();
-    } else {
-        toast(r.error || 'Token refresh failed. You may need to reconnect.', 'error');
-    }
-}
-
-async function syncFromZoho() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner spinner-light"></span> Pulling...';
-
-    const modules = [...document.querySelectorAll('.zoho-module-cb:checked')].map(cb => cb.value);
-
-    let totalCreated = 0, totalUpdated = 0;
-    let errors = [];
-
-    for (const module of modules) {
-        const r = await api('zoho-sync-pull', 'POST', { module });
-        if (r.success) {
-            totalCreated += r.created || 0;
-            totalUpdated += r.updated || 0;
-            if (r.errors && r.errors.length) errors.push(...r.errors);
-        } else {
-            errors.push(r.error || `Pull ${module} failed`);
-        }
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Pull from Zoho';
-
-    if (errors.length) {
-        toast(`Pull done with errors: ${totalCreated} created, ${totalUpdated} updated. ${errors[0]}`, 'warning');
-    } else {
-        toast(`Pulled from Zoho: ${totalCreated} created, ${totalUpdated} updated`, 'success');
-    }
-    loadLeads();
-    loadZohoStatus();
-}
-
-async function syncToZoho() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner spinner-light"></span> Pushing...';
-
-    const r = await api('zoho-sync-push', 'POST', { module: 'Leads' });
-
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Push to Zoho';
-
-    if (r.success) {
-        const errCount = (r.errors && r.errors.length) || 0;
-        if (errCount) {
-            toast(`Push done: ${r.created || 0} created, ${r.updated || 0} updated, ${errCount} error(s): ${r.errors[0]}`, 'warning');
-        } else {
-            toast(`Pushed to Zoho: ${r.created || 0} created, ${r.updated || 0} updated`, 'success');
-        }
-    } else {
-        toast(r.error || 'Push failed', 'error');
-    }
-    loadZohoStatus();
-}
-
-async function fullZohoSync() {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner spinner-light"></span> Syncing...';
-
-    // Pull first, then push
-    const pullR = await api('zoho-sync-pull', 'POST', { module: 'Leads' });
-    const pushR = await api('zoho-sync-push', 'POST', { module: 'Leads' });
-
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Full Sync';
-
-    const totalPulled = (pullR.created || 0) + (pullR.updated || 0);
-    const totalPushed = (pushR.created || 0) + (pushR.updated || 0);
-
-    toast(`Full sync complete: ${totalPulled} pulled, ${totalPushed} pushed`, 'success');
-    loadLeads();
-    loadZohoStatus();
-}
-
-async function openFieldMappingModal() {
-    // For now, show a simplified field mapping view
-    const r = await api('zoho-get-mapping');
-    const mapping = r.mapping || {};
-
-    let html = `
-        <div style="max-height:400px;overflow-y:auto;">
-            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">
-                Field mapping configuration. Macktiles fields are automatically mapped to Zoho fields.
-            </p>
-            <div id="field-mapping-list"></div>
-        </div>
-    `;
-
-    // Get Zoho fields
-    const fieldsR = await api('zoho-get-fields&module=Leads');
-    const zohoFields = fieldsR.fields || [];
-
-    if (zohoFields.length > 0) {
-        let tableHtml = `<table class="table" style="font-size:12px;"><thead><tr><th>Macktiles Field</th><th>Zoho Field</th><th>Sync</th></tr></thead><tbody>`;
-
-        const macktileFields = [
-            { id: 'first_name', label: 'First Name' },
-            { id: 'last_name', label: 'Last Name' },
-            { id: 'email', label: 'Email' },
-            { id: 'phone', label: 'Phone' },
-            { id: 'company', label: 'Company' },
-            { id: 'title', label: 'Title' },
-            { id: 'industry', label: 'Industry' },
-            { id: 'website', label: 'Website' },
-            { id: 'linkedin', label: 'LinkedIn' },
-            { id: 'country', label: 'Country' },
-            { id: 'fit_grade', label: 'ICP Grade' },
-            { id: 'fit_score', label: 'ICP Score' },
-            { id: 'temperature', label: 'Temperature' }
-        ];
-
-        const currentMapping = mapping.macktiles_to_zoho || {};
-
-        for (const cf of macktileFields) {
-            const zohoOpts = zohoFields.map(zf =>
-                `<option value="${zf.api_name}" ${currentMapping[cf.id] === zf.api_name ? 'selected' : ''}>${zf.display_label}</option>`
-            ).join('');
-
-            tableHtml += `<tr>
-                <td>${cf.label}</td>
-                <td><select class="form-select form-select-sm zoho-field-map" data-macktiles="${cf.id}" style="font-size:11px;">
-                    <option value="">-- Not mapped --</option>
-                    ${zohoOpts}
-                </select></td>
-                <td>↔</td>
-            </tr>`;
-        }
-
-        tableHtml += `</tbody></table>`;
-        html = html.replace('<div id="field-mapping-list"></div>', tableHtml);
-    }
-
-    // Create modal dynamically
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-    modalOverlay.id = 'field-mapping-modal';
-    modalOverlay.style.display = 'flex';
-    modalOverlay.innerHTML = `
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Zoho Field Mapping - Leads</h3>
-                <button class="modal-close" onclick="closeFieldMappingModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                ${html}
-                <div class="btn-group" style="margin-top:16px;">
-                    <button class="btn btn-primary btn-sm" onclick="saveFieldMapping()">Save Mapping</button>
-                    <button class="btn btn-secondary btn-sm" onclick="closeFieldMappingModal()">Cancel</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modalOverlay);
-}
-
-function closeFieldMappingModal() {
-    const modal = document.getElementById('field-mapping-modal');
-    if (modal) modal.remove();
-}
-
-async function saveFieldMapping() {
-    const mapping = { macktiles_to_zoho: {}, sync_direction: 'bidirectional', conflict_resolution: 'latest_wins' };
-
-    document.querySelectorAll('.zoho-field-map').forEach(sel => {
-        const macktileField = sel.dataset.macktiles;
-        const zohoField = sel.value;
-        if (zohoField) {
-            mapping.macktiles_to_zoho[macktileField] = zohoField;
-        }
-    });
-
-    const r = await api('zoho-save-mapping', 'POST', { module: 'Leads', mapping });
-    if (r.success) {
-        toast('Field mapping saved!', 'success');
-        closeFieldMappingModal();
-    } else {
-        toast(r.error || 'Failed to save mapping', 'error');
+        toast(r.error || 'Failed to save targets', 'error');
     }
 }
 
@@ -4801,6 +4775,21 @@ async function migrateLeads() {
         toast(r.error || 'Migration failed', 'error');
     }
 }
+async function resetAllData() {
+    const typed = await customConfirm(
+        'This permanently deletes every lead, chat message, chat channel (except #general/#deals), support ticket, and activity log for ALL users. User accounts and their My Context settings are kept. This cannot be undone.\n\nType WIPE ALL DATA to confirm.',
+        'Wipe All Test Data',
+        {input:true, placeholder:'WIPE ALL DATA', danger:true, confirmText:'Wipe Everything'}
+    );
+    if(!typed) return;
+    const r = await api('reset-all-data', 'POST', {confirm: typed});
+    if(r.success) {
+        toast(r.message || 'All test data cleared', 'success');
+        loadLeads(); loadStats();
+    } else {
+        toast(r.error || 'Reset failed', 'error');
+    }
+}
 function renderReqList(){const list=document.getElementById('req-list');if(!list)return;list.innerHTML=reqConfig.map((r,i)=>`<div class="req-list-item ${r.enabled?'':'disabled'}"><div class="req-list-info"><div class="req-list-title">${r.title}</div><div class="req-list-type">${r.type==='text'?'Free text':r.type==='multi'?'Multi select':'Single select'}${r.type==='text'?'':` · ${(r.options||[]).length} options`}</div></div><div class="toggle-switch ${r.enabled?'active':''}" onclick="toggleReq(${i})"></div><button class="action-btn" onclick="editReq(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn danger" onclick="deleteReq(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`).join('')}
 async function toggleReq(i){reqConfig[i].enabled=!reqConfig[i].enabled;await api('admin-settings','POST',{requisitions:reqConfig});renderReqList()}
 function openAddReqModal(){document.getElementById('add-req-title').textContent='Add Question';document.getElementById('edit-req-id').value='';document.getElementById('req-title-input').value='';document.getElementById('req-subtitle-input').value='';document.getElementById('req-type-input').value='single';document.getElementById('req-options-input').value='';openModal('add-req-modal')}
@@ -4808,8 +4797,13 @@ function editReq(i){const r=reqConfig[i];document.getElementById('add-req-title'
 async function deleteReq(i){const ok=await customConfirm('Delete this qualification question?','Delete Question',{danger:true,confirmText:'Delete'});if(!ok)return;reqConfig.splice(i,1);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();toast('Deleted','success')}
 function fmtAgo(iso){if(!iso)return'<span style="color:var(--text-muted)">Never</span>';const s=Math.floor((Date.now()-new Date(iso))/1000);if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m ago';return Math.floor(s/86400)+'d ago';}
 function fmtDuration(startIso,lastActiveIso){if(!startIso||!lastActiveIso)return'<span style="color:var(--text-muted)">—</span>';const s=Math.floor((new Date(lastActiveIso)-new Date(startIso))/1000);if(s<60)return'<1m';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
-function setReportRange(range){document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.range===range));loadActivityReport(range);}
+function setReportRange(range){loadActivityReport(range);}
 async function loadActivityReport(mode){
+    // Button highlight is derived from what's actually being loaded, right
+    // here, instead of being set separately by each caller — so the button
+    // and the data it reflects can never disagree with each other again.
+    const effectiveMode=mode||'month';
+    document.querySelectorAll('.report-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.range===effectiveMode));
     let qs,callsQs;
     if(mode==='custom'){
         const from=document.getElementById('report-from').value;
@@ -4819,8 +4813,8 @@ async function loadActivityReport(mode){
         qs=`activity-report&from=${from}&to=${to}`;
         callsQs=`calls-report&from=${from}&to=${to}`;
     } else {
-        qs=`activity-report&range=${mode||'week'}`;
-        callsQs=`calls-report&range=${mode||'week'}`;
+        qs=`activity-report&range=${effectiveMode}`;
+        callsQs=`calls-report&range=${effectiveMode}`;
     }
     const callsCard=document.getElementById('reports-calls-card');
     if(callsCard)callsCard.hidden=!AIRCALL_ENABLED;
@@ -4872,9 +4866,9 @@ async function loadCallsReport(baseQs){
     if(repFilter)qs+=`&rep_id=${encodeURIComponent(repFilter)}`;
     if(outcomeFilter)qs+=`&outcome=${encodeURIComponent(outcomeFilter)}`;
     const body=document.getElementById('calls-report-body');
-    body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">Loading…</td></tr>';
+    body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Loading…</td></tr>';
     const r=await api(qs);
-    if(!r.success){body.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:20px;">${r.error||'Failed to load'}</td></tr>`;return;}
+    if(!r.success){body.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px;">${r.error||'Failed to load'}</td></tr>`;return;}
     // Populate rep filter once (preserve current selection)
     const repSelect=document.getElementById('calls-rep-filter');
     if(repSelect&&repSelect.options.length<=1){
@@ -4884,27 +4878,49 @@ async function loadCallsReport(baseQs){
     const s=r.summary;
     document.getElementById('calls-summary').innerHTML=`<span><strong>${s.total}</strong> total</span><span style="color:var(--success);"><strong>${s.answered}</strong> answered</span><span style="color:var(--danger);"><strong>${s.missed}</strong> missed</span><span><strong>${s.manual}</strong> manually logged</span><span><strong>${s.with_recording}</strong> with recording</span>`;
     if(!r.calls.length){
-        body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No calls in this range</td></tr>';
+        body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">No calls in this range</td></tr>';
         return;
     }
-    body.innerHTML=r.calls.map(c=>{
+    body.innerHTML='';
+    r.calls.forEach(c=>{
         const when=new Date(c.timestamp).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
         const dur=c.duration_seconds?`${Math.floor(c.duration_seconds/60)}m ${c.duration_seconds%60}s`:'—';
         const outcomeColor=c.via==='aircall'?(c.outcome==='missed'?'var(--danger)':'var(--success)'):'var(--text-muted)';
         const outcomeLabel=c.outcome_label||(c.via==='aircall'?c.outcome:'Logged');
-        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:28px;max-width:200px;"></audio>`:'<span style="color:var(--text-muted);">—</span>';
-        return `<tr>
-            <td>${esc(c.rep_name)}</td>
+        const rec=c.recording_url?`<audio controls preload="none" src="${c.recording_url}" style="height:32px;width:280px;"></audio>`:'<span style="color:var(--text-muted);">—</span>';
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${esc(c.rep_name)}</td>
             <td><a href="javascript:void(0)" onclick="openLead('${c.lead_id}')" style="color:var(--info);">${esc(c.lead_name)}</a>${c.company?`<div style="font-size:11px;color:var(--text-muted);">${esc(c.company)}</div>`:''}</td>
             <td>${when}</td>
             <td><span style="color:${outcomeColor};font-weight:500;">${esc(outcomeLabel)}</span></td>
             <td>${dur}</td>
             <td>${rec}</td>
-            <td style="font-size:12px;color:var(--text-secondary);max-width:200px;">${esc(c.notes||'')}</td>
-        </tr>`;
-    }).join('');
+            <td style="max-width:180px;"><div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">${esc(c.notes||'')}</div></td>
+            <td></td>`;
+        if(c.call_id){
+            const delBtn=document.createElement('button');
+            delBtn.className='action-btn danger';
+            delBtn.title='Delete this call log';
+            delBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+            delBtn.addEventListener('click',()=>deleteCallLog(c.lead_id,c.call_id,c.rep_id));
+            tr.lastElementChild.appendChild(delBtn);
+        }
+        body.appendChild(tr);
+    });
 }
-async function loadUsers(){const aircallTh=document.getElementById('users-aircall-th');if(aircallTh)aircallTh.hidden=!AIRCALL_ENABLED;const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';const aircallLinked=u.aircall_user_id&&u.aircall_number_id;const aircallCell=aircallLinked?`<span style="color:var(--success);font-size:12px;cursor:pointer;font-weight:500;" title="Aircall User ${u.aircall_user_id} · Number ${u.aircall_number_id} — click to edit" onclick="linkAircallUser('${u.id}','${u.name}','${u.aircall_user_id}','${u.aircall_number_id}')">&#10003; Linked</span>`:`<button class="btn btn-xs btn-secondary" onclick="linkAircallUser('${u.id}','${u.name}','','')">Link</button>`;return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td>${AIRCALL_ENABLED?`<td>${aircallCell}</td>`:''}<td><div style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td></tr>`}).join('');}
+async function deleteCallLog(leadId,callId,repId){
+    const ok=await customConfirm('Delete this call log entry? This cannot be undone.','Delete Call Log',{danger:true,confirmText:'Delete'});
+    if(!ok)return;
+    const r=await api('delete-call-log','POST',{lead_id:leadId,call_id:callId,rep_id:repId});
+    if(r.success){
+        toast('Call log deleted','success');
+        // Re-fetch rather than just removing the row — the summary counts
+        // (total/answered/missed/manual/with recording) at the top of the
+        // table would otherwise go stale until the page was reloaded.
+        loadCallsReport();
+    }else toast(r.error||'Failed to delete call log','error');
+}
+async function loadUsers(){const showAircallCol=AIRCALL_ENABLED&&user?.is_super_admin;const aircallTh=document.getElementById('users-aircall-th');if(aircallTh)aircallTh.hidden=!showAircallCol;const r=await api('users');if(r.success)document.getElementById('users-table-body').innerHTML=r.users.map(u=>{const roleBadge=u.is_super_admin?'<span class="badge" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;">Super Admin</span>':u.is_admin?'<span class="badge badge-admin">Admin</span>':'User';const superBtns=user?.is_super_admin&&u.id!==user.id?`<button class="action-btn" title="Impersonate" onclick="impersonateUser('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M23 11l-3 3-3-3"/></svg></button><button class="action-btn danger" title="Reset leads" onclick="resetUserData('${u.id}','${u.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>`:'';const aircallLinked=u.aircall_user_id&&u.aircall_number_id;const aircallCell=aircallLinked?`<span style="color:var(--success);font-size:12px;cursor:pointer;font-weight:500;" title="Aircall User ${u.aircall_user_id} · Number ${u.aircall_number_id} — click to edit" onclick="linkAircallUser('${u.id}','${u.name}','${u.aircall_user_id}','${u.aircall_number_id}')">&#10003; Linked</span>`:`<button class="btn btn-xs btn-secondary" onclick="linkAircallUser('${u.id}','${u.name}','','')">Link</button>`;return`<tr><td>${u.name}</td><td>${u.email}</td><td>${roleBadge}</td>${showAircallCol?`<td>${aircallCell}</td>`:''}<td><div style="display:flex;gap:4px;">${superBtns}<button class="action-btn danger" onclick="deleteUser('${u.id}')" ${u.id===user.id?'disabled':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td></tr>`}).join('');}
 async function linkAircallUser(id,name,curUid,curNid){
     const uid=prompt(`Aircall User ID for ${name}\n(Aircall Dashboard → Users → open the user — the ID is in the URL):`,curUid||'');
     if(uid===null)return;
@@ -5047,7 +5063,7 @@ document.getElementById('my-settings-form').addEventListener('submit',async e=>{
 document.getElementById('admin-settings-form').addEventListener('submit',async e=>{e.preventDefault();await api('admin-settings','POST',{default_provider:document.getElementById('admin-provider').value,groq_key:document.getElementById('admin-groq-key').value,cerebras_key:document.getElementById('admin-cerebras-key').value,gemini_key:document.getElementById('admin-gemini-key').value,anthropic_key:document.getElementById('admin-anthropic-key').value});toast('Saved!','success')});
 document.querySelectorAll('.provider-card').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.provider-card').forEach(x=>x.classList.remove('selected'));c.classList.add('selected');document.getElementById('admin-provider').value=c.dataset.provider}));
 document.getElementById('add-req-form').addEventListener('submit',async e=>{e.preventDefault();const idx=document.getElementById('edit-req-id').value;const type=document.getElementById('req-type-input').value;const options=type==='text'?[]:document.getElementById('req-options-input').value.split('\n').map(o=>o.trim()).filter(o=>o);if(type!=='text'&&!options.length){toast('Add at least one option','warning');return;}const newReq={id:idx!==''?reqConfig[idx].id:'req_'+Date.now(),title:document.getElementById('req-title-input').value,subtitle:document.getElementById('req-subtitle-input').value,type,options,enabled:true};if(idx!=='')reqConfig[idx]=newReq;else reqConfig.push(newReq);await api('admin-settings','POST',{requisitions:reqConfig});renderReqList();closeModal('add-req-modal');toast('Saved!','success')});
-document.getElementById('create-user-form').addEventListener('submit',async e=>{e.preventDefault();const r=await api('create-user','POST',{name:document.getElementById('new-user-name').value,email:document.getElementById('new-user-email').value,is_admin:document.getElementById('new-user-admin').checked});if(r.success){document.getElementById('new-user-password').innerHTML=`<div class="password-display"><strong>Password:</strong> <code>${r.password}</code></div>`;document.getElementById('new-user-password').style.display='block';e.target.reset();loadUsers();toast('Created!','success')}else toast(r.error||'Failed','error')});
+document.getElementById('create-user-form').addEventListener('submit',async e=>{e.preventDefault();const customPw=document.getElementById('new-user-password-input').value;if(customPw&&customPw.length<8){toast('Password must be at least 8 characters','error');return;}const r=await api('create-user','POST',{name:document.getElementById('new-user-name').value,email:document.getElementById('new-user-email').value,password:customPw,is_admin:document.getElementById('new-user-admin').checked});if(r.success){document.getElementById('new-user-password').innerHTML=`<div class="password-display"><strong>Password:</strong> <code>${r.password}</code></div>`;document.getElementById('new-user-password').style.display='block';e.target.reset();loadUsers();toast('Created!','success')}else toast(r.error||'Failed','error')});
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&m.id!=='confirm-modal')m.classList.remove('active')}));
 document.querySelectorAll('#ec-type-tabs .email-type-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('#ec-type-tabs .email-type-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active')}));
 }
@@ -5065,7 +5081,7 @@ const SYSTEM_FIELDS = [
     {value:'linkedin',label:'LinkedIn URL'},
     {value:'company_size',label:'Company Size'},
     {value:'notes',label:'Notes'},
-    {value:'zoho_id',label:'Zoho Record ID'},
+    {value:'zoho_id',label:'External Record ID'},
 ];
 
 // Auto-guess system field from a raw column header
@@ -5096,7 +5112,7 @@ function guessField(col) {
         companysize:       'company_size', employees: 'company_size', headcount: 'company_size', size: 'company_size',
         // Notes — map headline & skills into notes
         notes:             'notes', comments: 'notes', description: 'notes', headline: 'notes', skills: 'notes',
-        // Zoho
+        // External record ID
         zohoid:            'zoho_id', recordid: 'zoho_id',
     };
     return map[c] || '';
@@ -5254,6 +5270,15 @@ function esc(str) {
     d.textContent = str == null ? '' : str;
     return d.innerHTML;
 }
+// Server timestamps are UTC ISO strings — slicing the first 10 characters
+// gives the UTC date, not the viewer's own local date (wrong the moment a
+// UTC day boundary and the viewer's day boundary don't line up, which is
+// most of the day for anyone not near UTC+0). Parse properly instead.
+function localDateOf(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    return isNaN(d) ? '' : d.toLocaleDateString('en-CA');
+}
 function showPage(p){
     updatePageLanguage(p);
     document.querySelectorAll('.page-section').forEach(x=>x.classList.remove('active'));
@@ -5264,7 +5289,7 @@ function showPage(p){
     if(p==='dashboard')loadTodayOperations();
     if(p==='leads')loadStats();
     if(p==='command-center'){loadCommandCenter();startCcLivePoll();}else{stopCcLivePoll();}
-    if(p==='reports')loadActivityReport('week');
+    if(p==='reports')loadActivityReport('month');
     if(p==='workbench')loadWorkbench();
     if(p==='commitments')loadCommitments();
     if(p==='users'){loadUsers();loadUserSessions();}
@@ -5294,7 +5319,7 @@ async function loadUserSessions(){
         const roleBadge=s.user_role==='super_admin'?'Super Admin':(s.user_role==='admin'?'Admin':'Rep');
         const detailId=`sess-detail-${s.user_id.replace(/[^a-z0-9]/gi,'_')}`;
         // Compute active today in browser local timezone
-        const todayMins = (s.sessions||[]).filter(x => x.start && x.start.slice(0,10) === localToday)
+        const todayMins = (s.sessions||[]).filter(x => localDateOf(x.start) === localToday)
             .reduce((sum, x) => sum + (x.duration_mins||0), 0);
         const rows=(s.sessions||[]).map(x=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;"><span>${_fmtDT(x.start)} → ${_fmtDT(x.end)}</span><span style="color:var(--text-muted);">${_fmtMins(x.duration_mins)} · ${(x.pages||[]).join(', ')||'—'}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">No sessions in range.</div>';
         return `<tr>
@@ -5598,56 +5623,70 @@ function jumpToMessage(msgId) {
     }
 }
 
+let _fetchChatMessagesInFlight = false;
 async function fetchChatMessages(scrollToBottom) {
-    const threadAtCall = chatState.thread;
-    const peekParam = chatState.peeking ? '&peek=1' : '';
-    const r = await api(`chat-messages&thread=${threadAtCall}${peekParam}`);
-    if (!r.success) return;
-    if (chatState.thread !== threadAtCall) return;
+    // The Pusher push and the polling-fallback timer can both be active at
+    // once (rtConnected is read once when a thread opens, but the actual
+    // Pusher connection finishes async — if it lands right after that check,
+    // both delivery paths end up live for the same thread). Without this
+    // guard, two overlapping calls can each pass the "is this new?" check
+    // below before either has updated chatState, rendering the same message
+    // twice.
+    if (_fetchChatMessagesInFlight) return;
+    _fetchChatMessagesInFlight = true;
+    try {
+        const threadAtCall = chatState.thread;
+        const peekParam = chatState.peeking ? '&peek=1' : '';
+        const r = await api(`chat-messages&thread=${threadAtCall}${peekParam}`);
+        if (!r.success) return;
+        if (chatState.thread !== threadAtCall) return;
 
-    const container = document.getElementById('chat-messages');
-    const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+        const container = document.getElementById('chat-messages');
+        const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
 
-    // Sort by sent_at ascending so oldest is always first
-    const sorted = (r.messages || []).slice().sort((a, b) =>
-        new Date(a.sent_at) - new Date(b.sent_at)
-    );
+        // Sort by sent_at ascending so oldest is always first
+        const sorted = (r.messages || []).slice().sort((a, b) =>
+            new Date(a.sent_at) - new Date(b.sent_at)
+        );
 
-    if (!sorted.length) {
-        if (scrollToBottom) {
-            container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">No messages yet. Say hello! 👋</div>';
-            chatState.allMessages = [];
+        if (!sorted.length) {
+            if (scrollToBottom) {
+                container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">No messages yet. Say hello! 👋</div>';
+                chatState.allMessages = [];
+            }
+            return;
         }
-        return;
+
+        const seenIds = new Set(chatState.allMessages.map(m => m.id));
+        const hasNew = sorted.some(m => !seenIds.has(m.id));
+        if (!hasNew) return;
+
+        // Rebuild from scratch with correct order
+        const emptyEl = container.querySelector('div[style*="text-align:center"]');
+        if (emptyEl) emptyEl.remove();
+
+        chatState.allMessages = sorted;
+        container.innerHTML = '';
+        const shouldStickToBottom = scrollToBottom || wasAtBottom;
+        sorted.forEach((m, i) => {
+            const prev = sorted[i - 1];
+            const grouped = prev && prev.user_id === m.user_id &&
+                (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
+            const el = buildMessageEl(m, grouped);
+            container.appendChild(el);
+            // Images load async and grow the container after we scroll — re-stick to bottom once loaded
+            if (shouldStickToBottom) {
+                el.querySelectorAll('img').forEach(img => {
+                    img.addEventListener('load', () => { container.scrollTop = container.scrollHeight; }, { once: true });
+                });
+            }
+        });
+
+        if (shouldStickToBottom) container.scrollTop = container.scrollHeight;
+        updateChatUnreadBadge();
+    } finally {
+        _fetchChatMessagesInFlight = false;
     }
-
-    const seenIds = new Set(chatState.allMessages.map(m => m.id));
-    const hasNew = sorted.some(m => !seenIds.has(m.id));
-    if (!hasNew) return;
-
-    // Rebuild from scratch with correct order
-    const emptyEl = container.querySelector('div[style*="text-align:center"]');
-    if (emptyEl) emptyEl.remove();
-
-    chatState.allMessages = sorted;
-    container.innerHTML = '';
-    const shouldStickToBottom = scrollToBottom || wasAtBottom;
-    sorted.forEach((m, i) => {
-        const prev = sorted[i - 1];
-        const grouped = prev && prev.user_id === m.user_id &&
-            (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
-        const el = buildMessageEl(m, grouped);
-        container.appendChild(el);
-        // Images load async and grow the container after we scroll — re-stick to bottom once loaded
-        if (shouldStickToBottom) {
-            el.querySelectorAll('img').forEach(img => {
-                img.addEventListener('load', () => { container.scrollTop = container.scrollHeight; }, { once: true });
-            });
-        }
-    });
-
-    if (shouldStickToBottom) container.scrollTop = container.scrollHeight;
-    updateChatUnreadBadge();
 }
 
 const COMPOSE_EMOJIS = ['😀','😁','😂','🤣','😊','😍','😘','😎','🤔','😅','😉','🙂','🙃','😇','🥳','😏','😬','😴','🤝','🙏','👍','👎','👏','💪','🙌','👌','✌️','🤞','🔥','✅','❌','⚡','🎉','🎯','💯','⭐','❤️','🧡','💛','💚','💙','💜','📌','📎','📞','📧','💼','🏆','🚀','💡','⏰','📅','✏️','💬'];
@@ -5754,10 +5793,19 @@ async function sendChatMessage() {
     document.getElementById('mention-picker').innerHTML = '';
     const r = await api('chat-messages', 'POST', {thread: chatState.thread, text});
     if (r.success) {
+        const m = r.message;
+        // The server now responds as soon as the message is saved and pushes
+        // the Pusher event afterward in the background — that push can reach
+        // this same browser (it's subscribed to its own thread) and trigger
+        // fetchChatMessages() before this await resolves. If that already
+        // rendered this message, appending it again here would duplicate it.
+        if (chatState.allMessages.some(existing => existing.id === m.id)) {
+            updateChatUnreadBadge();
+            return;
+        }
         const container = document.getElementById('chat-messages');
         const emptyEl = container.querySelector('div[style*="text-align:center"]');
         if (emptyEl) emptyEl.remove();
-        const m = r.message;
         const prev = chatState.allMessages[chatState.allMessages.length - 1];
         const grouped = prev && prev.user_id === m.user_id &&
             (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
@@ -5831,10 +5879,17 @@ async function sendStagedFile(caption) {
         const r = await res.json();
         if (r.success) {
             cancelStagedFile();
+            const m = r.message;
+            // Same de-dup guard as sendChatMessage() — a background refresh
+            // (notification poll, Pusher push) can render this message before
+            // this await resolves.
+            if (chatState.allMessages.some(existing => existing.id === m.id)) {
+                toast('File sent', 'success');
+                return true;
+            }
             const container = document.getElementById('chat-messages');
             const emptyEl = container.querySelector('div[style*="text-align:center"]');
             if (emptyEl) emptyEl.remove();
-            const m = r.message;
             const prev = chatState.allMessages[chatState.allMessages.length - 1];
             const grouped = prev && prev.user_id === m.user_id &&
                 (new Date(m.sent_at) - new Date(prev.sent_at)) < 5 * 60 * 1000;
@@ -5964,7 +6019,7 @@ async function openEditChannel(channelId) {
     } else {
         delBtn.onclick = () => deleteChannel(channelId, ch.name);
     }
-    delBtn.style.display = isAdminUser ? '' : 'none';
+    delBtn.style.display = (isAdminUser && channelId !== 'channel_general') ? '' : 'none';
     openModal('create-channel-modal');
 }
 
@@ -6099,6 +6154,15 @@ async function initRealtime(){
             dsupRefresh();
         }
     });
+
+    // Live "who's on a call" (Aircall) — admin/super-admin only, matches
+    // aircall-status's own access check.
+    if(AIRCALL_ENABLED && (user.is_admin||user.is_super_admin)){
+        const rtAdminChannel=rtPusher.subscribe('private-admins');
+        rtAdminChannel.bind('aircall-oncall-changed',()=>{
+            if(document.getElementById('page-command-center')?.classList.contains('active')) loadCommandCenter();
+        });
+    }
 }
 
 function rtSubscribeThread(threadId){

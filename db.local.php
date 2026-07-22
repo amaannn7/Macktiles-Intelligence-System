@@ -92,7 +92,29 @@ function dbDeleteUserData(string $userId): void {
     _writeJson('leads', $all);
     $store = _readJson('kv_store');
     unset($store['settings'][$userId]);
+    unset($store['usermeta'][$userId]);
+    unset($store['notif_dismissed_at'][$userId]);
     _writeJson('kv_store', $store);
+    $notifs = _readJson('notifications');
+    $notifs = array_values(array_filter($notifs, fn($n) => ($n['_user_id'] ?? '') !== $userId));
+    _writeJson('notifications', $notifs);
+}
+
+// Moves a single lead to a new owner without touching any of the old or new
+// owner's other leads — mirrors dbReassignLead() in db.php (Postgres mode).
+function dbReassignLead(string $leadId, string $newOwnerId): bool {
+    $all = _readJson('leads');
+    $found = false;
+    foreach ($all as &$row) {
+        if (($row['id'] ?? null) === $leadId) {
+            $row['owner_id'] = $newOwnerId;
+            $found = true;
+            break;
+        }
+    }
+    unset($row);
+    if ($found) _writeJson('leads', $all);
+    return $found;
 }
 
 // ── KV store ─────────────────────────────────────────────────────────────────
@@ -113,6 +135,10 @@ function dbLoadMessages(string $threadId): array {
     return array_values(array_filter($all, fn($m) => ($m['thread_id'] ?? '') === $threadId));
 }
 
+// Full-replace of a thread's message set — kept for any bulk-rewrite caller,
+// but NOT safe for concurrent senders (see the matching warning in db.php).
+// Every single-message operation must use dbInsertMessage()/dbUpdateMessage()/
+// dbDeleteMessage() instead.
 function dbSaveMessages(string $threadId, array $messages): void {
     $all = _readJson('chat_messages');
     $all = array_values(array_filter($all, fn($m) => ($m['thread_id'] ?? '') !== $threadId));
@@ -120,6 +146,33 @@ function dbSaveMessages(string $threadId, array $messages): void {
         $m['thread_id'] = $threadId;
         $all[] = $m;
     }
+    _writeJson('chat_messages', $all);
+}
+
+function dbInsertMessage(string $threadId, array $msg): void {
+    $all = _readJson('chat_messages');
+    $msg['thread_id'] = $threadId;
+    $found = false;
+    foreach ($all as &$m) {
+        if (($m['id'] ?? null) === ($msg['id'] ?? null)) { $m = $msg; $found = true; break; }
+    }
+    unset($m);
+    if (!$found) $all[] = $msg;
+    _writeJson('chat_messages', $all);
+}
+
+function dbUpdateMessage(string $threadId, string $messageId, array $msg): void {
+    $all = _readJson('chat_messages');
+    foreach ($all as &$m) {
+        if (($m['id'] ?? null) === $messageId && ($m['thread_id'] ?? '') === $threadId) { $msg['thread_id'] = $threadId; $m = $msg; break; }
+    }
+    unset($m);
+    _writeJson('chat_messages', $all);
+}
+
+function dbDeleteMessage(string $threadId, string $messageId): void {
+    $all = _readJson('chat_messages');
+    $all = array_values(array_filter($all, fn($m) => !(($m['id'] ?? null) === $messageId && ($m['thread_id'] ?? '') === $threadId)));
     _writeJson('chat_messages', $all);
 }
 
@@ -133,6 +186,60 @@ function dbSetLastRead(string $userId, string $threadId, string $lastRead): void
     $store = _readJson('chat_last_read');
     $store[$userId][$threadId] = $lastRead;
     _writeJson('chat_last_read', $store);
+}
+
+// ── Notifications (own file-level store, matching db.php's own table) ───────
+function dbLoadNotifications(string $userId, int $limit = 50): array {
+    $all = _readJson('notifications');
+    $mine = array_values(array_filter($all, fn($n) => ($n['_user_id'] ?? '') === $userId));
+    usort($mine, fn($a, $b) => strtotime($b['created_at'] ?? '0') <=> strtotime($a['created_at'] ?? '0'));
+    return array_map(fn($n) => array_diff_key($n, ['_user_id' => true]), array_slice($mine, 0, $limit));
+}
+
+function dbInsertNotification(string $userId, array $notif): void {
+    $all = _readJson('notifications');
+    foreach ($all as $n) { if (($n['id'] ?? null) === ($notif['id'] ?? null)) return; }
+    $notif['_user_id'] = $userId;
+    $all[] = $notif;
+    _writeJson('notifications', $all);
+}
+
+function dbNotificationKeyExists(string $userId, string $notifKey): bool {
+    if ($notifKey === '') return false;
+    foreach (_readJson('notifications') as $n) {
+        if (($n['_user_id'] ?? '') === $userId && ($n['notif_key'] ?? '') === $notifKey) return true;
+    }
+    return false;
+}
+
+function dbMarkNotificationRead(string $userId, string $notifId): void {
+    $all = _readJson('notifications');
+    foreach ($all as &$n) {
+        if (($n['_user_id'] ?? '') === $userId && ($n['id'] ?? null) === $notifId) { $n['read'] = true; break; }
+    }
+    unset($n);
+    _writeJson('notifications', $all);
+}
+
+function dbMarkAllNotificationsRead(string $userId): void {
+    $all = _readJson('notifications');
+    foreach ($all as &$n) {
+        if (($n['_user_id'] ?? '') === $userId) $n['read'] = true;
+    }
+    unset($n);
+    _writeJson('notifications', $all);
+}
+
+function dbDeleteNotification(string $userId, string $notifId): void {
+    $all = _readJson('notifications');
+    $all = array_values(array_filter($all, fn($n) => !(($n['_user_id'] ?? '') === $userId && ($n['id'] ?? null) === $notifId)));
+    _writeJson('notifications', $all);
+}
+
+function dbDeleteAllNotifications(string $userId): void {
+    $all = _readJson('notifications');
+    $all = array_values(array_filter($all, fn($n) => ($n['_user_id'] ?? '') !== $userId));
+    _writeJson('notifications', $all);
 }
 
 // ── Activity pings (user session analytics) ──────────────────────────────────
