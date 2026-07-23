@@ -5404,12 +5404,21 @@ async function loadChatDms() {
 async function refreshChatUnreadBadges() {
     const requestedFor = chatState.thread;
     const requestedPeek = !!chatState.peeking;
+    // chatState.thread keeps pointing at the last-opened thread even after
+    // navigating away from Team Chat entirely (it's only cleared by
+    // explicitly closing the conversation), so it alone can't mean "the user
+    // is currently looking at this thread." Without also checking the chat
+    // page is actually visible, new messages arriving in whatever thread you
+    // LAST had open — even from a completely different page — always get
+    // their badge force-suppressed below, while every other thread updates
+    // normally.
+    const chatPageActive = document.getElementById('page-chat')?.classList.contains('active');
     const r = await api('chat-unread');
     if (!r.success) return;
     // Discard stale responses: if the open thread changed (or got marked read)
     // while this request was in flight, don't let old counts re-add a badge
     // the user already cleared by opening/reading that thread.
-    const staleFor = (requestedFor === chatState.thread && !requestedPeek) ? requestedFor : null;
+    const staleFor = (chatPageActive && requestedFor === chatState.thread && !requestedPeek) ? requestedFor : null;
     const counts = r.counts || {};
     // Update channel badges in-place
     document.querySelectorAll('#chat-channel-list .chat-nav-item').forEach(el => {
