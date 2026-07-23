@@ -3267,6 +3267,13 @@ case 'enrich-lead':
             }
         }
     }
+    // Reject BEFORE the LLM call, not just at save time — otherwise a caller
+    // with no real access to this lead could still get real (billed) research
+    // content back in the response, even though it would never actually save
+    // anywhere. The client always sends a real lead's id, so failing to find
+    // it among the caller's own or (if admin) any other user's leads means
+    // they have no business researching it.
+    if (!$ownsIt) respond(['success' => false, 'error' => 'Lead not found or not accessible'], 403);
 
     $prompt = buildResearchPrompt($lead);
     $res = callLLM($provider, $apiKey, $prompt, $admin);
