@@ -1795,7 +1795,7 @@ function pushChatNotification(string $userId, array $notif): void {
 }
 
 // Notify @mentioned users in a message (matches full name or first name, case-insensitive).
-function notifyChatMentions(array $sender, string $text, string $threadId, string $threadLabel): void {
+function notifyChatMentions(array $sender, string $text, string $threadId, string $threadLabel, string $sentAt): void {
     if (strpos($text, '@') === false) return;
     $senderName = $sender['name'] ?? $sender['email'] ?? 'Someone';
     foreach (getUsers() as $u) {
@@ -1814,7 +1814,10 @@ function notifyChatMentions(array $sender, string $text, string $threadId, strin
             'title'      => "{$senderName} mentioned you",
             'body'       => "In {$threadLabel}: " . substr($text, 0, 80),
             'thread_id'  => $threadId,
-            'created_at' => date('c'),
+            // The message's own timestamp — see the DM/channel notifications
+            // in the chat-messages POST handler for why this can't be a fresh
+            // date('c') call.
+            'created_at' => $sentAt,
             'read'       => false,
         ]);
     }
@@ -3924,7 +3927,18 @@ case 'chat-messages':
         $messages = getChannelMessages($safe);
         $since = $_GET['since'] ?? null;
         if ($since) $messages = array_values(array_filter($messages, fn($m) => ($m['sent_at'] ?? '') > $since));
-        if (empty($_GET['peek'])) dbSetLastRead($user['id'], $safe, date('c'));
+        // Stamp last-read using the newest message actually served in THIS
+        // response, not wall-clock now(). Using now() races a concurrent
+        // sender: if their INSERT and this GET overlap, now() can land after
+        // the new message's created_at even though it was never actually
+        // returned here, which silently suppresses that message's push
+        // notification (pushChatNotification's "already read" check) while
+        // the message itself still shows up fine on the next fetch — exactly
+        // the "message arrives, notification sometimes doesn't" symptom.
+        if (empty($_GET['peek']) && !empty($messages)) {
+            $latestSentAt = max(array_map(fn($m) => $m['sent_at'] ?? '', $messages));
+            dbSetLastRead($user['id'], $safe, $latestSentAt);
+        }
         respond(['success' => true, 'messages' => array_slice($messages, -100)]);
     }
 
@@ -3966,7 +3980,14 @@ case 'chat-messages':
                         'title'      => "DM from {$senderName}",
                         'body'       => substr($text, 0, 100),
                         'thread_id'  => $threadId,
-                        'created_at' => date('c'),
+                        // The message's own timestamp, not a fresh date('c') —
+                        // pushChatNotification()'s "already read" check compares
+                        // this against dbGetLastRead(); a separately-generated
+                        // timestamp here can land a hair after lastRead gets
+                        // stamped by a concurrent poll for THIS message, silently
+                        // swallowing the notification even though the message
+                        // itself was correctly delivered.
+                        'created_at' => $msg['sent_at'],
                         'read'       => false,
                     ]);
                     break;
@@ -3996,12 +4017,14 @@ case 'chat-messages':
                     'title'      => "{$senderName} in {$threadLabel}",
                     'body'       => substr($text, 0, 100),
                     'thread_id'  => $threadId,
-                    'created_at' => date('c'),
+                    // See the DM notification above for why this uses the
+                    // message's own timestamp rather than a fresh date('c').
+                    'created_at' => $msg['sent_at'],
                     'read'       => false,
                 ]);
             }
             // @mentions only make sense in channels, not DMs
-            notifyChatMentions($user, $text, $threadId, $threadLabel);
+            notifyChatMentions($user, $text, $threadId, $threadLabel, $msg['sent_at']);
         }
         exit; // response already sent above via respondThenContinue()
     }
@@ -4167,7 +4190,13 @@ case 'chat-upload':
         'user_id'   => $user['id'],
         'user_name' => $user['name'] ?? $user['email'],
         'text'      => $caption !== '' ? htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') : '',
-        'file'      => ['name' => $file['name'], 'path' => 'data/uploads/' . $filename, 'type' => $file['type'], 'size' => $file['size'], 'is_image' => $isImage],
+        // Root-relative (leading slash), not 'data/uploads/...' — a bare
+        // relative path resolves against the CURRENT PAGE's URL, so it can
+        // point somewhere different depending on how the viewer navigated to
+        // the app (e.g. a trailing path segment), producing a 404 for one
+        // person and a working image for another even though it's the same
+        // file on the same domain.
+        'file'      => ['name' => $file['name'], 'path' => '/data/uploads/' . $filename, 'type' => $file['type'], 'size' => $file['size'], 'is_image' => $isImage],
         'sent_at'   => date('c'),
         'reactions' => []
     ];
@@ -4200,7 +4229,10 @@ case 'chat-upload':
                     'title'      => "DM from {$senderName}",
                     'body'       => $notifBody,
                     'thread_id'  => $threadId,
-                    'created_at' => date('c'),
+                    // The message's own timestamp — see chat-messages POST for
+                    // why a fresh date('c') here can race dbSetLastRead() and
+                    // silently suppress the notification.
+                    'created_at' => $msg['sent_at'],
                     'read'       => false,
                 ]);
                 break;
@@ -4223,7 +4255,7 @@ case 'chat-upload':
                 'title'      => "{$senderName} in {$threadLabel}",
                 'body'       => $notifBody,
                 'thread_id'  => $threadId,
-                'created_at' => date('c'),
+                'created_at' => $msg['sent_at'],
                 'read'       => false,
             ]);
         }
@@ -5993,7 +6025,7 @@ case 'ticket-reply':
     unset($target);
     saveTicketsStore($store);
     // Best-effort: push this reply onward to the Levata hub so it sees the conversation.
-    forwardReplyToHub($ticketCopy, $reply);
+    sendReplyToHub($ticketCopy, $reply);
     respond(['success' => true]);
     break;
 

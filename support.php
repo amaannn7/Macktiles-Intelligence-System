@@ -152,20 +152,33 @@ function forwardTicketToHub($ticket) {
     return trim($decoded['id'] ?? '') ?: null;
 }
 
-/** Forward a reply (posted here) onward to the hub, so the hub sees the conversation too. */
-function forwardReplyToHub($ticket, $reply) {
+/**
+ * Push a client (Macktiles-side) reply UP to the hub, so the hub sees the
+ * conversation too. The hub finds its own copy of the ticket by matching this
+ * spoke's ticket id against the 'remote_id' it stored when the ticket was
+ * first forwarded (forwardTicketToHub()) — no extra id bookkeeping needed here.
+ *
+ * Posts to the hub's 'ingest-client-reply' endpoint (NOT 'ingest-reply', which
+ * is the opposite direction — hub-to-spoke, handled by ingestReplyFromHub()
+ * below). Derived from the configured ticket_hub_url the same way
+ * forwardTicketToHub() already does, so there's nothing extra to configure.
+ */
+function sendReplyToHub($ticket, $reply) {
     $admin = getAdmin();
     $hubUrl = trim($admin['ticket_hub_url'] ?? '');
     $secret = trim($admin['ticket_hub_secret'] ?? '');
     if ($hubUrl === '' || $secret === '') return false;
-    $remoteId = trim($ticket['hub_ticket_id'] ?? '');
-    if ($remoteId === '') return false; // hub hasn't acked this ticket yet
+    $localId = trim($ticket['id'] ?? '');
+    if ($localId === '') return false;
 
-    $replyUrl = str_replace('action=ingest-ticket', 'action=ingest-reply', $hubUrl);
+    $replyUrl = str_replace('action=ingest-ticket', 'action=ingest-client-reply', $hubUrl);
     $payload = [
         'secret' => $secret,
-        'remote_id' => $remoteId,
+        'remote_id' => $localId,
         'reply' => [
+            // Lets the hub recognise a redelivery (timeout retry) and skip it
+            // instead of appending the same message twice.
+            'source_reply_id' => $reply['id'] ?? '',
             'author_name' => $reply['author_name'] ?? 'Macktiles',
             'is_staff' => false,
             'message' => $reply['message'] ?? '',
@@ -196,19 +209,38 @@ function ingestReplyFromHub($localTicketId, $reply) {
     $message = trim($reply['message'] ?? '');
     if ($localTicketId === '' || $message === '') return false;
 
+    $sourceId = trim($reply['source_reply_id'] ?? '');
+    $createdAt = trim($reply['created_at'] ?? '');
+    $authorName = trim($reply['author_name'] ?? '') ?: 'Levata Support';
+
     $store = getTicketsStore();
     $found = false;
     $ticketCopy = null;
     foreach ($store['tickets'] as &$ticket) {
         if (($ticket['id'] ?? '') === $localTicketId) {
             if (!isset($ticket['replies']) || !is_array($ticket['replies'])) $ticket['replies'] = [];
+
+            // The hub retries on timeout, so the SAME reply can arrive more than
+            // once. Match on the hub's reply id where available, else on
+            // content+timestamp+author for older payloads. Return true (not
+            // false) so the hub doesn't treat this as a failure and retry forever.
+            foreach ($ticket['replies'] as $existing) {
+                $sameSource = $sourceId !== '' && ($existing['source_reply_id'] ?? '') === $sourceId;
+                $sameContent = $sourceId === ''
+                    && ($existing['message'] ?? '') === $message
+                    && ($existing['created_at'] ?? '') === $createdAt
+                    && ($existing['author_name'] ?? '') === $authorName;
+                if ($sameSource || $sameContent) return true;
+            }
+
             $ticket['replies'][] = [
                 'id' => 'rep_' . bin2hex(random_bytes(6)),
+                'source_reply_id' => $sourceId,
                 'author_id' => '',
-                'author_name' => trim($reply['author_name'] ?? '') ?: 'Levata Support',
+                'author_name' => $authorName,
                 'is_staff' => true,
                 'message' => $message,
-                'created_at' => trim($reply['created_at'] ?? '') ?: date('c'),
+                'created_at' => $createdAt ?: date('c'),
             ];
             $ticket['status'] = 'in_progress';
             $ticket['updated_at'] = date('c');
