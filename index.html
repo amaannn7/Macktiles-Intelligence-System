@@ -6153,6 +6153,15 @@ async function initRealtime(){
         if(notif && notif.type==='ticket_reply' && document.getElementById('page-dev-support')?.classList.contains('active')){
             dsupRefresh();
         }
+        // Chat/mention/upload notifications also mean the chat navbar badge and
+        // in-chat unread counts are stale. Previously these only refreshed via a
+        // 15s poll (and only while NOT viewing chat) — this makes them update
+        // instantly, the same way the bell already does, instead of lagging up
+        // to 15 seconds behind on every other page.
+        if(notif && ['chat_dm','chat_message','mention'].includes(notif.type)){
+            updateChatUnreadBadge();
+            if(document.getElementById('page-chat')?.classList.contains('active')) refreshChatUnreadBadges();
+        }
     });
 
     // Live "who's on a call" (Aircall) — admin/super-admin only, matches
