@@ -6175,7 +6175,15 @@ function callGroq($apiKey, $prompt) {
 }
 
 function callCerebras($apiKey, $prompt) {
-    // OpenAI-compatible chat/completions API, same response shape as Groq.
+    // OpenAI-compatible chat/completions API, same response shape as Groq —
+    // except gpt-oss-120b is a reasoning model that spends part of its token
+    // budget on an internal "reasoning" field before ever writing to
+    // "content" (confirmed empirically: a low max_tokens cut it off
+    // mid-reasoning with finish_reason "length" and an EMPTY content field,
+    // which read as a generic API error with no indication why). Research
+    // responses are large structured JSON (1500+ tokens of real content), so
+    // the budget needs real headroom on top of that reasoning overhead —
+    // 2048 was cutting it close.
     $ch = curl_init('https://api.cerebras.ai/v1/chat/completions');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -6183,7 +6191,7 @@ function callCerebras($apiKey, $prompt) {
         CURLOPT_POSTFIELDS => json_encode([
             'model' => 'gpt-oss-120b',
             'messages' => [['role' => 'user', 'content' => $prompt]],
-            'max_tokens' => 2048,
+            'max_tokens' => 4096,
             'temperature' => 0.7
         ]),
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey],
@@ -6195,9 +6203,15 @@ function callCerebras($apiKey, $prompt) {
     curl_close($ch);
     if ($error) return ['success' => false, 'error' => $error, 'status' => 0];
     $r = json_decode($response, true);
-    return isset($r['choices'][0]['message']['content'])
-        ? ['success' => true, 'content' => $r['choices'][0]['message']['content']]
-        : ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
+    if (isset($r['choices'][0]['message']['content']) && $r['choices'][0]['message']['content'] !== '') {
+        return ['success' => true, 'content' => $r['choices'][0]['message']['content']];
+    }
+    // Cut off mid-reasoning before any content was written — distinguish
+    // this from a real API error so it's actually diagnosable next time.
+    if (($r['choices'][0]['finish_reason'] ?? '') === 'length') {
+        return ['success' => false, 'error' => 'Cerebras ran out of tokens before producing a response (reasoning overhead) — increase max_tokens', 'status' => $status];
+    }
+    return ['success' => false, 'error' => $r['error']['message'] ?? 'API error', 'status' => $status];
 }
 
 function callGemini($apiKey, $prompt) {
