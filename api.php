@@ -2182,8 +2182,25 @@ case 'update-user':
             // Aircall linking — super-admin only, same tier as the Aircall
             // connection settings (checked here too, not just hidden in the UI).
             if (isset($input['aircall_user_id']) || isset($input['aircall_number_id'])) requireSuperAdmin();
-            if (isset($input['aircall_user_id'])) $u['aircall_user_id'] = trim((string)$input['aircall_user_id']);
-            if (isset($input['aircall_number_id'])) $u['aircall_number_id'] = trim((string)$input['aircall_number_id']);
+            $newAircallUserId = isset($input['aircall_user_id']) ? trim((string)$input['aircall_user_id']) : null;
+            $newAircallNumberId = isset($input['aircall_number_id']) ? trim((string)$input['aircall_number_id']) : null;
+            // Only validate against Aircall's API when actually LINKING (both
+            // ids non-empty) — unlinking (empty strings) has nothing to check,
+            // and previously any typed value was accepted and saved as
+            // "Linked" with no confirmation it was a real Aircall id, only
+            // surfacing as a silent failure later when a call came in.
+            if ($newAircallUserId !== null && $newAircallNumberId !== null && $newAircallUserId !== '' && $newAircallNumberId !== '') {
+                $userCheck = aircallRequest('GET', '/users/' . rawurlencode($newAircallUserId));
+                if (!$userCheck['ok']) {
+                    respond(['success' => false, 'error' => 'Could not verify Aircall User ID: ' . ($userCheck['error'] ?: 'not found in Aircall')], 400);
+                }
+                $numberCheck = aircallRequest('GET', '/numbers/' . rawurlencode($newAircallNumberId));
+                if (!$numberCheck['ok']) {
+                    respond(['success' => false, 'error' => 'Could not verify Aircall Number ID: ' . ($numberCheck['error'] ?: 'not found in Aircall')], 400);
+                }
+            }
+            if ($newAircallUserId !== null) $u['aircall_user_id'] = $newAircallUserId;
+            if ($newAircallNumberId !== null) $u['aircall_number_id'] = $newAircallNumberId;
             if (!empty($input['reset_password'])) {
                 $customPassword = trim((string)($input['password'] ?? ''));
                 if ($customPassword !== '' && strlen($customPassword) < 8) {
