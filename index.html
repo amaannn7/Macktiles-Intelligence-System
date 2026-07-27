@@ -6238,7 +6238,6 @@ const DSUP_CATS={
 };
 const DSUP_CAT=Object.fromEntries([...DSUP_CATS.support,...DSUP_CATS.feedback]);
 window.loadDevSupport=async function(){
-    if(!user?.is_super_admin)return;
     const list=document.getElementById('dsup-ticket-list');
     list.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div>';
     await dsupRefresh();
