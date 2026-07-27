@@ -27,3 +27,14 @@
     Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
+
+# index.html ships the whole SPA (all HTML/CSS/JS) and gets redeployed
+# frequently — without an explicit no-cache directive here, browsers are
+# free to keep serving a stale cached copy indefinitely on repeat visits,
+# so a fix can be live on the server yet invisible to a user whose browser
+# never re-fetches the file. Force a revalidation on every load instead.
+<IfModule mod_headers.c>
+    <FilesMatch "^index\.html$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
