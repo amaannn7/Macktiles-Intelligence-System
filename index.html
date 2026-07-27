@@ -6253,7 +6253,15 @@ function dsupStopPolling(){
 // loading spinner, and never clobbers a reply the user is mid-typing.
 async function dsupRefresh(){
     const r=await api('tickets');
-    if(!r.success)return;
+    if(!r.success){
+        // Never leave the initial "Loading..." text stuck forever — show
+        // what actually happened instead of silently doing nothing (this bit
+        // a real user: the request itself was fine, but a failure here used
+        // to look identical to a page that never finished loading).
+        const list=document.getElementById('dsup-ticket-list');
+        if(list)list.innerHTML=`<div style="text-align:center;padding:30px 16px;color:var(--danger);font-size:13px;">${esc(r.error||'Could not load tickets.')}</div>`;
+        return;
+    }
     _dsupTickets=r.tickets||[];
     dsupRenderSummary(r.summary||{});
     dsupRenderList();
