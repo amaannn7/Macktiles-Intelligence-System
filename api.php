@@ -5945,12 +5945,17 @@ case 'aircall-webhook':
     respond(['success' => true]);
     break;
 
-// ===== Feedback & Support (feedback/support channel to Levata; super-admin-only for now, see support.php) =====
+// ===== Feedback & Support (feedback/support channel to Levata; open to all
+// authenticated users — a rep sees and manages only tickets they created,
+// admins/super-admins see every ticket. See support.php. =====
 case 'tickets':
     if ($method !== 'GET') break;
-    requireSuperAdmin();
+    $u = requireAuth();
     $store = getTicketsStore();
     $tickets = $store['tickets'];
+    if (empty($u['is_admin']) && empty($u['is_super_admin'])) {
+        $tickets = array_values(array_filter($tickets, fn($t) => ($t['created_by'] ?? '') === $u['id']));
+    }
     usort($tickets, function ($a, $b) { return strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''); });
     respond([
         'success' => true,
@@ -5961,15 +5966,19 @@ case 'tickets':
 
 case 'save-ticket':
     if ($method !== 'POST') break;
-    $u = requireSuperAdmin();
+    $u = requireAuth();
     $store = getTicketsStore();
     $now = date('c');
     $id = trim($input['id'] ?? '');
 
     if ($id !== '') {
+        $isAdminUser = !empty($u['is_admin']) || !empty($u['is_super_admin']);
         $found = false;
         foreach ($store['tickets'] as &$ticket) {
             if (($ticket['id'] ?? '') === $id) {
+                if (!$isAdminUser && ($ticket['created_by'] ?? '') !== $u['id']) {
+                    respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
+                }
                 $ticket = applyTicketFields($ticket, $input);
                 $ticket['updated_at'] = $now;
                 $found = true;
@@ -6007,7 +6016,7 @@ case 'save-ticket':
 
 case 'ticket-reply':
     if ($method !== 'POST') break;
-    $u = requireSuperAdmin();
+    $u = requireAuth();
     $ticketId = trim($input['ticket_id'] ?? '');
     $message = trim($input['message'] ?? '');
     if ($message === '') respond(['success' => false, 'error' => 'Reply cannot be empty'], 400);
@@ -6017,6 +6026,9 @@ case 'ticket-reply':
         if (($ticket['id'] ?? '') === $ticketId) { $target = &$ticket; break; }
     }
     if ($target === null) respond(['success' => false, 'error' => 'Ticket not found'], 404);
+    if (empty($u['is_admin']) && empty($u['is_super_admin']) && ($target['created_by'] ?? '') !== $u['id']) {
+        respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
+    }
     if (!isset($target['replies']) || !is_array($target['replies'])) $target['replies'] = [];
     $reply = [
         'id' => 'rep_' . bin2hex(random_bytes(6)),
@@ -6038,13 +6050,17 @@ case 'ticket-reply':
 
 case 'update-ticket-status':
     if ($method !== 'POST') break;
-    requireSuperAdmin();
+    $u = requireAuth();
+    $isAdminUser = !empty($u['is_admin']) || !empty($u['is_super_admin']);
     global $VALID_TICKET_STATUS, $VALID_TICKET_PRIORITY;
     $ticketId = trim($input['id'] ?? '');
     $store = getTicketsStore();
     $found = false;
     foreach ($store['tickets'] as &$ticket) {
         if (($ticket['id'] ?? '') === $ticketId) {
+            if (!$isAdminUser && ($ticket['created_by'] ?? '') !== $u['id']) {
+                respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
+            }
             if (isset($input['status']) && in_array($input['status'], $VALID_TICKET_STATUS, true)) {
                 $ticket['status'] = $input['status'];
             }
@@ -6064,9 +6080,14 @@ case 'update-ticket-status':
 
 case 'delete-ticket':
     if ($method !== 'POST') break;
-    requireSuperAdmin();
+    $u = requireAuth();
     $id = trim($input['id'] ?? '');
     $store = getTicketsStore();
+    if (empty($u['is_admin']) && empty($u['is_super_admin'])) {
+        $owns = false;
+        foreach ($store['tickets'] as $t) { if (($t['id'] ?? '') === $id && ($t['created_by'] ?? '') === $u['id']) { $owns = true; break; } }
+        if (!$owns) respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
+    }
     $store['tickets'] = array_values(array_filter($store['tickets'], function ($t) use ($id) {
         return ($t['id'] ?? '') !== $id;
     }));
