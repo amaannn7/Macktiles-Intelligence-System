@@ -5973,11 +5973,22 @@ case 'tickets':
     if (empty($u['is_admin']) && empty($u['is_super_admin'])) {
         $tickets = array_values(array_filter($tickets, fn($t) => ($t['created_by'] ?? '') === $u['id']));
     }
+    // Summary counts (the Open/In Progress/Resolved/Total stat tiles) always
+    // reflect everything this user can see, regardless of which view is
+    // showing — only the returned ticket list itself is filtered by closed
+    // state below.
+    $summary = ticketsSummary($tickets);
+    // Closed tickets are hidden from the default queue (they're done — no
+    // reason to keep them in the working view) but stay fully reachable via
+    // the dedicated "Closed Tickets" toggle in the UI, which passes closed=1.
+    $wantClosed = !empty($_GET['closed']);
+    $tickets = array_values(array_filter($tickets, fn($t) => ($t['status'] === 'closed') === $wantClosed));
     usort($tickets, function ($a, $b) { return strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''); });
     respond([
         'success' => true,
         'tickets' => $tickets,
-        'summary' => ticketsSummary($tickets),
+        'summary' => $summary,
+        'closed_count' => count(array_filter($store['tickets'], fn($t) => $t['status'] === 'closed' && (!empty($u['is_admin']) || !empty($u['is_super_admin']) || ($t['created_by'] ?? '') === $u['id']))),
     ]);
     break;
 
@@ -6043,7 +6054,9 @@ case 'ticket-reply':
         if (($ticket['id'] ?? '') === $ticketId) { $target = &$ticket; break; }
     }
     if ($target === null) respond(['success' => false, 'error' => 'Ticket not found'], 404);
-    if (empty($u['is_admin']) && empty($u['is_super_admin']) && ($target['created_by'] ?? '') !== $u['id']) {
+    $isAdminUser = !empty($u['is_admin']) || !empty($u['is_super_admin']);
+    $isOwner = ($target['created_by'] ?? '') === $u['id'];
+    if (!$isAdminUser && !$isOwner) {
         respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
     }
     if (!isset($target['replies']) || !is_array($target['replies'])) $target['replies'] = [];
@@ -6056,6 +6069,18 @@ case 'ticket-reply':
         'created_at' => date('c'),
     ];
     $target['replies'][] = $reply;
+    // Auto status: an admin replying to someone else's open ticket means
+    // someone picked it up — move it to in_progress. The requester replying
+    // to their own resolved/closed ticket means it isn't actually done —
+    // reopen it. Neither rule fires for an admin replying to their OWN
+    // ticket or a requester replying while already open/in_progress, since
+    // there's no clear signal either way there; the manual status dropdown
+    // still covers every other transition exactly as before.
+    if ($isAdminUser && !$isOwner && $target['status'] === 'open') {
+        $target['status'] = 'in_progress';
+    } elseif ($isOwner && in_array($target['status'], ['resolved', 'closed'], true)) {
+        $target['status'] = 'open';
+    }
     $target['updated_at'] = date('c');
     $ticketCopy = $target;
     unset($target);

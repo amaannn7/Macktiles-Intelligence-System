@@ -242,7 +242,12 @@ function ingestReplyFromHub($localTicketId, $reply) {
                 'message' => $message,
                 'created_at' => $createdAt ?: date('c'),
             ];
-            $ticket['status'] = 'in_progress';
+            // A hub staff reply is always "our side" replying — someone
+            // picked this up, so move it out of open. Only from open, not
+            // unconditionally: a hub reply landing on an already
+            // resolved/closed ticket shouldn't silently flip it back to
+            // in_progress (that's not the same as the requester reopening it).
+            if ($ticket['status'] === 'open') $ticket['status'] = 'in_progress';
             $ticket['updated_at'] = date('c');
             $found = true;
             $ticketCopy = $ticket;

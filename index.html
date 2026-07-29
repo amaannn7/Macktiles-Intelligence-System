@@ -1760,9 +1760,11 @@ Phone: +1 234 567 890"></textarea></div>
                                     <button type="button" class="dsup-filter-tab" data-filter="open" onclick="dsupSetFilter('open')">Open</button>
                                     <button type="button" class="dsup-filter-tab" data-filter="in_progress" onclick="dsupSetFilter('in_progress')">In progress</button>
                                     <button type="button" class="dsup-filter-tab" data-filter="resolved" onclick="dsupSetFilter('resolved')">Resolved</button>
-                                    <button type="button" class="dsup-filter-tab" data-filter="closed" onclick="dsupSetFilter('closed')">Closed</button>
                                 </div>
-                                <span id="dsup-live-indicator" style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>Live</span>
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <span id="dsup-live-indicator" style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>Live</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="dsup-closed-toggle" onclick="dsupToggleClosedView()">Closed Tickets (0)</button>
+                                </div>
                             </div>
                         </div>
                         <div id="dsup-ticket-list" class="dsup-ticket-list"><div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div></div>
@@ -6224,11 +6226,9 @@ document.getElementById('realtime-settings-form').addEventListener('submit',asyn
 });
 
 // ===================== Feedback & Support =====================
-// Currently gated to super admins only (testing phase) via requireSuperAdmin()
-// on every backend endpoint + the .super-admin-only nav class. When this goes
-// live for everyone, loosen those two gates — no other rework needed.
 let _dsupTickets=[];
 let _dsupFilter='';
+let _dsupShowClosed=false;   // toggles between the normal queue and the closed-only view
 let _dsupOpenThreads=new Set();   // ticket ids whose conversation panel is expanded
 let _dsupPollTimer=null;
 const DSUP_STATUS={open:{label:'Open',color:'#e3705a'},in_progress:{label:'In Progress',color:'#2563eb'},resolved:{label:'Resolved',color:'#10b981'},closed:{label:'Closed',color:'#9ca3af'}};
@@ -6238,6 +6238,7 @@ const DSUP_CATS={
 };
 const DSUP_CAT=Object.fromEntries([...DSUP_CATS.support,...DSUP_CATS.feedback]);
 window.loadDevSupport=async function(){
+    _dsupShowClosed=false;
     const list=document.getElementById('dsup-ticket-list');
     list.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div>';
     await dsupRefresh();
@@ -6252,7 +6253,7 @@ function dsupStopPolling(){
 // Quiet refetch used both for the initial load and the 5s live poll — no
 // loading spinner, and never clobbers a reply the user is mid-typing.
 async function dsupRefresh(){
-    const r=await api('tickets');
+    const r=await api('tickets'+(_dsupShowClosed?'&closed=1':''));
     if(!r.success){
         // Never leave the initial "Loading..." text stuck forever — show
         // what actually happened instead of silently doing nothing (this bit
@@ -6264,8 +6265,19 @@ async function dsupRefresh(){
     }
     _dsupTickets=r.tickets||[];
     dsupRenderSummary(r.summary||{});
+    const closedBtn=document.getElementById('dsup-closed-toggle');
+    if(closedBtn)closedBtn.textContent=_dsupShowClosed?'← Back to Tickets':`Closed Tickets (${r.closed_count||0})`;
     dsupRenderList();
 }
+window.dsupToggleClosedView=async function(){
+    _dsupShowClosed=!_dsupShowClosed;
+    document.getElementById('dsup-filter-tabs').style.display=_dsupShowClosed?'none':'';
+    _dsupFilter='';
+    document.querySelectorAll('.dsup-filter-tab').forEach(b=>b.classList.toggle('active',b.dataset.filter===''));
+    const list=document.getElementById('dsup-ticket-list');
+    list.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div>';
+    await dsupRefresh();
+};
 function dsupRenderSummary(s){
     document.getElementById('dsup-open-count').textContent=s.open||0;
     document.getElementById('dsup-progress-count').textContent=s.in_progress||0;
@@ -6288,9 +6300,13 @@ function dsupRenderList(){
 
     const tickets=_dsupFilter?_dsupTickets.filter(t=>t.status===_dsupFilter):_dsupTickets;
     if(!tickets.length){
-        list.innerHTML=_dsupTickets.length
-            ?'<div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:13px;">No tickets in this view.</div>'
-            :'<div style="text-align:center;padding:40px 16px;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:10px;">💬</div><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:6px;">No tickets yet</div><p style="max-width:520px;margin:0 auto;line-height:1.6;font-size:13px;">Click <strong>+ New Ticket</strong> to raise a support request or send feedback to Levata.</p></div>';
+        if(_dsupShowClosed){
+            list.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:10px;">✅</div><div style="font-size:15px;font-weight:600;color:#333;">No closed tickets</div></div>';
+        }else{
+            list.innerHTML=_dsupTickets.length
+                ?'<div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:13px;">No tickets in this view.</div>'
+                :'<div style="text-align:center;padding:40px 16px;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:10px;">💬</div><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:6px;">No tickets yet</div><p style="max-width:520px;margin:0 auto;line-height:1.6;font-size:13px;">Click <strong>+ New Ticket</strong> to raise a support request or send feedback to Levata.</p></div>';
+        }
         return;
     }
     list.innerHTML=tickets.map(dsupTicketCard).join('');
