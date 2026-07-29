@@ -6098,12 +6098,14 @@ case 'update-ticket-status':
     $ticketId = trim($input['id'] ?? '');
     $store = getTicketsStore();
     $found = false;
+    $statusChanged = false;
     foreach ($store['tickets'] as &$ticket) {
         if (($ticket['id'] ?? '') === $ticketId) {
             if (!$isAdminUser && ($ticket['created_by'] ?? '') !== $u['id']) {
                 respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
             }
             if (isset($input['status']) && in_array($input['status'], $VALID_TICKET_STATUS, true)) {
+                $statusChanged = $ticket['status'] !== $input['status'];
                 $ticket['status'] = $input['status'];
             }
             if (isset($input['priority']) && in_array($input['priority'], $VALID_TICKET_PRIORITY, true)) {
@@ -6111,12 +6113,16 @@ case 'update-ticket-status':
             }
             $ticket['updated_at'] = date('c');
             $found = true;
+            $ticketCopy = $ticket;
             break;
         }
     }
     unset($ticket);
     if (!$found) respond(['success' => false, 'error' => 'Ticket not found'], 404);
     saveTicketsStore($store);
+    // Best-effort: push the status change up to the Levata hub so its own
+    // copy of this ticket stays in sync, same as replies already do.
+    if ($statusChanged) sendStatusToHub($ticketCopy);
     respond(['success' => true]);
     break;
 
@@ -6152,6 +6158,25 @@ case 'ingest-reply':
     $reply = $input['reply'] ?? null;
     $ok = ingestReplyFromHub($localId, $reply);
     if (!$ok) respond(['success' => false, 'error' => 'Ticket not found or empty reply'], 404);
+    respond(['success' => true]);
+    break;
+
+case 'ingest-status':
+    // Public endpoint: the Levata hub pushes a status change back here (an
+    // admin clicked Resolved/Closed/etc. on the hub's own copy of a
+    // client-forwarded ticket). Same auth as ingest-reply — the shared
+    // secret, never exposed in the UI, disabled unless configured.
+    if ($method !== 'POST') break;
+    $admin = getAdmin();
+    $statusSecret = trim($admin['ticket_hub_secret'] ?? '');
+    if ($statusSecret === '') respond(['success' => false, 'error' => 'Status ingest not enabled'], 404);
+    if (!hash_equals($statusSecret, trim($input['secret'] ?? ''))) {
+        respond(['success' => false, 'error' => 'Invalid secret'], 403);
+    }
+    $localId = trim($input['remote_id'] ?? '');
+    $status = trim($input['status'] ?? '');
+    $ok = ingestStatusFromHub($localId, $status);
+    if (!$ok) respond(['success' => false, 'error' => 'Ticket not found or invalid status'], 404);
     respond(['success' => true]);
     break;
 

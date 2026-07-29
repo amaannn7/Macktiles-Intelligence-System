@@ -200,6 +200,41 @@ function sendReplyToHub($ticket, $reply) {
 }
 
 /**
+ * Push a status change (made here, on this Macktiles deployment) UP to the
+ * hub, so the hub's own copy of the ticket reflects it too — the mirror of
+ * sendReplyToHub(), same derived URL and secret. Best-effort; returns false
+ * quietly if this deployment isn't a spoke, the ticket was never forwarded,
+ * or the hub is unreachable. Never throws.
+ */
+function sendStatusToHub($ticket) {
+    $admin = getAdmin();
+    $hubUrl = trim($admin['ticket_hub_url'] ?? '');
+    $secret = trim($admin['ticket_hub_secret'] ?? '');
+    if ($hubUrl === '' || $secret === '') return false;
+    $localId = trim($ticket['id'] ?? '');
+    if ($localId === '') return false;
+
+    $statusUrl = str_replace('action=ingest-ticket', 'action=ingest-client-status', $hubUrl);
+    $payload = [
+        'secret' => $secret,
+        'remote_id' => $localId,
+        'status' => $ticket['status'] ?? 'open',
+    ];
+    $ch = curl_init($statusUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+    curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $code >= 200 && $code < 300;
+}
+
+/**
  * Receive a staff reply pushed back from the Levata hub and append it to the
  * local ticket's thread. Public endpoint, authenticated by the shared secret
  * (admin.json 'ticket_hub_secret', must match the hub's outbound secret).
@@ -271,5 +306,33 @@ function ingestReplyFromHub($localTicketId, $reply) {
             'created_at' => date('c'),
         ]);
     }
+    return true;
+}
+
+/**
+ * Receive a status change pushed down from the Levata hub (an admin clicked
+ * Resolved/Closed/etc. on the hub's own copy of this ticket) and apply it to
+ * the local ticket. Public endpoint, authenticated by the same shared secret
+ * as ingestReplyFromHub(). Idempotent by construction — applying the same
+ * status twice is harmless, so no dedupe bookkeeping is needed here.
+ */
+function ingestStatusFromHub($localTicketId, $status) {
+    global $VALID_TICKET_STATUS;
+    $localTicketId = trim($localTicketId);
+    if ($localTicketId === '' || !in_array($status, $VALID_TICKET_STATUS, true)) return false;
+
+    $store = getTicketsStore();
+    $found = false;
+    foreach ($store['tickets'] as &$ticket) {
+        if (($ticket['id'] ?? '') === $localTicketId) {
+            $ticket['status'] = $status;
+            $ticket['updated_at'] = date('c');
+            $found = true;
+            break;
+        }
+    }
+    unset($ticket);
+    if (!$found) return false;
+    saveTicketsStore($store);
     return true;
 }
