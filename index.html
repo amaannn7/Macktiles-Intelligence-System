@@ -6322,7 +6322,9 @@ function dsupTicketCard(t){
         ?'<span class="dsup-chip dsup-chip-feedback">Feedback</span>'
         :'<span class="dsup-chip dsup-chip-support">Support</span>';
     const priorityChip=t.priority==='high'?'<span class="dsup-chip dsup-chip-priority-high">High priority</span>':'';
-    const meta=[t.ticket_no||'',DSUP_CAT[t.category]||t.category].filter(Boolean).join(' · ');
+    const isAdminUser=(user.is_admin||user.is_super_admin);
+    const creatorName=isAdminUser?(t.created_by_name||''):'';
+    const meta=[t.ticket_no||'',DSUP_CAT[t.category]||t.category,creatorName?`by ${creatorName}`:''].filter(Boolean).join(' · ');
     const replyCount=(t.replies||[]).length;
     const isOpen=_dsupOpenThreads.has(t.id);
     const replies=(t.replies||[]).map(dsupReplyRow).join('')||'<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">No replies yet.</div>';
