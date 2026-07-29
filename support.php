@@ -206,6 +206,41 @@ function sendReplyToHub($ticket, $reply) {
  * quietly if this deployment isn't a spoke, the ticket was never forwarded,
  * or the hub is unreachable. Never throws.
  */
+/**
+ * Push a deletion (made here, on this Macktiles deployment) UP to the hub, so
+ * the hub's own copy of the ticket is removed too — the mirror of
+ * sendStatusToHub(), same derived URL and secret. Best-effort; returns false
+ * quietly if this deployment isn't a spoke, the ticket was never forwarded,
+ * or the hub is unreachable. Never throws. Must be called BEFORE the local
+ * ticket is removed from the store, since it needs the ticket's own id.
+ */
+function sendDeleteToHub($ticket) {
+    $admin = getAdmin();
+    $hubUrl = trim($admin['ticket_hub_url'] ?? '');
+    $secret = trim($admin['ticket_hub_secret'] ?? '');
+    if ($hubUrl === '' || $secret === '') return false;
+    $localId = trim($ticket['id'] ?? '');
+    if ($localId === '') return false;
+
+    $deleteUrl = str_replace('action=ingest-ticket', 'action=ingest-client-delete', $hubUrl);
+    $payload = [
+        'secret' => $secret,
+        'remote_id' => $localId,
+    ];
+    $ch = curl_init($deleteUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+    curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $code >= 200 && $code < 300;
+}
+
 function sendStatusToHub($ticket) {
     $admin = getAdmin();
     $hubUrl = trim($admin['ticket_hub_url'] ?? '');
@@ -361,6 +396,28 @@ function ingestStatusFromHub($localTicketId, $status) {
             'read' => false,
             'created_at' => date('c'),
         ]);
+    }
+    return true;
+}
+
+/**
+ * Receive a deletion pushed down from the Levata hub (a ticket forwarded from
+ * here was deleted on the hub's side) and remove the local copy. Public
+ * endpoint, authenticated by the same shared secret as ingestStatusFromHub().
+ * Idempotent by construction — deleting an already-gone (or never-forwarded)
+ * ticket id is a no-op success, not a failure, so a hub retry never fails.
+ */
+function ingestDeleteFromHub($localTicketId) {
+    $localTicketId = trim($localTicketId);
+    if ($localTicketId === '') return false;
+
+    $store = getTicketsStore();
+    $before = count($store['tickets']);
+    $store['tickets'] = array_values(array_filter($store['tickets'], function ($t) use ($localTicketId) {
+        return ($t['id'] ?? '') !== $localTicketId;
+    }));
+    if (count($store['tickets']) !== $before) {
+        saveTicketsStore($store);
     }
     return true;
 }

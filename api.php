@@ -6136,10 +6136,15 @@ case 'delete-ticket':
         foreach ($store['tickets'] as $t) { if (($t['id'] ?? '') === $id && ($t['created_by'] ?? '') === $u['id']) { $owns = true; break; } }
         if (!$owns) respond(['success' => false, 'error' => 'Not authorized for this ticket'], 403);
     }
+    $ticketToDelete = null;
+    foreach ($store['tickets'] as $t) { if (($t['id'] ?? '') === $id) { $ticketToDelete = $t; break; } }
     $store['tickets'] = array_values(array_filter($store['tickets'], function ($t) use ($id) {
         return ($t['id'] ?? '') !== $id;
     }));
     saveTicketsStore($store);
+    // Best-effort: push the deletion up to the Levata hub so its own copy of
+    // this ticket is removed too, same as status changes already do.
+    if ($ticketToDelete) sendDeleteToHub($ticketToDelete);
     respond(['success' => true]);
     break;
 
@@ -6177,6 +6182,24 @@ case 'ingest-status':
     $status = trim($input['status'] ?? '');
     $ok = ingestStatusFromHub($localId, $status);
     if (!$ok) respond(['success' => false, 'error' => 'Ticket not found or invalid status'], 404);
+    respond(['success' => true]);
+    break;
+
+case 'ingest-delete':
+    // Public endpoint: the Levata hub pushes a deletion back here (a ticket
+    // forwarded from this deployment was deleted on the hub's side). Same
+    // auth as ingest-reply/ingest-status — the shared secret, never exposed
+    // in the UI, disabled unless configured.
+    if ($method !== 'POST') break;
+    $admin = getAdmin();
+    $deleteSecret = trim($admin['ticket_hub_secret'] ?? '');
+    if ($deleteSecret === '') respond(['success' => false, 'error' => 'Delete ingest not enabled'], 404);
+    if (!hash_equals($deleteSecret, trim($input['secret'] ?? ''))) {
+        respond(['success' => false, 'error' => 'Invalid secret'], 403);
+    }
+    $localId = trim($input['remote_id'] ?? '');
+    $ok = ingestDeleteFromHub($localId);
+    if (!$ok) respond(['success' => false, 'error' => 'Missing ticket id'], 404);
     respond(['success' => true]);
     break;
 
