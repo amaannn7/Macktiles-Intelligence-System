@@ -6419,7 +6419,14 @@ window.dsupSendReply=async function(ticketId){
     inp.disabled=true;
     const r=await api('ticket-reply','POST',{ticket_id:ticketId,message});
     inp.disabled=false;
-    if(r.success){_dsupOpenThreads.add(ticketId);dsupRefresh();}else toast(r.error||'Reply failed','error');
+    if(r.success){
+        // Clear BEFORE refreshing — dsupRenderList() preserves any non-empty
+        // input value across its rebuild (so an in-progress draft survives a
+        // live poll), which was also re-filling this box with the message
+        // that had just been sent successfully.
+        if(inp)inp.value='';
+        _dsupOpenThreads.add(ticketId);dsupRefresh();
+    }else toast(r.error||'Reply failed','error');
 };
 window.dsupSetStatus=async function(id,status){
     const r=await api('update-ticket-status','POST',{id,status});
