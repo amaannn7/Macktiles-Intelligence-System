@@ -406,18 +406,43 @@ function ingestStatusFromHub($localTicketId, $status) {
  * endpoint, authenticated by the same shared secret as ingestStatusFromHub().
  * Idempotent by construction — deleting an already-gone (or never-forwarded)
  * ticket id is a no-op success, not a failure, so a hub retry never fails.
+ *
+ * Removing the ticket alone left an open Feedback & Support tab stuck showing
+ * it until a manual refresh — same live-refresh gap as the status-only push
+ * (see ingestStatusFromHub()) — since nothing told the frontend anything had
+ * changed. Pushes a notification here too, reusing the same 'ticket_reply'
+ * type the frontend already listens for.
  */
 function ingestDeleteFromHub($localTicketId) {
     $localTicketId = trim($localTicketId);
     if ($localTicketId === '') return false;
 
     $store = getTicketsStore();
-    $before = count($store['tickets']);
+    $ticketCopy = null;
+    foreach ($store['tickets'] as $t) {
+        if (($t['id'] ?? '') === $localTicketId) { $ticketCopy = $t; break; }
+    }
+    if ($ticketCopy === null) return true; // already gone; nothing to do
+
     $store['tickets'] = array_values(array_filter($store['tickets'], function ($t) use ($localTicketId) {
         return ($t['id'] ?? '') !== $localTicketId;
     }));
-    if (count($store['tickets']) !== $before) {
-        saveTicketsStore($store);
+    saveTicketsStore($store);
+
+    $creatorId = trim($ticketCopy['created_by'] ?? '');
+    if ($creatorId !== '') {
+        pushChatNotification($creatorId, [
+            'id' => 'notif_' . bin2hex(random_bytes(6)),
+            'type' => 'ticket_reply',
+            'title' => 'Levata deleted your ticket',
+            'body' => $ticketCopy['subject'] ?? '(no subject)',
+            'ticket_id' => $localTicketId,
+            // Stable key (no timestamp) so a hub retry of the SAME delete
+            // dedupes correctly instead of creating a fresh notification.
+            'notif_key' => 'ticket_deleted_' . $localTicketId,
+            'read' => false,
+            'created_at' => date('c'),
+        ]);
     }
     return true;
 }
