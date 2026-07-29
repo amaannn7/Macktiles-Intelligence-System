@@ -315,6 +315,13 @@ function ingestReplyFromHub($localTicketId, $reply) {
  * the local ticket. Public endpoint, authenticated by the same shared secret
  * as ingestReplyFromHub(). Idempotent by construction — applying the same
  * status twice is harmless, so no dedupe bookkeeping is needed here.
+ *
+ * A hub REPLY already live-updates an open Feedback & Support tab because it
+ * pushes a 'ticket_reply' notification the frontend listens for — a pure
+ * status-only change (no reply attached, e.g. clicking Resolved directly)
+ * previously pushed nothing at all, so the tab looked stuck until a manual
+ * refresh even though the change had already landed. Pushes its own
+ * notification here so the same live-refresh path fires for this case too.
  */
 function ingestStatusFromHub($localTicketId, $status) {
     global $VALID_TICKET_STATUS;
@@ -323,16 +330,37 @@ function ingestStatusFromHub($localTicketId, $status) {
 
     $store = getTicketsStore();
     $found = false;
+    $ticketCopy = null;
     foreach ($store['tickets'] as &$ticket) {
         if (($ticket['id'] ?? '') === $localTicketId) {
             $ticket['status'] = $status;
             $ticket['updated_at'] = date('c');
             $found = true;
+            $ticketCopy = $ticket;
             break;
         }
     }
     unset($ticket);
     if (!$found) return false;
     saveTicketsStore($store);
+    $creatorId = trim($ticketCopy['created_by'] ?? '');
+    if ($creatorId !== '') {
+        // Matches the labels the frontend's own DSUP_STATUS map uses.
+        $statusLabels = ['open' => 'Open', 'in_progress' => 'In Progress', 'resolved' => 'Resolved', 'closed' => 'Closed'];
+        $statusLabel = $statusLabels[$status] ?? ucfirst($status);
+        pushChatNotification($creatorId, [
+            'id' => 'notif_' . bin2hex(random_bytes(6)),
+            'type' => 'ticket_reply',
+            'title' => 'Levata marked your ticket ' . $statusLabel,
+            'body' => $ticketCopy['subject'] ?? '(no subject)',
+            'ticket_id' => $localTicketId,
+            // Stable key (no timestamp) so a hub retry of the SAME status
+            // push dedupes correctly instead of creating a fresh notification
+            // every retry — matches every other notif_key in this codebase.
+            'notif_key' => 'ticket_status_' . $localTicketId . '_' . $status,
+            'read' => false,
+            'created_at' => date('c'),
+        ]);
+    }
     return true;
 }
