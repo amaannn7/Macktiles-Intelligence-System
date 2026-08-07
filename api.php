@@ -6712,44 +6712,56 @@ BODY: [your complete body]";
     $subject = trim(str_replace(['—', '–', '"', '"'], ['', '', '"', '"'], $subject));
     $subject = ucfirst($subject); // Capitalize first letter
 
+    // A custom signature already contains the rep's own sign-off (that's what
+    // the settings field is for - see its placeholder: "Best regards, [Name],
+    // [Title] | [Company]"), so the plain name/title/company block below must
+    // be skipped whenever a custom signature will be appended later, or the
+    // email ends up with two sign-offs stacked on top of each other.
+    $useCustomSignature = $includeSignature && !empty($signature);
+
     switch ($emailType) {
         case 'initial':
             $body = "Hi {$firstName},\n\n";
             $body .= ($parts['opener'] ?? "Hope you're doing well.") . "\n\n";
             $body .= ($parts['problem_bridge'] ?? '') . "\n\n";
             $body .= ($parts['cta'] ?? 'Would this be worth a conversation?') . "\n\n";
-            $body .= $senderName;
-            if ($senderTitle) $body .= "\n{$senderTitle}";
-            if ($senderCompany) $body .= "\n{$senderCompany}";
+            if (!$useCustomSignature) {
+                $body .= $senderName;
+                if ($senderTitle) $body .= "\n{$senderTitle}";
+                if ($senderCompany) $body .= "\n{$senderCompany}";
+            }
             break;
 
         case 'followup1':
             $body = "Hi {$firstName},\n\n";
             $body .= ($parts['reconnect_value'] ?? 'Following up on my previous note.') . "\n\n";
             $body .= ($parts['cta'] ?? 'Worth a quick call?') . "\n\n";
-            $body .= $senderName;
+            if (!$useCustomSignature) $body .= $senderName;
             break;
 
         case 'followup2':
             $body = "Hi {$firstName},\n\n";
             $body .= ($parts['acknowledge_proof'] ?? 'I know you\'re busy, so I\'ll keep this short.') . "\n\n";
             $body .= ($parts['cta_easyout'] ?? 'If the timing isn\'t right, no worries at all.') . "\n\n";
-            $body .= $senderName;
+            if (!$useCustomSignature) $body .= $senderName;
             break;
 
         case 'breakup':
             $body = "Hi {$firstName},\n\n";
             $body .= ($parts['body'] ?? 'I\'ve reached out a few times without hearing back. Should I close your file, or would it make sense to reconnect in a few months?') . "\n\n";
-            $body .= $senderName;
+            if (!$useCustomSignature) $body .= $senderName;
             break;
 
         default:
-            $body = "Hi {$firstName},\n\n{$llmOutput}\n\n{$senderName}";
+            $body = "Hi {$firstName},\n\n{$llmOutput}";
+            if (!$useCustomSignature) $body .= "\n\n{$senderName}";
     }
 
-    // Clean up the body - remove em-dashes and excessive punctuation
+    // Clean up the body - remove em-dashes and excessive punctuation, and trim
+    // any trailing blank lines left when the sign-off above was skipped
     $body = str_replace(['—', '–'], [',', ','], $body);
     $body = preg_replace('/\n{3,}/', "\n\n", $body);
+    $body = rtrim($body);
 
     // Add signature if enabled and exists
     if ($includeSignature && !empty($signature)) {
