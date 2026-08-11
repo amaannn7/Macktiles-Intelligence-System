@@ -1512,7 +1512,10 @@ function generateNotifications($leads, $existingNotifications) {
             ['cond' => !empty($lead['followup_date']) && strtotime($lead['followup_date']) < strtotime('today'),
              'key'  => "callback_overdue_{$leadId}", 'type' => 'callback_overdue',
              'title'=> "⚠️ Callback overdue",
-             'body' => "{$name} from {$company} — " . floor(($now - strtotime($lead['followup_date'])) / 86400) . " day(s) overdue"],
+             // 'body' is built even when 'cond' above is false (all array values are
+             // evaluated up front), so this can't skip the strtotime() call just
+             // because followup_date is empty - guard it here directly instead.
+             'body' => "{$name} from {$company} — " . (empty($lead['followup_date']) ? 0 : floor(($now - strtotime($lead['followup_date'])) / 86400)) . " day(s) overdue"],
 
             ['cond' => in_array($temp, ['hot','warm']) && $daysSinceActivity >= 7 && $daysSinceActivity < 14,
              'key'  => "going_cold_{$leadId}", 'type' => 'going_cold',
@@ -2801,6 +2804,14 @@ case 'update-lead':
 
 case 'import':
     if ($method !== 'POST') break;
+    // Temporary diagnostic logging (2026-08-11): "Failed to fetch" reports on
+    // import with nothing in error_log suggest the request may be getting cut
+    // off before/during this handler rather than a normal PHP error. These
+    // markers + the try/catch below confirm whether this code ever runs to
+    // completion, and surface any exception explicitly instead of relying on
+    // default fatal-error logging. Remove once the report is resolved.
+    error_log('[import] start user=' . ($_SERVER['HTTP_X_USER_TOKEN'] ?? 'no-token') . ' rows=' . (is_array($input['data'] ?? null) ? count($input['data']) : 'n/a'));
+    try {
     $user = requireAuth();
     $userData = getUserData($user['id']);
     $csvData = $input['data'] ?? [];
@@ -2950,7 +2961,12 @@ case 'import':
         $response['duplicates'] = $duplicates;
     }
 
+    error_log('[import] success imported=' . $imported . ' skipped=' . $skipped);
     respond($response);
+    } catch (Throwable $e) {
+        error_log('[import] EXCEPTION: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        respond(['success' => false, 'error' => 'Import failed: ' . $e->getMessage()], 500);
+    }
     break;
 
 case 'delete-lead':
