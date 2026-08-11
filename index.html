@@ -2108,7 +2108,7 @@ async function api(endpoint,method='GET',data=null){
 // for a repeated identical GET URL (e.g. re-opening the same chat thread from
 // a notification), showing old messages until a hard refresh forces a real
 // network request.
-const opts={method,cache:'no-store',headers:{'Content-Type':'application/json','X-Timezone-Offset':String(new Date().getTimezoneOffset())}};if(localStorage.token)opts.headers['X-User-Token']=localStorage.token;if(data)opts.body=JSON.stringify(data);try{const r=await fetch(`${API_BASE}?action=${endpoint}`,opts);return await r.json()}catch(e){return{success:false,error:e.message}}}
+const opts={method,cache:'no-store',headers:{'Content-Type':'application/json','X-Timezone-Offset':String(new Date().getTimezoneOffset())}};if(localStorage.token)opts.headers['X-User-Token']=localStorage.token;if(data)opts.body=JSON.stringify(data);try{const r=await fetch(`${API_BASE}?action=${endpoint}`,opts);return await r.json()}catch(e){return{success:false,error:e.message,network_error:true}}}
 async function handleLogin(e){e.preventDefault();const btn=document.getElementById('login-btn');btn.disabled=true;btn.innerHTML='<span class="spinner spinner-light"></span>';const r=await api('login','POST',{email:document.getElementById('login-email').value,password:document.getElementById('login-password').value});if(r.success){localStorage.token=r.token;user=r.user;showApp()}else toast(r.error||'Login failed','error');btn.disabled=false;btn.textContent='Sign In'}
 function showResetPassword(e){e.preventDefault();document.getElementById('reset-password-form').style.display='block'}
 async function requestPasswordReset(){
@@ -5240,11 +5240,21 @@ btn.innerHTML='<span class="spinner spinner-light"></span>';
 const skipDuplicates = document.getElementById('import-skip-duplicates')?.checked ?? true;
 const source = document.getElementById('import-source')?.value || 'firmable';
 
-const r=await api('import','POST',{
-    data: importData,
-    skip_duplicates: skipDuplicates,
-    source: source
-});
+// A dropped connection (flaky wifi, a network hiccup) surfaces as a raw
+// fetch failure, not a normal server error - retrying is safe here because
+// the backend already skips duplicates by email, so a retry after a partial
+// success just re-confirms what went through instead of double-importing.
+let r;
+const maxAttempts = 3;
+for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    r = await api('import','POST',{
+        data: importData,
+        skip_duplicates: skipDuplicates,
+        source: source
+    });
+    if (r.success || !r.network_error || attempt === maxAttempts) break;
+    await new Promise(res => setTimeout(res, 1500 * attempt));
+}
 
 if(r.success){
     let msg = `Imported ${r.imported} leads`;
@@ -5266,6 +5276,8 @@ if(r.success){
     loadStats();
     loadProactiveDashboard();
     showPage('leads');
+} else if (r.network_error) {
+    toast('Could not reach the server after several tries. Check your internet connection and try again.', 'error');
 } else {
     toast(r.error||'Failed','error');
 }
