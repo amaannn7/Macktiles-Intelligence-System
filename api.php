@@ -2810,9 +2810,11 @@ case 'import':
     // markers + the try/catch below confirm whether this code ever runs to
     // completion, and surface any exception explicitly instead of relying on
     // default fatal-error logging. Remove once the report is resolved.
-    error_log('[import] start user=' . ($_SERVER['HTTP_X_USER_TOKEN'] ?? 'no-token') . ' rows=' . (is_array($input['data'] ?? null) ? count($input['data']) : 'n/a'));
+    $importIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown-ip';
+    error_log('[import] start ip=' . $importIp . ' rows=' . (is_array($input['data'] ?? null) ? count($input['data']) : 'n/a'));
     try {
     $user = requireAuth();
+    error_log('[import] authenticated as ' . ($user['email'] ?? $user['id'] ?? 'unknown') . ' ip=' . $importIp);
     $userData = getUserData($user['id']);
     $csvData = $input['data'] ?? [];
     $skipDuplicates = $input['skip_duplicates'] ?? true;
@@ -2961,10 +2963,10 @@ case 'import':
         $response['duplicates'] = $duplicates;
     }
 
-    error_log('[import] success imported=' . $imported . ' skipped=' . $skipped);
+    error_log('[import] success ip=' . $importIp . ' imported=' . $imported . ' skipped=' . $skipped);
     respond($response);
     } catch (Throwable $e) {
-        error_log('[import] EXCEPTION: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        error_log('[import] EXCEPTION ip=' . $importIp . ': ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
         respond(['success' => false, 'error' => 'Import failed: ' . $e->getMessage()], 500);
     }
     break;
